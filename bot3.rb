@@ -165,6 +165,26 @@ bot = Cinch::Bot.new do
 
   end
 
+    on :message, Regexp.new('(xxxhttps?://\S+)', Regexp::IGNORECASE) do |m, url|
+    next if m.user.nick == 'TurtleBot'
+
+    recvd = String.new
+
+    easy = Ethon::Easy.new url: url, followlocation: true, headers: {
+      'User-Agent' => 'foo'
+    }
+    easy.on_body do |chunk, easy|
+      recvd << chunk
+
+      recvd =~ Regexp.new('<title[^>]*>\s*(.*?)\s*</title>', Regexp::IGNORECASE | Regexp::MULTILINE)
+      if title_found = $1
+        m.reply Nokogiri::HTML.parse(title_found.force_encoding('utf-8').gsub(/\s{2,}/, ' ')).text
+      end
+
+      :abort if recvd.length > 1024 * 1024 || title_found
+    end
+    easy.perform
+  end
 
 
 
