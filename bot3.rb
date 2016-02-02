@@ -10,19 +10,107 @@ require 'cinch'
 #require 'ethon'
 #require 'sequel'
 require 'unirest'
+require 'ruby-duration'
 
 
 bot = Cinch::Bot.new do
   configure do |c|
-    c.server = "REMOVED"
+    c.server = ""
     c.port = 38173
     c.channels = ["#newzbin","#testing12"]
-    c.user = "REMOVED"
-    c.password = "REMOVED"
+    c.user = "twatbot/freenode"
+    c.password = ""
     c.ssl.use = true
 #    c.channels = ["#testing12"]
     c.nick = "twatbot"
   end
+  
+  
+  on :message, Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*', Regexp::IGNORECASE) do |m|
+  
+	color_yt = "03"	 	
+	color_name = "04"
+	color_rating = "07"
+	color_url = "03"
+	
+    info "[IN] [YOUTUBEURL] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
+    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*', Regexp::IGNORECASE)
+    id = $1
+    
+	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=AIzaSyDGCWrBDa_Ygxgynw5akpuwltjxad6PsQA&part=snippet,contentDetails,statistics,status")
+	
+	if search.body && search.body.key?("items") && search.body["items"].size > 0
+
+		if search.body["items"][0].key?("snippet") 
+			if search.body["items"][0]["snippet"].key?("publishedAt")
+				publishedAt = search.body["items"][0]["snippet"]["publishedAt"]
+				if publishedAt.size > 0
+					publishedAt = DateTime.iso8601(publishedAt).strftime("%Y-%m-%d")
+				end
+			end
+			
+			if search.body["items"][0]["snippet"].key?("title")
+				title = search.body["items"][0]["snippet"]["title"]
+			end
+			
+			if search.body["items"][0]["snippet"].key?("description")
+				description = search.body["items"][0]["snippet"]["description"]
+			end			
+        end
+		
+		if search.body["items"][0].key?("contentDetails") 
+			if search.body["items"][0]["contentDetails"].key?("duration")
+				duration = search.body["items"][0]["contentDetails"]["duration"]
+				if duration.size > 0
+					duration = Duration.load(duration).format("%tm:%s")
+				end
+			end	
+        end
+		
+		if search.body["items"][0].key?("statistics") 
+			if search.body["items"][0]["statistics"].key?("viewCount")
+				viewCount = search.body["items"][0]["statistics"]["viewCount"]
+			end	
+			
+			if search.body["items"][0]["statistics"].key?("likeCount")
+				likeCount = search.body["items"][0]["statistics"]["likeCount"]
+			end	
+			
+			if search.body["items"][0]["statistics"].key?("dislikeCount")
+				dislikeCount = search.body["items"][0]["statistics"]["dislikeCount"]
+			end	
+        end
+		
+		if(viewCount.nil?)
+			viewCount = 0
+		end
+		
+		if(likeCount.nil?)
+			viewCount = 0
+		end
+		
+		if(dislikeCount.nil?)
+			viewCount = 0
+		end
+	
+		myreply = "\x03".b + color_yt + "[yt] " + "\x0f".b + 
+	  "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b + 
+	  "\x03".b + color_rating +
+	  (duration.nil? ? ""    : (" (" + duration    + ")")) +	  
+	  (publishedAt.nil? ? "" : (" [" + publishedAt + "]")) +
+	   " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
+	   " views] [+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
+	   "/-"         + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "]" +
+	   "\x0f".b
+      
+	  m.reply myreply
+	
+    end  
+  end
+  
+  
+  
+  
 
   on :message, Regexp.new('https?://[^/]*imdb.com.*/title/\D*(\d+)', Regexp::IGNORECASE) do |m|
   
@@ -48,7 +136,7 @@ bot = Cinch::Bot.new do
 
   on :message, Regexp.new('^\.moe', Regexp::IGNORECASE) do |m|
   #  sleep 2 
-    m.reply Cinch::Helpers.sanitize CGI.unescapeHTML "moeSizlak did actually profit several thousand dollars in US currency from sale of bitcoins which he acquired.  How much have you made?  Thought so.".force_encoding('utf-8')
+    m.reply Cinch::Helpers.sanitize CGI.unescapeHTML "1200 BTC = $0.00 USD".force_encoding('utf-8')
   end
 
   on :message, Regexp.new('^[.!]imdb', Regexp::IGNORECASE) do |m|
