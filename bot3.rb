@@ -16,7 +16,7 @@ require 'ruby-duration'
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = ""
-    c.port = 38173
+    c.port = 12345
     c.channels = ["#newzbin","#testing12"]
     c.user = "twatbot/freenode"
     c.password = ""
@@ -37,7 +37,7 @@ bot = Cinch::Bot.new do
     m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*', Regexp::IGNORECASE)
     id = $1
     
-	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=AIzaSyDGCWrBDa_Ygxgynw5akpuwltjxad6PsQA&part=snippet,contentDetails,statistics,status")
+	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=YOUR_API_KEY&part=snippet,contentDetails,statistics,status")
 	
 	if search.body && search.body.key?("items") && search.body["items"].size > 0
 
@@ -62,7 +62,7 @@ bot = Cinch::Bot.new do
 			if search.body["items"][0]["contentDetails"].key?("duration")
 				duration = search.body["items"][0]["contentDetails"]["duration"]
 				if duration.size > 0
-					duration = Duration.load(duration).format("%tm:%s")
+					duration = Duration.load(duration).format("%tm:%S")
 				end
 			end	
         end
@@ -95,10 +95,9 @@ bot = Cinch::Bot.new do
 	
 		myreply = "\x03".b + color_yt + "[yt] " + "\x0f".b + 
 	  "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b + 
-	  "\x03".b + color_rating +
 	  (duration.nil? ? ""    : (" (" + duration    + ")")) +	  
 	  (publishedAt.nil? ? "" : (" [" + publishedAt + "]")) +
-	   " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
+	  "\x03".b + color_rating + " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
 	   " views] [+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
 	   "/-"         + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "]" +
 	   "\x0f".b
