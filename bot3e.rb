@@ -7,7 +7,7 @@ require 'cgi'
 require 'imdb'
 
 require 'cinch'
-#require 'ethon'
+require 'ethon'
 #require 'sequel'
 require 'unirest'
 require 'ruby-duration'
@@ -16,7 +16,7 @@ require 'ruby-duration'
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = ""
-    c.port = 12345
+    c.port = 
     c.channels = ["#EZTV","#ezNAZI","#eztv-bitch","#New_World_Order","#testing12"]
     c.user = "twatbot/EFNET"
     c.password = ""
@@ -28,7 +28,7 @@ bot = Cinch::Bot.new do
   
   
   
-  on :message, Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*', Regexp::IGNORECASE) do |m|
+  on :message, Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?\s]*).*', Regexp::IGNORECASE) do |m|
   
 	color_yt = "03"	 	
 	color_name = "04"
@@ -41,7 +41,7 @@ bot = Cinch::Bot.new do
     
 	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=YOUR_API_KEY&part=snippet,contentDetails,statistics,status")
 	
-	if search.body && search.body.key?("items") && search.body["items"].size > 0
+	if m.channel.to_s != '#New_World_Order' && search.body && search.body.key?("items") && search.body["items"].size > 0
 
 		if search.body["items"][0].key?("snippet") 
 			if search.body["items"][0]["snippet"].key?("publishedAt")
@@ -95,11 +95,12 @@ bot = Cinch::Bot.new do
 			viewCount = 0
 		end
 	
-		myreply = "\x03".b + color_yt + "[yt] " + "\x0f".b + 
+		myreply = "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
 	  "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b +
+	  "\x03".b + color_rating +
 	  (duration.nil? ? ""    : (" (" + duration    + ")")) +	  
 	  (publishedAt.nil? ? "" : (" [" + publishedAt + "]")) +
-	   "\x03".b + color_rating + " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
+	   " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
 	   " views] [+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
 	   "/-"         + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "]" +
 	   "\x0f".b
@@ -251,6 +252,56 @@ bot = Cinch::Bot.new do
 	  info "[OUT] [TVMAZE] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + myreply.to_s
     end
 
+  end
+  
+  
+  
+      on :message, Regexp.new('(https?://([^\/\.]*\.)*dumpert\.nl\S+)', Regexp::IGNORECASE) do |m, url|
+    #next if m.user.nick == 'TurtleBot'
+
+    info "[IN] [DUMPERTURL] ["+ url + "] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
+
+    recvd = String.new
+
+    easy = Ethon::Easy.new url: url, followlocation: true, headers: {
+      'User-Agent' => 'foo'
+    }
+    easy.on_body do |chunk, easy|
+      recvd << chunk
+
+      recvd =~ Regexp.new('<title[^>]*>\s*(.*?)\s*</title>', Regexp::IGNORECASE | Regexp::MULTILINE)
+      if title_found = $1
+
+
+
+        thereply = '' + Nokogiri::HTML.parse(title_found.force_encoding('utf-8').gsub(/\s{2,}/, ' ')).text
+
+
+
+        search = Unirest::get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(thereply.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))
+
+        if search.body
+	  search = search.body
+          search.gsub!(/,+/, ',')
+	  search.gsub!(/\[,/, '[')
+          search = JSON.parse(search.body)
+
+          if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
+            thereply = thereply + 
+#            "\x03".b + "04" + "  [DUMPERT] " + "\x0f".b + 
+            "\x03".b + "04" + "  [" + search[0][0][0] + "]" + "\x0f".b
+          end
+        end
+
+
+
+        info "[OUT] [DUMPERTURL] ["+ url + "] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + thereply
+        m.reply thereply
+      end
+
+      :abort if recvd.length > 1024 * 1024 || title_found
+    end
+    easy.perform
   end
 
 

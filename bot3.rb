@@ -7,7 +7,7 @@ require 'cgi'
 require 'imdb'
 
 require 'cinch'
-#require 'ethon'
+require 'ethon'
 #require 'sequel'
 require 'unirest'
 require 'ruby-duration'
@@ -16,7 +16,7 @@ require 'ruby-duration'
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = ""
-    c.port = 12345
+    c.port = 
     c.channels = ["#newzbin","#testing12"]
     c.user = "twatbot/freenode"
     c.password = ""
@@ -33,10 +33,13 @@ bot = Cinch::Bot.new do
 	color_rating = "07"
 	color_url = "03"
 	
-    info "[IN] [YOUTUBEURL] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
-    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*', Regexp::IGNORECASE)
+ #   info "[IN] [YOUTUBEURL] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
+    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?\s]*).*', Regexp::IGNORECASE)
     id = $1
     
+    info "[IN] [YOUTUBEURL] ["+ id + "] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
+  
+  
 	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=YOUR_API_KEY&part=snippet,contentDetails,statistics,status")
 	
 	if search.body && search.body.key?("items") && search.body["items"].size > 0
@@ -93,11 +96,12 @@ bot = Cinch::Bot.new do
 			viewCount = 0
 		end
 	
-		myreply = "\x03".b + color_yt + "[yt] " + "\x0f".b + 
-	  "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b + 
+		myreply = "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
+	  "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b +
+	  "\x03".b + color_rating +
 	  (duration.nil? ? ""    : (" (" + duration    + ")")) +	  
 	  (publishedAt.nil? ? "" : (" [" + publishedAt + "]")) +
-	  "\x03".b + color_rating + " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
+	   " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
 	   " views] [+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
 	   "/-"         + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "]" +
 	   "\x0f".b
@@ -252,8 +256,10 @@ bot = Cinch::Bot.new do
 
   end
 
-    on :message, Regexp.new('(xxxhttps?://\S+)', Regexp::IGNORECASE) do |m, url|
-    next if m.user.nick == 'TurtleBot'
+    on :message, Regexp.new('(https?://([^\/\.]*\.)*dumpert\.nl\S+)', Regexp::IGNORECASE) do |m, url|
+    #next if m.user.nick == 'TurtleBot'
+
+    info "[IN] [DUMPERTURL] ["+ url + "] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
 
     recvd = String.new
 
@@ -265,7 +271,32 @@ bot = Cinch::Bot.new do
 
       recvd =~ Regexp.new('<title[^>]*>\s*(.*?)\s*</title>', Regexp::IGNORECASE | Regexp::MULTILINE)
       if title_found = $1
-        m.reply Nokogiri::HTML.parse(title_found.force_encoding('utf-8').gsub(/\s{2,}/, ' ')).text
+
+
+
+        thereply = '' + Nokogiri::HTML.parse(title_found.force_encoding('utf-8').gsub(/\s{2,}/, ' ')).text
+
+
+
+        search = Unirest::get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(thereply.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))
+
+        if search.body
+	  search = search.body
+          search.gsub!(/,+/, ',')
+	  search.gsub!(/\[,/, '[')
+          search = JSON.parse(search.body)
+
+          if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
+            thereply = thereply + 
+#            "\x03".b + "04" + "  [DUMPERT] " + "\x0f".b + 
+            "\x03".b + "04" + "  [" + search[0][0][0] + "]" + "\x0f".b
+          end
+        end
+
+
+
+        info "[OUT] [DUMPERTURL] ["+ url + "] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + thereply
+        m.reply thereply
       end
 
       :abort if recvd.length > 1024 * 1024 || title_found
