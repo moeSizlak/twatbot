@@ -16,7 +16,7 @@ require 'ruby-duration'
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = ""
-    c.port = 
+    c.port = 0
     c.channels = ["#EZTV","#ezNAZI","#eztv-bitch","#New_World_Order","#testing12"]
     c.user = "twatbot/EFNET"
     c.password = ""
@@ -24,8 +24,6 @@ bot = Cinch::Bot.new do
 #    c.channels = ["#testing12"]
     c.nick = "twatbot"
   end
-
-  
   
   
   on :message, Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?\s]*).*', Regexp::IGNORECASE) do |m|
@@ -36,10 +34,10 @@ bot = Cinch::Bot.new do
 	color_url = "03"
 	
     info "[IN] [YOUTUBEURL] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
-    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*', Regexp::IGNORECASE)
+    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?\s]*).*', Regexp::IGNORECASE)
     id = $1
     
-	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=YOUR_API_KEY&part=snippet,contentDetails,statistics,status")
+	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=yourkey&part=snippet,contentDetails,statistics,status")
 	
 	if m.channel.to_s != '#New_World_Order' && search.body && search.body.key?("items") && search.body["items"].size > 0
 
@@ -88,11 +86,11 @@ bot = Cinch::Bot.new do
 		end
 		
 		if(likeCount.nil?)
-			viewCount = 0
+			likeCount = 0
 		end
 		
 		if(dislikeCount.nil?)
-			viewCount = 0
+			dislikeCount = 0
 		end
 	
 		myreply = "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
@@ -126,9 +124,24 @@ bot = Cinch::Bot.new do
     i = Imdb::Movie.new(id)
 
     if i.title
+	  myrating = i.mpaa_rating.to_s
+	  if myrating =~ /Rated\s+(\S+)/i
+		myrating = "[" + $1 + "] "
+	  else
+	    myrating = ""
+	  end
+	  
+	  mygenres = i.genres
+	  if(!mygenres.nil? && mygenres.length > 0)
+	    mygenres = "[" + mygenres.join(", ") + "] "
+	  else
+	    mygenres = ""
+	  end	
+	
       myreply = #"\x03".b + color_imdb + "[IMDB] " + "\x0f".b + 
 	  "\x03".b + color_name + i.title + " (" + i.year.to_s + ")" + "\x0f".b + 
-	  "\x03".b + color_rating + " [IMDB: " + i.rating.to_s + "/10, " + i.votes.to_s + " votes] " + "\x0f".b + 
+	  "\x03".b + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
+	  myrating + mygenres + "\x0f".b + 
 	  (i.plot)[0..255]
       m.reply myreply
 
@@ -156,10 +169,25 @@ bot = Cinch::Bot.new do
     i = Imdb::Search.new(id)
 
     if i.movies && i.movies.size > 0
+	  myrating = i.movies[0].mpaa_rating.to_s
+	  if myrating =~ /Rated\s+(\S+)/i
+		myrating = "[" + $1 + "] "
+	  else
+	    myrating = ""
+	  end
+	
+	  mygenres = i.movies[0].genres
+	  if(!mygenres.nil? && mygenres.length > 0)
+	    mygenres = "[" + mygenres.join(", ") + "] "
+	  else
+	    mygenres = ""
+	  end
+	
       myreply = #"\x03".b + color_imdb + "[IMDB] " + "\x0f".b + 
 	  "\x03".b + color_name + i.movies[0].title + "\x0f".b + 
-	  "\x03".b + color_rating + " [IMDB: " + i.movies[0].rating.to_s + "/10, " + i.movies[0].votes.to_s + " votes] " + "\x0f".b + 
-	  "\x03".b + color_url + i.movies[0].url.gsub!(/\/combined/, "") + "\x0f".b + 
+	  "\x03".b + color_rating + " [IMDB: " + i.movies[0].rating.to_s + "/10] [" + i.movies[0].votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
+	  myrating + mygenres + "\x0f".b + 
+	  "\x03".b + color_url + i.movies[0].url.gsub!(/\/combined/, "").gsub!(/akas\.imdb\.com/,"www.imdb.com") + "\x0f".b + 
 	  " - " + (i.movies[0].plot)[0..255]
       m.reply myreply
 
@@ -253,7 +281,7 @@ bot = Cinch::Bot.new do
     end
 
   end
-  
+   
   
   
       on :message, Regexp.new('(https?://([^\/\.]*\.)*dumpert\.nl\S+)', Regexp::IGNORECASE) do |m, url|
@@ -278,6 +306,7 @@ bot = Cinch::Bot.new do
 
 
 
+#        search = Unirest::get("https://www.googleapis.com/language/translate/v2?key=yourkey&target=en&q=" + CGI.escape(thereply))
         search = Unirest::get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(thereply.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))
 
         if search.body
