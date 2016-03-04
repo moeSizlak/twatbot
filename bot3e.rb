@@ -258,6 +258,15 @@ bot = Cinch::Bot.new do
         if (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("airstamp", nil))
           now = Time.now
           showtime = DateTime.iso8601(nextep.body.fetch("airstamp")).to_time
+		  negative = ""
+		  
+		  if showtime < now && nextep && nextep.body && nextep.body.size > 0 && !nextep.body.fetch("airstamp", nil).nil?
+		    tempx = now
+			now = showtime
+			showtime = tempx
+			negative = "-"
+		  end
+		  
           if showtime > now
             diff = (showtime-now).floor
             days = (diff/(60*60*24)).floor
@@ -266,7 +275,7 @@ bot = Cinch::Bot.new do
             seconds = (diff-(days*60*60*24)-(hours*60*60)-(minutes*60)).floor
             
             myreply = myreply + 
-              " | " + "\x0f".b + "\x03".b + color_title + "Countdown" + "\x0f".b +  ":" +"\x03".b + color_text + " " + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s" + "\x0f".b
+              " | " + "\x0f".b + "\x03".b + color_title + "Countdown" + "\x0f".b +  ":" +"\x03".b + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s" + "\x0f".b
           end
         end
 
