@@ -26,7 +26,7 @@ bot = Cinch::Bot.new do
   end
   
   
-  on :message, Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?\s]*).*', Regexp::IGNORECASE) do |m|
+  on :message, Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*', Regexp::IGNORECASE) do |m|
   
 	color_yt = "03"	 	
 	color_name = "04"
@@ -34,7 +34,7 @@ bot = Cinch::Bot.new do
 	color_url = "03"
 	
     info "[IN] [YOUTUBEURL] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + m.message.to_s
-    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?\s]*).*', Regexp::IGNORECASE)
+    m.message =~ Regexp.new('.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*', Regexp::IGNORECASE)
     id = $1
     
 	search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=yourkey&part=snippet,contentDetails,statistics,status")
