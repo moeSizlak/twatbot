@@ -372,7 +372,7 @@ bot = Cinch::Bot.new do
 				begin
 					con = Mysql.new MyApp::Config::TB_SQL_SERVER, MyApp::Config::TB_SQL_USER, MyApp::Config::TB_SQL_PASSWORD, MyApp::Config::TB_SQL_DATABASE
 					con.query("SET NAMES utf8")
-					con.query("INSERT INTO TitleBot(Date, Nick, URL, Title) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle) + "'" : "''"})")
+					con.query("INSERT INTO TitleBot(Date, Nick, URL, Title) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(CGI.unescapeHTML mytitle.force_encoding('utf-8')) + "'" : "''"})")
 					
 					rescue Mysql::Error => e
 						puts e.errno
