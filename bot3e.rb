@@ -6,7 +6,38 @@ require 'cinch'
 require 'ethon'
 require 'unirest'
 require 'ruby-duration'
+require 'feedjira'
 
+module Plugins
+class RSSFeed
+    include Cinch::Plugin
+    set :react_on, :channel
+
+	if defined? @old
+		timer 300, method: :updatefeed
+	else
+		timer 5, method: :updatefeed
+	end
+	
+	
+    def updatefeed
+	#Channel('#testing12').send "AAA"
+      feed = Feedjira::Feed.fetch_and_parse('http://feeds.feedburner.com/Torrentfreak')
+      sub = feed.entries.first
+      if defined? @old
+        printnew sub unless sub.title == @old
+	  else
+	    printnew sub
+      end
+      @old = sub.title
+    end
+
+    def printnew(entry)
+      Channel('#ezNAZI').send "\x02".b + "[TorrentFreak]" + "\x0f".b + " #{entry.title} - #{entry.url}"
+    end
+	
+end
+end
 
 bot = Cinch::Bot.new do
 	configure do |c|
@@ -17,6 +48,9 @@ bot = Cinch::Bot.new do
 		c.password = MyApp::Config::PASSWORD
 		c.ssl.use = MyApp::Config::SSL
 		c.nick = MyApp::Config::NICK
+		c.plugins.plugins = [
+			Plugins::RSSFeed,
+		]
 	end
 	
 	
