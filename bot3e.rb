@@ -9,34 +9,47 @@ require 'ruby-duration'
 require 'feedjira'
 
 module Plugins
-class RSSFeed
+  class RSSFeed
     include Cinch::Plugin
     set :react_on, :channel
-
-  if defined? @old
-    timer 300, method: :updatefeed
-  else
-    timer 5, method: :updatefeed
-  end
-  
-  
+    
+    timer 0,  {:method => :updatefeed, :shots => 1}
+    timer 300, {:method => :updatefeed}  
+    
+    def initialize(z)
+      #Cinch::Plugin.instance_method(:initialize).bind(self).call(z)
+      super(z)
+      #Channel('#testing12').send "DEBUG: initialize!"
+    
+      @feeds = [
+        {:name => "TorrentFreak", :url => "http://feeds.feedburner.com/Torrentfreak", :chans => ["#testing12","#ezNAZI"], :old => nil}
+        # Add more feeds like this:
+        #,{:name => "Slashdot", :url => "http://rss.slashdot.org/Slashdot/slashdotMain", :chans => ["#testing12"], :old => nil}
+      ]
+    end
+    
     def updatefeed
-  #Channel('#testing12').send "AAA"
-      feed = Feedjira::Feed.fetch_and_parse('http://feeds.feedburner.com/Torrentfreak')
-      sub = feed.entries.first
-      if defined? @old
-        printnew sub unless sub.title == @old
-    else
-      printnew sub
+      #Channel('#testing12').send "DEBUG: updatefeed"
+      
+      @feeds.each do |feed|      
+        feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])
+        sub = feedparsed.entries.first
+        if !feed[:old].nil?
+          printnew(sub, feed[:name], feed[:chans]) unless sub.title == feed[:old]
+        end
+        feed[:old] = sub.title
       end
-      @old = sub.title
     end
-
-    def printnew(entry)
-      Channel('#ezNAZI').send "\x02".b + "[TorrentFreak]" + "\x0f".b + " #{entry.title} - #{entry.url}"
+    
+    def printnew(entry, feedname, chans)
+      #Channel('#testing12').send "DEBUG: printnew"
+      
+      chans.each do |chan|
+        Channel(chan).send "\x02".b + "[#{feedname}]" + "\x0f".b + " #{entry.title} - #{entry.url}"
+      end
     end
-  
-end
+    
+  end
 end
 
 bot = Cinch::Bot.new do
@@ -166,7 +179,7 @@ bot = Cinch::Bot.new do
         mygenres = ""
       end  
       
-      myreply = #"\x03".b + color_imdb + "[IMDB] " + "\x0f".b + 
+      myreply =
       "\x03".b + color_name + i.title + " (" + i.year.to_s + ")" + "\x0f".b + 
       "\x03".b + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
       myrating + mygenres + "\x0f".b + 
@@ -177,7 +190,6 @@ bot = Cinch::Bot.new do
   end
   
   on :message, Regexp.new('^\.moe', Regexp::IGNORECASE) do |m|
-    #  sleep 2 
     m.reply Cinch::Helpers.sanitize CGI.unescapeHTML "moeSizlak did actually profit several thousand dollars in US currency from sale of bitcoins which he acquired.  How much have you made?  Thought so.".force_encoding('utf-8')
   end
   
@@ -211,7 +223,7 @@ bot = Cinch::Bot.new do
         mygenres = ""
       end
       
-      myreply = #"\x03".b + color_imdb + "[IMDB] " + "\x0f".b + 
+      myreply = 
       "\x03".b + color_name + i.movies[0].title + "\x0f".b + 
       "\x03".b + color_rating + " [IMDB: " + i.movies[0].rating.to_s + "/10] [" + i.movies[0].votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
       myrating + mygenres + "\x0f".b + 
@@ -344,7 +356,6 @@ bot = Cinch::Bot.new do
           
           if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
             thereply = thereply + 
-            #            "\x03".b + "04" + "  [DUMPERT] " + "\x0f".b + 
             "\x03".b + "04" + "  [" + search[0][0][0] + "]" + "\x0f".b
           end
         end
@@ -372,10 +383,7 @@ bot = Cinch::Bot.new do
       m.message !~ Regexp.new('https?://[^/]*imdb.com.*/title/\D*(\d+)', Regexp::IGNORECASE) &&
       m.message !~ Regexp.new('https?://([^\/\.]*\.)*dumpert\.nl\S+', Regexp::IGNORECASE)    
       
-      # m.message =~ Regexp.new('(https?://([^\s/]*)\S*)', Regexp::IGNORECASE)
       m.message.scan(Regexp.new('(https?://([^\s/]*)\S*)', Regexp::IGNORECASE)) do |url, host|
-        #url = $1
-        #host = $2
         
         info "[IN] [TITLEBOT] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + url
         
@@ -386,14 +394,10 @@ bot = Cinch::Bot.new do
         easy.on_body do |chunk, easy|
           recvd << chunk
           
-          #info "[DEBUG] [TITLEBOT] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + recvd
-          
-          
           recvd =~ Regexp.new('<title[^>]*>\s*((?:(?!</title>).)*)\s*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found.strip!
             title_found.gsub!(/[\s\r\n]+/m, ' ')
-            #title_found.gsub!(/[^ -~]/m, '')
             title_found = "[ " + title_found + " ] - " + host
             m.reply Cinch::Helpers.sanitize CGI.unescapeHTML title_found.force_encoding('utf-8')
           end
