@@ -27,8 +27,8 @@ module Plugins
       
       @feeds = [
         {:name => "TorrentFreak", :url => "http://feeds.feedburner.com/Torrentfreak", :chans => ["#testing12","#ezNAZI"], :old => nil}#,  
-		#{:name => "Slashdot", :url => "http://rss.slashdot.org/Slashdot/slashdotMain", :chans => ["#testing12"], :old => nil}
-		]
+    #{:name => "Slashdot", :url => "http://rss.slashdot.org/Slashdot/slashdotMain", :chans => ["#testing12"], :old => nil}
+    ]
     end
     
     def updatefeed
