@@ -14,6 +14,7 @@ module MyApp
       "Plugins::TvMaze",
       "Plugins::IMDB",
       #"Plugins::URLDB",
+	  #"Plugins::MoeBTC",
     ]
     
     # Plugins::URL
