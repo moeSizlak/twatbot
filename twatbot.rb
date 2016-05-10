@@ -265,7 +265,7 @@ module Plugins
     
     def printnew(entry, feedname, chans)
       chans.each do |chan|
-        info "[USER = #{m.user.to_s}] [CHAN = #{chan}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+        #info "[USER = #{m.user.to_s}] [CHAN = #{chan}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
         Channel(chan).send "\x02".b + "[#{feedname}]" + "\x0f".b + " #{entry.title} - #{entry.url}"
       end
     end
