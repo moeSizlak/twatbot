@@ -10,6 +10,11 @@ require 'ruby-duration'
 require 'feedjira'
 require 'htmlentities'
 require 'mysql'
+require 'filemagic'
+require 'open-uri'
+require 'securerandom'
+require 'time'
+require 'mime/types'
 # }}}
 
 
@@ -193,7 +198,7 @@ module URLHandlers
       recvd = String.new
       
       begin
-        easy = Ethon::Easy.new url: url, followlocation: true, headers: {
+        easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
           'User-Agent' => 'foo'
         }
         easy.on_body do |chunk, easy|
@@ -317,11 +322,65 @@ module Plugins
         info "[URL = #{url}] [USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
         
         mytitle = URLHandlers::TitleBot::getTitle(url)
+		imagefile = nil
+		
+		if Dir.exists?(MyApp::Config::URLDB_IMAGEDIR)
+			imagedir = MyApp::Config::URLDB_IMAGEDIR
+			imagedir = imagedir + '/' unless imagedir =~ /\/$/
+			
+			recvd = ""
+			if mytitle.nil? || mytitle.length == 0
+				begin
+					easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
+					  'User-Agent' => 'foo'
+					}
+					
+					easy.on_body do |chunk, easy|
+					  recvd << chunk		 			  
+					  :abort if recvd.length > 1024
+					end
+					easy.perform
+				rescue
+					# EXCEPTION!
+				end		
+			end
+			
+			if recvd.length > 0
+				fm = FileMagic.mime
+				ft = fm.buffer(recvd)
+				if ft =~ /^(image\/[^;]+)/
+					mimetype = $1
+					imagefile = Time.now.utc.strftime("%Y%m%d%H%M%S") + "-" + SecureRandom.uuid
+					
+					if  MIME::Types[mimetype].length > 0 && MIME::Types[mimetype].first.extensions.length > 0 && !MIME::Types[mimetype].first.extensions.first.nil? && MIME::Types[mimetype].first.extensions.first.length > 0
+						imagefile = imagefile + "." + MIME::Types[mimetype].first.extensions.first
+					else
+						ext = url.split(//).last(5).join
+						if ext =~ /^\.([a-zA-Z0-9]{4})$/
+							ext = $1
+						elsif ext =~ /^.\.([a-zA-Z0-9]{3})$/
+							ext = $1
+						else
+							ext = ""
+						end
+						
+						imagefile = imagefile + "." + ext
+					end
+					
+					File.open(imagedir + imagefile, "wb") do |saved_file|
+						# the following "open" is provided by open-uri
+						open(url, "rb", :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE ) do |read_file|
+						saved_file.write(read_file.read)
+						end
+					end
+				end				
+			end
+		end
         
         begin
           con = Mysql.new MyApp::Config::URLDB_SQL_SERVER, MyApp::Config::URLDB_SQL_USER, MyApp::Config::URLDB_SQL_PASSWORD, MyApp::Config::URLDB_SQL_DATABASE
           con.query("SET NAMES utf8")
-          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"})")
+          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"}, '#{imagefile.nil? ? "NULL" : con.escape_string(imagefile)}')")
           
           rescue Mysql::Error => e
           puts e.errno
