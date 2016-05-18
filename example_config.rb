@@ -48,7 +48,7 @@ module MyApp
     URLDB_SQL_USER = 'yoursqlusername'
     URLDB_SQL_PASSWORD = 'yoursqlpassword'
     URLDB_SQL_DATABASE = "yoursqldatabase"
-	URLDB_IMAGEDIR = ""  # set this to a real path and images will be saved in it
+    URLDB_IMAGEDIR = ""  # set this to a real path and images will be saved in it
     
   end
 end
