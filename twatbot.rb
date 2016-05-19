@@ -11,7 +11,6 @@ require 'feedjira'
 require 'htmlentities'
 require 'mysql'
 require 'filemagic'
-require 'open-uri'
 require 'securerandom'
 require 'time'
 require 'mime/types'
@@ -367,12 +366,30 @@ module Plugins
                 imagefile = imagefile + "." + ext
               end
         
+              filesize = 0;
               File.open(imagedir + imagefile, "wb") do |saved_file|
-                # the following "open" is provided by open-uri
-                open(url, "rb", :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE ) do |read_file|
-                  saved_file.write(read_file.read)
-                end
+                begin
+                  easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
+                  'User-Agent' => 'foo'
+                  }         
+                    
+                  easy.on_body do |chunk, easy|
+                    saved_file.write(chunk) 
+                    filesize += chunk.length;
+                    :abort if filesize > 10000000   #~10 MB limit
+                  end
+                  
+                  easy.perform
+                rescue
+                  # EXCEPTION!
+                end                
               end
+              
+              if filesize == 0 || filesize >= 10000000
+                File.delete(imagedir + imagefile)
+                imagefile = nil
+              end
+              
             end        
           end
         end
@@ -380,7 +397,7 @@ module Plugins
         begin
           con = Mysql.new MyApp::Config::URLDB_SQL_SERVER, MyApp::Config::URLDB_SQL_USER, MyApp::Config::URLDB_SQL_PASSWORD, MyApp::Config::URLDB_SQL_DATABASE
           con.query("SET NAMES utf8")
-          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"}, '#{imagefile.nil? ? "NULL" : con.escape_string(imagefile)}')")
+          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape_string(imagefile) + "'"})")
           
           rescue Mysql::Error => e
           puts e.errno
