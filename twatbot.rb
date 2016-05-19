@@ -347,7 +347,7 @@ module Plugins
           if recvd.length > 0
             fm = FileMagic.mime
             ft = fm.buffer(recvd)
-            if ft =~ /^(image\/[^;]+)/
+            if ft =~ /^((?:image\/|video\/webm)[^;]*)/
               mimetype = $1
               imagefile = Time.now.utc.strftime("%Y%m%d%H%M%S") + "-" + SecureRandom.uuid
         
