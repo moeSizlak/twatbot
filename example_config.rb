@@ -22,10 +22,12 @@ module MyApp
       {:class => "URLHandlers::Youtube",  :excludeChans => [], :excludeNicks => []},
       {:class => "URLHandlers::IMDB",     :excludeChans => [], :excludeNicks => []},
       {:class => "URLHandlers::Dumpert",  :excludeChans => [], :excludeNicks => []},
+      {:class => "URLHandlers::Imgur",    :excludeChans => [], :excludeNicks => []},
       {:class => "URLHandlers::TitleBot", :excludeChans => [], :excludeNicks => []},
     ]
     
     YOUTUBE_GOOGLE_SERVER_KEY = "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API"
+    IMGUR_API_CLIENT_ID = "YOUR IMGUR API CLIENT ID"
     
     # Plugins::IMDB
     IMDB_EXCLUDE_CHANS = []
