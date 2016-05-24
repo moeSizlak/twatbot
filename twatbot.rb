@@ -457,11 +457,11 @@ module Plugins
         mostrecent = feedparsed.entries.first
         
         if !feed[:old].nil?
-          if(mostrecent.title != feed[:old])
+          if(mostrecent.url != feed[:old])
             newentries = []
             
             feedparsed.entries.slice(0..10).each do |entry|
-              break if entry.title == feed[:old]
+              break if entry.url == feed[:old]
               newentries.unshift entry
             end
             
@@ -473,8 +473,8 @@ module Plugins
           else
           #printnew(mostrecent, feed[:name], feed[:chans])          
         end 
-        info "Setting #{feed[:name]}[:old] to \"#{mostrecent.title}\""
-        feed[:old] = mostrecent.title
+        #info "Setting #{feed[:name]}[:old] to \"#{mostrecent.title}\""
+        feed[:old] = mostrecent.url
       end
     end
     
