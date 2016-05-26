@@ -732,7 +732,7 @@ module Plugins
                 end                
               end
               
-              if filesize == 0 || filesize >= 10000000
+              if filesize == 0 || filesize >= 50000000
                 File.delete(imagedir + imagefile)
                 imagefile = nil
               end
