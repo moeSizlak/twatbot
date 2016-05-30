@@ -672,6 +672,7 @@ module Plugins
           recvd = ""
           
           if mytitle.nil? || mytitle.length == 0 || (imgurlink && imgurlink.length > 0)
+            tempurl = url
             if imgurlink && imgurlink.length > 0
               tempurl = imgurlink
             end
@@ -690,7 +691,7 @@ module Plugins
               # EXCEPTION!
             end    
           end
-        
+
           if recvd.length > 0
             fm = FileMagic.mime
             ft = fm.buffer(recvd)
@@ -712,7 +713,7 @@ module Plugins
         
                 imagefile = imagefile + "." + ext
               end
-        
+
               filesize = 0;
               File.open(imagedir + imagefile, "wb") do |saved_file|
                 begin
