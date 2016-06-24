@@ -9,13 +9,21 @@ require 'unirest'
 require 'ruby-duration'
 require 'feedjira'
 require 'htmlentities'
-require 'mysql'
+require 'mysql2'
 require 'filemagic'
 require 'securerandom'
 require 'time'
 require 'mime/types'
 # }}}
 
+LIKE_METACHARACTER_REGEX = /([\\%_])/
+LIKE_METACHARACTER_ESCAPE = '\\\\\1'
+
+
+def like_sanitize(value)
+  raise ArgumentError unless value.respond_to?(:gsub)
+  value.gsub(LIKE_METACHARACTER_REGEX, LIKE_METACHARACTER_ESCAPE)
+end
 
 def class_from_string(str)
   str.split('::').inject(Object) do |mod, class_name|
@@ -29,6 +37,10 @@ def class_from_string_array(arr)
       arr[index] = mod.const_get(class_name)
     end
   end
+end
+
+def dbsym(msg)
+  return ":::::"+msg.to_s+":::::"
 end
 
 module URLHandlers
@@ -49,7 +61,7 @@ module URLHandlers
             
             if search.body["items"][0]["snippet"].key?("title")
               title = search.body["items"][0]["snippet"]["title"]
-            end
+              end
             
             if search.body["items"][0]["snippet"].key?("description")
               description = search.body["items"][0]["snippet"]["description"]
@@ -487,6 +499,268 @@ module Plugins
     
   end
   
+  class DickBot
+    include Cinch::Plugin
+    set :react_on, :message
+    
+    match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
+    match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
+    
+    def gentext(order, nicks, seed)
+      debug = 1
+      info "SEED='#{seed}'" unless debug != 1
+      
+      order = 2 unless order == 1
+      prng = Random.new      
+      con =  Mysql2::Client.new(:host => MyApp::Config::DICKBOT_SQL_SERVER, :username => MyApp::Config::DICKBOT_SQL_USER, :password => MyApp::Config::DICKBOT_SQL_PASSWORD, :database => MyApp::Config::DICKBOT_SQL_DATABASE)
+      con.query("SET NAMES utf8")
+      
+      if !nicks || nicks == "" || nicks.length == 0
+        nick_filter = ""
+      else
+        nick_filter = " and Nick in ("
+        nicks.each do |nick|
+          nick_filter << "'#{nick}',"
+        end
+        nick_filter.chomp!(",")
+        nick_filter << ") "
+      end      
+      info ">>>>>" + nick_filter
+         
+         
+      sentence = ""
+      wordcount = 0
+        
+      if(!seed || seed == "" || seed =~ /^\s*$/)
+        word1 = dbsym("START")
+        word2 = ""
+
+      else
+        info "COMPUTE FROM SEED BACKWARDS TO START" unless debug != 1
+        seed.gsub!(/^\s*(\S+).*$/,'\1')
+        
+        if order == 1
+          word2 = seed.dup
+          sentence = seed.dup
+          word1 = ""
+          while word1 != dbsym("START") && word2 != dbsym("START")
+            q = "select Word1, count(*) as count from WORDS1 where Word2 = '#{con.escape(word2)}' #{nick_filter} group by Word1 order by count(*) desc;"
+            info q unless debug != 1
+            result = con.query(q)
+            info "done" unless debug != 1
+            count = 0
+            result.each do |r|
+              count += r['count']
+            end
+            rand = prng.rand(count)
+            info "#{rand} / #{count}" unless debug != 1
+            count = 0
+            word2 = ""
+            result.each do |r|
+              count += r['count']
+              if count > rand
+                word2 = r['Word1']
+                break
+              end
+            end
+            
+            if word2 != dbsym("START")
+              sentence = word2 + " " + sentence
+              wordcount += 1
+            end
+          end
+          
+          word1 = seed.dup
+          word2 = ""
+          sentence += " "
+          
+        elsif order == 2
+          word2 = seed.dup
+          sentence = seed.dup
+          word1 = ""
+        
+          q = "select Word1, count(*) as count from WORDS1 where Word2 = '#{con.escape(word2)}' #{nick_filter} group by Word1 order by count(*) desc;"
+          info q unless debug != 1
+          result = con.query(q)
+          info "done" unless debug != 1
+          count = 0
+          result.each do |r|
+            count += r['count']
+          end
+          rand = prng.rand(count)
+          info "#{rand} / #{count}" unless debug != 1
+          count = 0
+          word1 = ""
+          result.each do |r|
+            count += r['count']
+            if count > rand
+              word1 = r['Word1']
+              break
+            end
+          end
+          
+          word1save = word1.dup
+          word2save = word2.dup
+            
+          if word1 != dbsym("START")
+            sentence = word1 + " " + word2
+            wordcount += 1            
+          end
+          
+          word3 = word2.dup
+          word2 = word1.dup
+          
+        
+          while word2 != dbsym("START") && word3 != dbsym("START")
+            q = "select Word1, count(*) as count from WORDS2 where Word2 = '#{con.escape(word2)}' and Word3 = '#{con.escape(word3)}' #{nick_filter} group by Word1 order by count(*) desc;"
+            info q unless debug != 1
+            result = con.query(q)
+            info "done" unless debug != 1
+            
+            word3 = word2.dup
+            
+            count = 0
+            result.each do |r|
+              count += r['count']
+            end
+            rand = prng.rand(count)
+            info "#{rand} / #{count}" unless debug != 1
+            count = 0
+            word2 = ""
+            result.each do |r|
+              count += r['count']
+              if count > rand
+                word2 = r['Word1']
+                break
+              end
+            end
+            
+            if word2 != dbsym("START")
+              sentence = word2 + " " + sentence
+              wordcount += 1
+            end
+          end
+          
+          word1 = word1save.dup
+          word2 = word2save.dup
+          sentence += " "
+          
+        end
+      
+        info "DONE: COMPUTE FROM SEED BACKWARDS TO START" unless debug != 1
+      end
+      
+
+  
+      if order == 1
+        while word1 != dbsym("END")
+          q = "select Word2, count(*) as count from WORDS1 where Word1 = '#{con.escape(word1)}' #{nick_filter} group by Word2 order by count(*) desc;"
+          info q unless debug != 1
+          result = con.query(q)
+          info "done" unless debug != 1
+          count = 0
+          result.each do |r|
+            count += r['count']
+          end
+          rand = prng.rand(count)
+          info "#{rand} / #{count}" unless debug != 1
+          count = 0
+          word1 = ""
+          result.each do |r|
+            count += r['count']
+            if count > rand
+              word1 = r['Word2']
+              break
+            end
+          end
+          
+          if word1 != dbsym("END")
+            sentence += word1 + " " 
+            wordcount += 1
+          end
+        end
+        
+      elsif order == 2
+        if word1 != dbsym("END") && word2 == ""
+          q = "select Word2, count(*) as count from WORDS1 where Word1 = '#{con.escape(word1)}' #{nick_filter} group by Word2 order by count(*) desc;"
+          info q unless debug != 1
+          result = con.query(q)
+          info "done" unless debug != 1
+          count = 0
+          result.each do |r|
+            count += r['count']
+          end
+          rand = prng.rand(count)
+          info "#{rand} / #{count}" unless debug != 1
+          count = 0
+          word2 = ""
+          result.each do |r|
+            count += r['count']
+            if count > rand
+              word2 = r['Word2']
+              break
+            end
+          end
+          
+          if word2 != dbsym("END")
+            sentence += word2 + " " 
+            wordcount += 1
+          end
+        end
+      
+        while word1 != dbsym("END") && word2 != dbsym("END")
+          q = "select Word3, count(*) as count from WORDS2 where Word1 = '#{con.escape(word1)}' and Word2 = '#{con.escape(word2)}' #{nick_filter} group by Word3 order by count(*) desc;"
+          info q unless debug != 1
+          result = con.query(q)
+          info "done" unless debug != 1
+          
+          word1 = word2.dup
+          
+          count = 0
+          result.each do |r|
+            count += r['count']
+          end
+          rand = prng.rand(count)
+          info "#{rand} / #{count}" unless debug != 1
+          count = 0
+          word2 = ""
+          result.each do |r|
+            count += r['count']
+            if count > rand
+              word2 = r['Word3']
+              break
+            end
+          end
+          
+          if word2 != dbsym("END")
+            sentence += word2 + " " 
+            wordcount += 1
+          end
+        end        
+      end
+      
+      return sentence.gsub(/Draylor/i, "Graylor")
+    
+    end
+    
+    def imitate(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      a.strip!
+      a.gsub!(/  /, " ") while a =~ /  /
+      a = a.split(" ")
+      nicks = a[0].split(",")
+      info nicks.to_s
+      
+      m.reply gentext(2, nicks, nil)
+    end
+    
+    def execute(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"           
+      m.reply gentext(2, nil, a)      
+    end
+  
+  end
+  
   
   class URL
     include Cinch::Plugin
@@ -515,6 +789,135 @@ module Plugins
     end
     
   end
+  
+  
+  class QuoteDB
+    include Cinch::Plugin
+    set :react_on, :message
+    
+    match /^!ratequote\s+(\S.*)$/, use_prefix: false, method: :ratequote
+    match /^!addquote\s+(\S.*)$/, use_prefix: false, method: :addquote
+    match /^!(?:find|search)?quote\s+(\S.*)$/, use_prefix: false, method: :quote
+    
+    def initialize(*args)
+      super
+      @lastquotes = Hash.new
+    end
+    
+    def ratequote(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+      a.strip!
+      
+      if a =~ /^(\d+)\s+(\d+)$/
+        id = $1
+        score = $2.to_i
+        
+        if score >=0 && score <= 10
+          con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
+          con.query("SET NAMES utf8")
+          result = con.query("select count(*) as count from quotes where id='#{con.escape(id)}'")
+          
+          if result && result.first && result.first['count'].to_i > 0
+            
+            result = con.query("select count(*) as count from quote_scr where id='#{con.escape(id)}' and handle='#{con.escape(m.user.to_s)}'")
+            score_updated = 0
+            if result && result.first && result.first['count'].to_i != 0
+              score_updated = 1
+              con.query("delete from quote_scr where id='#{con.escape(id)}' and handle='#{con.escape(m.user.to_s)}'")
+            end
+            
+            con.query("insert into quote_scr (handle, id, score) values ('#{con.escape(m.user.to_s)}', '#{con.escape(id)}', '#{score.to_s}')")
+            result = con.query("select count(*) as count, AVG(score) as score from quote_scr where id='#{con.escape(id)}' group by id")
+            
+            if result && result.first
+              m.reply "#{score_updated == 1 ? "Your rating has been changed to #{score.to_s}.  " : "" }New score for quote #{id.to_s} is #{result.first['score'].to_f.round(2).to_s}, based on #{result.first['count'].to_s} ratings."
+            end
+            
+          else
+            m.reply "No such quote id (#{id.to_s})"
+          end
+          
+        else
+          m.reply "Score must be an integer from 0 to 10."
+        end
+      
+      else
+        m.reply "Usage: !ratequote <quote_id> <0,1,2,3,4,5,6,7,8,9,10>"      
+      end
+      
+      con.close if con
+      
+    end
+    
+    
+    def quote(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+      a.strip!
+      return unless a.length > 0
+      
+      lqkey = m.channel.to_s + "::" + m.user.to_s;
+      if(@lastquotes.key?(lqkey) && @lastquotes[lqkey][:quote] == a && @lastquotes[lqkey][:time] >= (Time.now.getutc.to_i - 60))
+        @lastquotes[lqkey][:offset] += 1
+        @lastquotes[lqkey][:time] = Time.now.getutc.to_i
+      else
+        @lastquotes[lqkey] = Hash.new
+        @lastquotes[lqkey][:quote] = a
+        @lastquotes[lqkey][:offset] = 0
+        @lastquotes[lqkey][:time] = Time.now.getutc.to_i
+      end
+
+      info @lastquotes[lqkey][:offset].to_s
+      #info @lastquotes.key(lqkey) && @lastquotes[lqkey][:quote] == a && @lastquote[lqkey][:time] >= (Time.now.getutc.to_i - 60))
+
+      con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
+      con.query("SET NAMES utf8")
+      idclause = "  "
+      if a =~ /^\d+$/
+        idclause = " or a.id='#{a.to_s}' "
+      end
+      
+      result = con.query("select a.*, b.score from quotes a left join (select id, AVG(score) as score from quote_scr group by id ) b on a.id=b.id where quote LIKE '%#{con.escape(like_sanitize(a))}%' #{idclause} order by timestamp desc limit 1 offset #{@lastquotes[lqkey][:offset]}")
+           
+
+      con.close if con
+
+      
+      if result && result.count > 0
+        m.reply "\x03".b + "03" + "[ #{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s : 'NO VOTES'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")} ]" + "\x0f".b + " #{result.first['quote']}"
+      else
+        m.reply "No matches."
+        @lastquotes[lqkey][:offset] = -1
+      end
+      
+    
+    end
+    
+    
+    def addquote(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"       
+      a.strip!
+      
+      begin
+        con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
+        con.query("SET NAMES utf8")
+        con.query("INSERT INTO quotes(nick, host, quote, channel, timestamp) VALUES ('#{con.escape(m.user.to_s)}', '#{con.escape(m.user.mask.to_s)}', '#{con.escape(a)}', '#{con.escape(m.channel.to_s)}', '#{con.escape(m.time.to_i.to_s)}')")
+        id = con.last_id
+        
+        rescue Mysql2::Error => e
+        puts e.errno
+        puts e.error
+        info "[DEBUG] [QUOTEDB] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + e.errno.to_s + " " + e.error
+        
+        ensure
+        con.close if con
+      end
+      
+      m.reply "Added quote #{id.to_s}."
+      
+    end
+
+  end
+
   
   
   class URLDB
@@ -743,11 +1146,16 @@ module Plugins
         end
         
         begin
-          con = Mysql.new MyApp::Config::URLDB_SQL_SERVER, MyApp::Config::URLDB_SQL_USER, MyApp::Config::URLDB_SQL_PASSWORD, MyApp::Config::URLDB_SQL_DATABASE
-          con.query("SET NAMES utf8")
-          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape_string(imagefile) + "'"})")
+          #con = Mysql.new MyApp::Config::URLDB_SQL_SERVER, MyApp::Config::URLDB_SQL_USER, MyApp::Config::URLDB_SQL_PASSWORD, MyApp::Config::URLDB_SQL_DATABASE
+          #con.query("SET NAMES utf8")
+          #con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape_string(imagefile) + "'"})")
           
-          rescue Mysql::Error => e
+          con =  Mysql2::Client.new(:host => MyApp::Config::URLDB_SQL_SERVER, :username => MyApp::Config::URLDB_SQL_USER, :password => MyApp::Config::URLDB_SQL_PASSWORD, :database => MyApp::Config::URLDB_SQL_DATABASE)
+          con.query("SET NAMES utf8")
+          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape(m.user.to_s)}', '#{con.escape(url)}', #{!mytitle.nil? ? "'" + con.escape(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape(imagefile) + "'"})")
+          
+          
+          rescue Mysql2::Error => e
           puts e.errno
           puts e.error
           info "[DEBUG] [TITLEBOT] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + e.errno.to_s + " " + e.error
@@ -944,21 +1352,46 @@ if !ARGV || ARGV.length != 1
 end
 
 
-bot = Cinch::Bot.new do
-  configure do |c|
-    c.server = MyApp::Config::IRC_SERVER
-    c.port = MyApp::Config::IRC_PORT
-    c.channels = MyApp::Config::IRC_CHANNELS
-    c.user = MyApp::Config::IRC_USER
-    c.password = MyApp::Config::IRC_PASSWORD
-    c.ssl.use = MyApp::Config::IRC_SSL
-    c.nick = MyApp::Config::IRC_NICK
-    c.plugins.plugins = class_from_string_array(MyApp::Config::IRC_PLUGINS)
-  end  
-  
+a = Thread.new do
+  bot = Cinch::Bot.new do
+    configure do |c|
+      c.server = MyApp::Config::IRC_SERVER
+      c.port = MyApp::Config::IRC_PORT
+      c.channels = MyApp::Config::IRC_CHANNELS
+      c.user = MyApp::Config::IRC_USER
+      c.password = MyApp::Config::IRC_PASSWORD
+      c.ssl.use = MyApp::Config::IRC_SSL
+      c.nick = MyApp::Config::IRC_NICK
+      c.plugins.plugins = class_from_string_array(MyApp::Config::IRC_PLUGINS)
+    end    
+  end
+
+  puts "A"
+  bot.loggers.level = :info
+  bot.start
 end
 
-bot.loggers.level = :info
+if MyApp::Config::DICKBOT_ENABLE == 1
+  b = Thread.new do
+    dickbot = Cinch::Bot.new do
+      configure do |c|
+        c.server = MyApp::Config::DICKBOT_IRC_SERVER
+        c.port = MyApp::Config::DICKBOT_IRC_PORT
+        c.channels = MyApp::Config::DICKBOT_IRC_CHANNELS
+        c.user = MyApp::Config::DICKBOT_IRC_USER
+        c.password = MyApp::Config::DICKBOT_IRC_PASSWORD
+        c.ssl.use = MyApp::Config::DICKBOT_IRC_SSL
+        c.nick = MyApp::Config::DICKBOT_IRC_NICK
+        c.plugins.plugins = class_from_string_array(MyApp::Config::DICKBOT_IRC_PLUGINS)
+      end    
+    end
+    
+    puts "B"
+    dickbot.loggers.level = :info
+    dickbot.start
+  end
+end
 
-bot.start
+a.join
+b.join if MyApp::Config::DICKBOT_ENABLE == 1
 

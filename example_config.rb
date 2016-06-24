@@ -15,6 +15,7 @@ module MyApp
       "Plugins::IMDB",
       #"Plugins::URLDB",
       #"Plugins::MoeBTC",
+      #"Plugins::QuoteDB",
     ]
     
     # Plugins::URL
@@ -43,6 +44,14 @@ module MyApp
       #{:name => "Slashdot", :url => "http://rss.slashdot.org/Slashdot/slashdotMain", :chans => ["#test1"], :old => nil},
     ]
       
+    # Plugins::QuoteDB
+    QUOTEDB_CHANS = []
+    QUOTEDB_EXCLUDE_USERS = []
+    QUOTEDB_SQL_SERVER = '127.0.0.1'
+    QUOTEDB_SQL_USER = 'yoursqlusername'
+    QUOTEDB_SQL_PASSWORD = 'yoursqlpassword'
+    QUOTEDB_SQL_DATABASE = "yoursqldatabase"
+    
     # Plugins::URLDB
     URLDB_CHANS = []
     URLDB_EXCLUDE_USERS = []
@@ -51,6 +60,24 @@ module MyApp
     URLDB_SQL_PASSWORD = 'yoursqlpassword'
     URLDB_SQL_DATABASE = "yoursqldatabase"
     URLDB_IMAGEDIR = ""  # set this to a real path and images will be saved in it
+    
+    # Plugins::DickBot
+    DICKBOT_ENABLE = 0
+    DICKBOT_IRC_SERVER = "server.irc.com"
+    DICKBOT_IRC_PORT = 7777
+    DICKBOT_IRC_CHANNELS = ["#chan1","#test1","#etc"]
+    DICKBOT_IRC_USER = "username"
+    DICKBOT_IRC_PASSWORD = "password"
+    DICKBOT_IRC_SSL = true
+    DICKBOT_IRC_NICK = "theOTHERbot"
+    DICKBOT_IRC_PLUGINS = [
+      #"Plugins:DickBot",
+    ]
+    
+    DICKBOT_SQL_SERVER = '127.0.0.1'
+    DICKBOT_SQL_USER = 'yoursqlusername'
+    DICKBOT_SQL_PASSWORD = 'yoursqlpassword'
+    DICKBOT_SQL_DATABASE = "yoursqldatabase"
     
   end
 end
