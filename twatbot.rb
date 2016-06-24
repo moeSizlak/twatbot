@@ -18,8 +18,6 @@ require 'mime/types'
 
 LIKE_METACHARACTER_REGEX = /([\\%_])/
 LIKE_METACHARACTER_ESCAPE = '\\\\\1'
-
-
 def like_sanitize(value)
   raise ArgumentError unless value.respond_to?(:gsub)
   value.gsub(LIKE_METACHARACTER_REGEX, LIKE_METACHARACTER_ESCAPE)
@@ -795,6 +793,11 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
+    #set :react_on, :channel 
+    #timer 0,  {:method => :randquote, :shots => 1}
+    timer 10800, {:method => :randquote}
+
+    
     match /^!ratequote\s+(\S.*)$/, use_prefix: false, method: :ratequote
     match /^!addquote\s+(\S.*)$/, use_prefix: false, method: :addquote
     match /^!(?:find|search)?quote\s+(\S.*)$/, use_prefix: false, method: :quote
@@ -804,7 +807,32 @@ module Plugins
       @lastquotes = Hash.new
     end
     
+    def randquote
+      MyApp::Config::QUOTEDB_CHANS.each do |chan|
+        con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
+        con.query("SET NAMES utf8")
+        result = con.query("select id from quotes where channel = '#{con.escape(chan)}' order by RAND()")
+        
+        if result && result.count > 0      
+          result = con.query("select a.*, b.score, b.count from quotes a left join (select id, AVG(score) as score, count(*) as count from quote_scr group by id ) b on a.id=b.id where a.id='#{result.first['id']}'")
+          con.close if con
+          
+          if result && result.count > 0
+            Channel(chan).send "\x03".b + "04" + "[Q] " + "\x0f".b + "\x03".b + "03" + "[#{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s + " (#{result.first['count']} votes)" : '(0 votes)'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result.first['quote']}"
+          else
+            info "WTF!!!! No quotes available for timed interval randquote in chan #{chan}, but there should be."
+          end
+        end  
+        
+      end    
+    end
+    
     def ratequote(m, a)
+    
+      if !MyApp::Config::QUOTEDB_CHANS.include?(m.channel.to_s) || MyApp::Config::QUOTEDB_EXCLUDE_USERS.include?(m.user.to_s)
+        return
+      end    
+    
       info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
       a.strip!
       
@@ -815,7 +843,7 @@ module Plugins
         if score >=0 && score <= 10
           con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
           con.query("SET NAMES utf8")
-          result = con.query("select count(*) as count from quotes where id='#{con.escape(id)}'")
+          result = con.query("select count(*) as count from quotes where channel = '#{con.escape(m.channel.to_s)}' and id='#{con.escape(id)}'")
           
           if result && result.first && result.first['count'].to_i > 0
             
@@ -851,6 +879,11 @@ module Plugins
     
     
     def quote(m, a)
+    
+      if !MyApp::Config::QUOTEDB_CHANS.include?(m.channel.to_s) || MyApp::Config::QUOTEDB_EXCLUDE_USERS.include?(m.user.to_s)
+        return
+      end
+      
       info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
       a.strip!
       return unless a.length > 0
@@ -876,16 +909,23 @@ module Plugins
         idclause = " or a.id='#{a.to_s}' "
       end
       
-      result = con.query("select a.*, b.score from quotes a left join (select id, AVG(score) as score from quote_scr group by id ) b on a.id=b.id where quote LIKE '%#{con.escape(like_sanitize(a))}%' #{idclause} order by timestamp desc limit 1 offset #{@lastquotes[lqkey][:offset]}")
-           
-
+      a.gsub!(/\s/, ' ')
+      a.gsub!(/\s\s/, ' ') while a =~ /\s\s/
+      words = a.split(" ")
+      
+      q = "select a.*, b.score, b.count from quotes a left join (select id, AVG(score) as score, count(*) as count from quote_scr group by id ) b on a.id=b.id where channel = '#{con.escape(m.channel.to_s)}' "
+      words.each do |word|
+        q += " and quote LIKE '%#{con.escape(like_sanitize(word))}%' "
+      end
+      q += " #{idclause} order by timestamp desc limit 1 offset #{@lastquotes[lqkey][:offset]}"
+      
+      result = con.query(q)     
       con.close if con
-
       
       if result && result.count > 0
-        m.reply "\x03".b + "03" + "[ #{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s : 'NO VOTES'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")} ]" + "\x0f".b + " #{result.first['quote']}"
+        m.reply "\x03".b + "04" + "[Q] " + "\x0f".b + "\x03".b + "03" + "[#{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s + " (#{result.first['count']} votes)" : '(0 votes)'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result.first['quote']}"
       else
-        m.reply "No matches."
+        m.reply "No #{@lastquotes[lqkey][:offset] != 0 ? "additional " : ""}matches."
         @lastquotes[lqkey][:offset] = -1
       end
       
@@ -894,6 +934,11 @@ module Plugins
     
     
     def addquote(m, a)
+    
+      if !MyApp::Config::QUOTEDB_CHANS.include?(m.channel.to_s) || MyApp::Config::QUOTEDB_EXCLUDE_USERS.include?(m.user.to_s)
+        return
+      end
+      
       info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"       
       a.strip!
       
@@ -912,7 +957,7 @@ module Plugins
         con.close if con
       end
       
-      m.reply "Added quote #{id.to_s}."
+      m.reply "Added quote (id = #{id.to_s})."
       
     end
 
