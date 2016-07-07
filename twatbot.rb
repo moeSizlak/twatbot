@@ -425,9 +425,10 @@ module URLHandlers
           
           recvd =~ Regexp.new('<title[^>]*>\s*((?:(?!</title>).)*)\s*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
+            title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
             title_found.gsub!(/[\s\r\n]+/m, ' ')
-            return Cinch::Helpers.sanitize coder.decode title_found.force_encoding('utf-8')
+            return Cinch::Helpers.sanitize title_found
           end
           
           :abort if recvd.length > 131072 || title_found
@@ -501,10 +502,46 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
-    match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
-    match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
+    def initialize(*args)
+      super
+      #@feeds = MyApp::Config::RSS_FEEDS
+    end
     
-    def gentext(order, nicks, seed)
+    match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
+    match /^!insult\s+(\S+)/, use_prefix: false, method: :insult
+    match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
+    match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
+    match /(.*)/i , use_prefix: false, method: :anytext
+    match /(.*)/i , use_prefix: false, method: :ircaction, react_on: :action
+    
+    def ircaction(m, a)
+      if a =~ /dickbot|twatbot/
+        m.reply "stfu #{m.user} you fucking #{get_fom_insult}"
+        #m.action_reply "rapes #{m.user}'s wife."
+      end
+    end
+    
+    def anytext(m, a)
+      #Channel("#testing12").send "AAA"
+    end
+    
+    def weight_use(word, count)
+      return count
+    end
+    
+    def weight_one(word, count)
+      return 1
+    end
+    
+    def weight_vulgar(word, count)
+      if(word =~ /(fuck|shit|ass|cunt|twat|mother|rape|kill|cock|dick|schwanz|4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksucker|cocksucking|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cunts|cyalis|cyberfuc|cyberfucker|cyberfuckers|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculatings|ejaculation|ejakulate|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|feck|fecker|felching|fellate|fellatio|fingerfuckers|fistfuck|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fucks|fuckwhit|fuckwit|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jackoff|jap|jism|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3itch|labia|lmfao|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat|masterbat|masterbat|masterbat|masterbat|masturbat|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucker|mothafuckers|mothafuckin|mothafuckings|mothafucks|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|nob|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasm|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pissflaps|pissing|poop|porn|porno|pornography|pornos|prick|pron|pube|pusse|pussi|pussies|pussy|rectum|retard|rimjaw|rimming|s\.o\.b\.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex|sh1t|shag|shagger|shaggin|shagging|shemale|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitting|shittings|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)/i)
+        return 100
+      else
+        return 1
+      end
+    end
+    
+    def gentext(order, nicks, seed, weightsystem)
       debug = 1
       info "SEED='#{seed}'" unless debug != 1
       
@@ -527,7 +564,6 @@ module Plugins
          
          
       sentence = ""
-      wordcount = 0
         
       if(!seed || seed == "" || seed =~ /^\s*$/)
         word1 = dbsym("START")
@@ -548,14 +584,16 @@ module Plugins
             info "done" unless debug != 1
             count = 0
             result.each do |r|
-              count += r['count']
+              w = weightsystem.call(r['Word1'], r['count'])
+              count += w #1 #r['count']
+              r['weight'] = w
             end
             rand = prng.rand(count)
             info "#{rand} / #{count}" unless debug != 1
             count = 0
             word2 = ""
             result.each do |r|
-              count += r['count']
+              count += r['weight']
               if count > rand
                 word2 = r['Word1']
                 break
@@ -564,7 +602,6 @@ module Plugins
             
             if word2 != dbsym("START")
               sentence = word2 + " " + sentence
-              wordcount += 1
             end
           end
           
@@ -583,14 +620,16 @@ module Plugins
           info "done" unless debug != 1
           count = 0
           result.each do |r|
-            count += r['count']
+            w = weightsystem.call(r['Word1'], r['count'])
+            count += w #1 #r['count']
+            r['weight'] = w
           end
           rand = prng.rand(count)
           info "#{rand} / #{count}" unless debug != 1
           count = 0
           word1 = ""
           result.each do |r|
-            count += r['count']
+            count += r['weight']
             if count > rand
               word1 = r['Word1']
               break
@@ -601,8 +640,7 @@ module Plugins
           word2save = word2.dup
             
           if word1 != dbsym("START")
-            sentence = word1 + " " + word2
-            wordcount += 1            
+            sentence = word1 + " " + word2        
           end
           
           word3 = word2.dup
@@ -619,14 +657,16 @@ module Plugins
             
             count = 0
             result.each do |r|
-              count += r['count']
+              w = weightsystem.call(r['Word1'], r['count'])
+              count +=  w #1 #r['count']
+              r['weight'] = w
             end
             rand = prng.rand(count)
             info "#{rand} / #{count}" unless debug != 1
             count = 0
             word2 = ""
             result.each do |r|
-              count += r['count']
+              count +=  r['weight']
               if count > rand
                 word2 = r['Word1']
                 break
@@ -635,7 +675,6 @@ module Plugins
             
             if word2 != dbsym("START")
               sentence = word2 + " " + sentence
-              wordcount += 1
             end
           end
           
@@ -658,14 +697,16 @@ module Plugins
           info "done" unless debug != 1
           count = 0
           result.each do |r|
-            count += r['count']
+            w = weightsystem.call(r['Word2'], r['count'])
+            count +=  w #1 #r['count']
+            r['weight'] = w
           end
           rand = prng.rand(count)
           info "#{rand} / #{count}" unless debug != 1
           count = 0
           word1 = ""
           result.each do |r|
-            count += r['count']
+            count += r['weight']
             if count > rand
               word1 = r['Word2']
               break
@@ -674,7 +715,6 @@ module Plugins
           
           if word1 != dbsym("END")
             sentence += word1 + " " 
-            wordcount += 1
           end
         end
         
@@ -686,14 +726,16 @@ module Plugins
           info "done" unless debug != 1
           count = 0
           result.each do |r|
-            count += r['count']
+            w = weightsystem.call(r['Word2'], r['count'])
+            count +=  w #1 #r['count']
+            r['weight'] = w
           end
           rand = prng.rand(count)
           info "#{rand} / #{count}" unless debug != 1
           count = 0
           word2 = ""
           result.each do |r|
-            count += r['count']
+            count += r['weight']
             if count > rand
               word2 = r['Word2']
               break
@@ -702,7 +744,6 @@ module Plugins
           
           if word2 != dbsym("END")
             sentence += word2 + " " 
-            wordcount += 1
           end
         end
       
@@ -716,14 +757,16 @@ module Plugins
           
           count = 0
           result.each do |r|
-            count += r['count']
+            w = weightsystem.call(r['Word3'], r['count'])
+            count += w #1 #r['count']
+            r['weight'] = w
           end
           rand = prng.rand(count)
           info "#{rand} / #{count}" unless debug != 1
           count = 0
           word2 = ""
           result.each do |r|
-            count += r['count']
+            count +=  r['weight']
             if count > rand
               word2 = r['Word3']
               break
@@ -732,12 +775,11 @@ module Plugins
           
           if word2 != dbsym("END")
             sentence += word2 + " " 
-            wordcount += 1
           end
         end        
       end
       
-      return sentence.gsub(/Draylor/i, "Graylor")
+      return sentence.gsub(/Draylor/i, "Gaylord")
     
     end
     
@@ -749,12 +791,111 @@ module Plugins
       nicks = a[0].split(",")
       info nicks.to_s
       
-      m.reply gentext(2, nicks, nil)
+      m.reply gentext(2, nicks, nil, method(:weight_vulgar))
+    end
+    
+    def get_fom_insult      
+      thewords = [["tossing", "bloody", "shitting", "wanking", "stinky", "raging", "dementing", "dumb", "dipping", "fucking", "instant",
+        "dipping", "holy", "maiming", "cocking", "ranting", "twunting", "hairy", "spunking", "flipping", "slapping",
+        "sodding", "blooming", "frigging", "sponglicking", "guzzling", "glistering", "cock wielding", "failed", "artist formally known as", "unborn",
+        "pulsating", "naked", "throbbing", "lonely", "failed", "stale", "spastic", "senile", "strangely shaped", "virgin",
+        "bottled", "twin-headed", "fat", "gigantic", "sticky", "prodigal", "bald", "bearded", "horse-loving", "spotty",
+        "spitting", "dandy", "fritzl-admiring", "friend of a", "indeterminable", "overrated", "fingerlicking", "diaper-wearing", "leg-humping",
+        "gold-digging", "mong loving", "trout-faced", "cunt rotting", "flip-flopping", "rotting", "inbred", "badly drawn", "undead", "annoying",
+        "whoring", "leaking", "dripping", "racist", "slutty", "cross-eyed", "irrelevant", "mental", "rotating", "scurvy looking",
+        "rambling", "gag sacking", "cunting", "wrinkled old", "dried out", "sodding", "funky", "silly", "unhuman", "bloated",
+        "wanktastic", "bum-banging", "cockmunching", "animal-fondling", "stillborn", "scruffy-looking", "hard-rubbing", "rectal", "glorious", "eye-less",
+        "constipated", "bastardized", "utter", "hitler's personal", "irredeemable", "complete", "enormous", "probing", "dangling",
+        "go suck a", "fuckfaced", "broadfaced", "titless", "son of a", "demonizing", "pigfaced", "treacherous", "retarded", "twittering",
+        "one-balled", "dickless", "long-titted", "unimaginable", "bawdy", "lumpish", "wayward", "assbackward", "fawning", "clouted", "spongy", "spleeny",
+        "foolish", "idle-minded", "brain-boiled", "crap-headed", "jizz-draped"],
+
+        [ "cock", "tit", "cunt", "wank", "piss", "crap", "shit", "arse", "sperm", "nipple", "anus",
+        "colon", "shaft", "dick", "poop", "semen", "slut", "suck", "earwax", "fart",
+        "scrotum", "cock-tip", "tea-bag", "jizz", "cockstorm", "bunghole", "food trough", "bum",
+        "butt", "shitface", "ass", "nut", "ginger", "llama", "tramp", "fudge", "vomit", "cum", "lard",
+        "puke", "sphincter", "nerf", "turd", "cocksplurt", "cockthistle", "dickwhistle", "gloryhole",
+        "gaylord", "spazz", "nutsack", "fuck", "spunk", "shitshark", "shitehawk", "fuckwit",
+        "dipstick", "asswad", "chesticle", "clusterfuck", "douchewaffle", "retard", "bukake"],
+
+        [ "force", "bottom", "hole", "goatse", "testicle", "balls", "bucket", "biscuit", "stain", "boy",
+        "flaps", "erection", "mange", "twat", "twunt", "mong", "spack", "diarrhea", "sod",
+        "excrement", "faggot", "pirate", "wipe", "sock", "sack", "barrel", "head", "zombie", "alien",
+        "minge", "candle", "torch", "pipe", "bint", "jockey", "udder", "pig", "dog", "cockroach",
+        "worm", "MILF", "sample", "infidel", "spunk-bubble", "stack", "handle", "badger", "wagon", "bandit",
+        "lord", "bogle", "bollock", "tranny", "knob", "nugget", "king", "hole", "kid", "trailer", "lorry", "whale",
+        "rag", "foot", "pile", "waffle", "bait", "barnacle", "clotpole", "dingleberry", "maggot"],
+
+        [ "licker", "raper", "lover", "shiner", "blender", "fucker", "jacker", "butler", "packer", "rider",
+        "wanker", "sucker", "felcher", "wiper", "experiment", "bender", "dictator", "basher", "piper", "slapper",
+        "fondler", "plonker", "bastard", "handler", "herder", "fan", "amputee", "extractor", "professor", "graduate",
+        "voyeur", "hogger", "collector", "detector", "sniffer"] ]
+
+
+      combinations = [
+        [0, 1, 2 ],
+        [0, 1, 3 ],
+        [0, 2, 3],
+        [1, 2],
+        [1, 3],
+        [2, 3],
+        [0, 1, 2, 3] ]
+        
+      prng = Random.new  
+      theform = combinations[prng.rand(combinations.count)]
+      
+      sentence = ""
+      theform.each do |i|
+        sentence << thewords[i][prng.rand(thewords[i].count)] + " "
+      end
+
+      return sentence.chomp(" ")
+    
+    end
+    
+    def get_ig_insult
+      coder = HTMLEntities.new
+      recvd = String.new
+      url = 'http://www.insultgenerator.org/'
+      
+      begin
+        easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
+          'User-Agent' => 'foo'
+        }
+        easy.on_body do |chunk, easy|
+          recvd << chunk
+          
+          recvd =~ Regexp.new('<div class="wrap">\s*<br><br>((?:(?!</div>).)+)', Regexp::MULTILINE | Regexp::IGNORECASE)
+          if title_found = $1
+            title_found = coder.decode title_found.force_encoding('utf-8')
+            title_found.strip!
+            #title_found.gsub!(/[\s\r\n]+/m, ' ')
+            return Cinch::Helpers.sanitize title_found
+          end
+          
+          :abort if recvd.length > 131072 || title_found
+        end
+        easy.perform
+        rescue
+        # EXCEPTION!
+      end
+      
+      return nil
+    end
+    
+    def insult(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      m.reply a + ": " + get_ig_insult()
+    end
+    
+    def insult2(m, a)
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      m.reply a + ": " + get_fom_insult()
     end
     
     def execute(m, a)
       info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"           
-      m.reply gentext(2, nil, a)      
+      m.reply gentext(2, nil, a, method(:weight_vulgar))      
     end
   
   end
@@ -795,7 +936,7 @@ module Plugins
     
     #set :react_on, :channel 
     #timer 0,  {:method => :randquote, :shots => 1}
-    timer 10800, {:method => :randquote}
+    timer 21600, {:method => :randquote}
 
     
     match /^!ratequote\s+(\S.*)$/, use_prefix: false, method: :ratequote
@@ -808,17 +949,31 @@ module Plugins
     end
     
     def randquote
+      return if MyApp::Config::QUOTEDB_ENABLE_RANDQUOTE == 0
+      
       MyApp::Config::QUOTEDB_CHANS.each do |chan|
         con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
         con.query("SET NAMES utf8")
         result = con.query("select id from quotes where channel = '#{con.escape(chan)}' order by RAND()")
         
-        if result && result.count > 0      
-          result = con.query("select a.*, b.score, b.count from quotes a left join (select id, AVG(score) as score, count(*) as count from quote_scr group by id ) b on a.id=b.id where a.id='#{result.first['id']}'")
+        if result && result.count > 0   
+        
+          prng = Random.new 
+          random = prng.rand(result.count)
+          myid = -1;
+          result.each do |r|
+            if random == 0
+              myid = r['id']
+              break
+            end
+            random -= 1
+          end
+          
+          result = con.query("select a.*, b.score, b.count from quotes a left join (select id, AVG(score) as score, count(*) as count from quote_scr group by id ) b on a.id=b.id where a.id='#{myid}'")
           con.close if con
           
           if result && result.count > 0
-            Channel(chan).send "\x03".b + "04" + "[Q] " + "\x0f".b + "\x03".b + "03" + "[#{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s + " (#{result.first['count']} votes)" : '(0 votes)'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result.first['quote']}"
+            Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s + " (#{result.first['count']} votes)" : '(0 votes)'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result.first['quote']}"
           else
             info "WTF!!!! No quotes available for timed interval randquote in chan #{chan}, but there should be."
           end
@@ -1260,7 +1415,7 @@ module Plugins
         "\x03".b + color_rating + " [IMDB: " + i.movies[0].rating.to_s + "/10] [" + i.movies[0].votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
         myrating + mygenres + "\x0f".b + 
         "\x03".b + color_url + i.movies[0].url.gsub!(/\/combined/, "").gsub!(/akas\.imdb\.com/,"www.imdb.com") + "\x0f".b + 
-        " - " + (i.movies[0].plot)[0..255]
+        " - " + (i.movies[0].plot ? (i.movies[0].plot)[0..255] : "")
         
         m.reply myreply
         return
@@ -1311,6 +1466,7 @@ module Plugins
           color_title = "03"
           color_colons = "12"
           color_text = "07"
+                    
           
           if show.body.fetch("network", nil) && show.body.fetch("network").fetch("name", nil)
             network = show.body.fetch("network").fetch("name");
@@ -1325,6 +1481,7 @@ module Plugins
           " | " + "\x0f".b + "\x03".b + color_title + "Next Ep" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (nextep.body.fetch("airstamp", nil) ? DateTime.iso8601(nextep.body.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +
           
           " | " + "\x0f".b + "\x03".b + color_title + "Last Ep" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (lastep.body.fetch("airstamp", nil) ? DateTime.iso8601(lastep.body.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +
+                  
           
           " | " + "\x0f".b + "\x03".b + color_title + "Status" + "\x0f".b +  ":" +"\x03".b + color_text + " " + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f".b +
           
@@ -1361,6 +1518,25 @@ module Plugins
           end
           
           m.reply myreply
+          
+          imdbrating = nil
+          if show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("imdb", nil)
+            imdblink = show.body.fetch("externals").fetch("imdb")
+            #info imdblink
+            i = Imdb::Search.new(imdblink)
+      
+            if i.movies && i.movies.size > 0
+              imdbrating = i.movies[0].rating.to_s + "/10 (" + i.movies[0].votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)"
+            end
+          end  
+          
+          if imdbrating 
+            m.reply "\x03".b + color_name + show.body["name"] + "\x0f".b +
+            " | " +"\x03".b + color_title + "IMDb" + "\x0f".b +  ":" +"\x03".b + color_text + " " + imdbrating + " http://www.imdb.com/title/#{imdblink}/" + "\x0f".b
+          end
+          
+          
+          
         end
         else
         myreply = "No matching shows found.  [" + (hitno != 0 ? "Searching for the #" + (hitno + 1).to_s + " search result for " : "") + "\"" + id.to_s + "\"]"

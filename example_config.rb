@@ -32,11 +32,11 @@ module MyApp
     
     # Plugins::IMDB
     IMDB_EXCLUDE_CHANS = []
-    IMDB_EXCLUDE_USERS = []
+    IMDB_EXCLUDE_USERS = ["dickbot", "dickbot_"]
     
     # Plugins::TvMaze
     TVMAZE_EXCLUDE_CHANS = []
-    TVMAZE_EXCLUDE_USERS = []
+    TVMAZE_EXCLUDE_USERS = ["dickbot", "dickbot_"]
     
     # Plugins::RSSFeed
     RSS_FEEDS = [
@@ -51,6 +51,7 @@ module MyApp
     QUOTEDB_SQL_USER = 'yoursqlusername'
     QUOTEDB_SQL_PASSWORD = 'yoursqlpassword'
     QUOTEDB_SQL_DATABASE = "yoursqldatabase"
+    QUOTEDB_ENABLE_RANDQUOTE = 1
     
     # Plugins::URLDB
     URLDB_CHANS = []
