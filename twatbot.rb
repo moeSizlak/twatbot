@@ -431,7 +431,7 @@ module URLHandlers
             return Cinch::Helpers.sanitize title_found
           end
           
-          :abort if recvd.length > 131072 || title_found
+          :abort if recvd.length > 1131072 || title_found
         end
         easy.perform
         rescue
@@ -510,12 +510,14 @@ module Plugins
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
     match /^!insult\s+(\S+)/, use_prefix: false, method: :insult
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
-    match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
+    match lambda {|m| /(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*[:,]?(?:\s+(.*))?$/i}, use_prefix: false
+    #match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
     match /(.*)/i , use_prefix: false, method: :anytext
     match /(.*)/i , use_prefix: false, method: :ircaction, react_on: :action
+    listen_to :join , method: :join_insult
     
     def ircaction(m, a)
-      if a =~ /dickbot|twatbot/
+      if a =~ /dickbot|twatbot|sizlak|#{Regexp.escape(@bot.nick.to_s)}/
         m.reply "stfu #{m.user} you fucking #{get_fom_insult}"
         #m.action_reply "rapes #{m.user}'s wife."
       end
@@ -886,6 +888,27 @@ module Plugins
     def insult(m, a)
       info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
       m.reply a + ": " + get_ig_insult()
+    end
+    
+    def join_insult(m)
+    
+      if !MyApp::Config::DICKBOT_JOIN_INSULTS.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+        return
+      end
+      
+      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      prng = Random.new  
+      randnum = prng.rand(5)
+      
+      if(randnum == 0) 
+        randnum = prng.rand(4)
+        if randnum == 0
+          m.reply "stfu #{m.user} you fucking #{get_fom_insult}"
+        else
+          m.reply m.user.to_s + ": " + get_ig_insult()
+        end
+      end
+
     end
     
     def insult2(m, a)

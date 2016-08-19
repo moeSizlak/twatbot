@@ -74,6 +74,7 @@ module MyApp
     DICKBOT_IRC_PLUGINS = [
       #"Plugins:DickBot",
     ]
+    DICKBOT_JOIN_INSULTS = ["#chan1","#test1"] 
     
     DICKBOT_SQL_SERVER = '127.0.0.1'
     DICKBOT_SQL_USER = 'yoursqlusername'
