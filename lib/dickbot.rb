@@ -11,13 +11,33 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
+    timer 0,  {:method => :initialize_speak_timers, :shots => 1}
+    
     def initialize(*args)
       super
-      @speaks = MyApp::Config::DICKBOT_RANDOM_SPEAK
-      
+      @speaks = MyApp::Config::DICKBOT_RANDOM_SPEAK      
+    end
+    
+    def initialize_speak_timers
       @speaks.each do |speak|
-        speak[:last_spoke] = Time.now.to_i
-      end
+        speak[:speaks_available] = 0 if !speak.key?(:speaks_available) || !speak[:speaks_available].is_a?(Integer) || speak[:speaks_available] < 0
+        speak[:rate] = 0 if !speak.key?(:rate) || !speak[:rate].is_a?(Numeric) || speak[:rate] < 0
+        
+        if(speak[:rate] > 0)
+          prng = Random.new  
+          next_timer = -60.0*Math.log(1.0-prng.rand).to_f/(1.0/speak[:rate].to_f)
+          Timer next_timer, {:shots => 1} { speak_timer(speak) }
+          info "Setting first speak timer for #{speak[:chan]} to #{next_timer} seconds."
+        end
+      end    
+    end
+    
+    def speak_timer(speak)
+      prng = Random.new
+      next_timer = -60.0*Math.log(1.0-prng.rand).to_f/(1.0/speak[:rate].to_f)
+      Timer next_timer, {:shots => 1} { speak_timer(speak) }
+      speak[:speaks_available] += 1
+      info "Setting next speak timer for #{speak[:chan]} to #{next_timer} seconds, there are #{speak[:speaks_available]} speaks_available."
     end
     
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
@@ -310,6 +330,7 @@ module Plugins
       m.reply gentext(2, nicks, nil, method(:weight_vulgar))
     end
     
+    #Foul-O-Matic
     def get_fom_insult      
       thewords = [["tossing", "bloody", "shitting", "wanking", "stinky", "raging", "dementing", "dumb", "dipping", "fucking", "instant",
         "dipping", "holy", "maiming", "cocking", "ranting", "twunting", "hairy", "spunking", "flipping", "slapping",
@@ -357,18 +378,18 @@ module Plugins
         [2, 3],
         [0, 1, 2, 3] ]
         
-      prng = Random.new  
-      theform = combinations[prng.rand(combinations.count)]
+      theform = combinations.sample
       
       sentence = ""
       theform.each do |i|
-        sentence << thewords[i][prng.rand(thewords[i].count)] + " "
+        sentence << thewords[i].sample + " "
       end
 
       return sentence.chomp(" ")
     
     end
     
+    # Insult Generator
     def get_ig_insult
       coder = HTMLEntities.new
       recvd = String.new

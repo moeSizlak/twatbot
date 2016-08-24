@@ -74,7 +74,20 @@ module MyApp
     DICKBOT_IRC_PLUGINS = [
       #"Plugins:DickBot",
     ]
-    DICKBOT_JOIN_INSULTS = ["#chan1","#test1"] 
+    
+    # prob1 is the percentage probability a insult will be thrown at someone who joins.
+    # prob1 is the percentage probability that a thrown insult will be of the type Foul-O-Matic,
+    # otherwise it will be of type Insult Generator
+    DICKBOT_JOIN_INSULTS = [
+      {:chan => "#chan1", :prob1 => 35, :prob2 => 25},
+      {:chan => "#chan2", :prob1 => 50, :prob2 => 25},
+      ]
+      
+    # rate is average number of minutes between "random" speaks, implemented as a Poisson Process
+    DICKBOT_RANDOM_SPEAK = [
+      {:chan => "#chan2", :rate => 0.5}, 
+      {:chan => "#chan1", :rate => 1},
+      ]
     
     DICKBOT_SQL_SERVER = '127.0.0.1'
     DICKBOT_SQL_USER = 'yoursqlusername'
