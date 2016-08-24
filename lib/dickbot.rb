@@ -300,7 +300,7 @@ module Plugins
     end
     
     def imitate(m, a)
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"  
       a.strip!
       a.gsub!(/  /, " ") while a =~ /  /
       a = a.split(" ")
@@ -408,7 +408,7 @@ module Plugins
     end
     
     def insult(m, a)
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"  
       m.reply a + ": " + get_ig_insult()
     end
     
@@ -424,7 +424,7 @@ module Plugins
       e[:prob2] = 0 if !e[:prob2].is_a? Integer || e[:prob2] < 0
       e[:prob2] = 100 if e[:prob2] > 100
       
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"  
       prng = Random.new  
       randnum = prng.rand(100)+1
       
@@ -440,12 +440,12 @@ module Plugins
     end
     
     def insult2(m, a)
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"  
       m.reply a + ": " + get_fom_insult()
     end
     
     def execute(m, a)
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"           
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"           
       m.reply gentext(2, nil, a, method(:weight_vulgar))      
     end
   

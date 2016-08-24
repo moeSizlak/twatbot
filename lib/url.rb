@@ -18,7 +18,7 @@ module Plugins
           if !handler[:excludeChans].include?(m.channel.to_s) && !handler[:excludeNicks].include?(m.user.to_s)
             output = class_from_string(handler[:class])::parse(link)
             if !output.nil?
-              info "[Handler = #{handler[:class]}] [URL = #{link}] [USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+              info "[Handler = #{handler[:class]}] [URL = #{link}] [USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
               m.reply output
               break
             end

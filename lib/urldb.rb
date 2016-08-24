@@ -20,7 +20,7 @@ module Plugins
       end
       
       URI.extract(m.message, ["http", "https"]) do |url|
-        info "[URL = #{url}] [USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+        info "[URL = #{url}] [USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
         
         ##########################################################
         if url =~ /https?:\/\/(?:[^\/.]+\.)*imgur.com(\/.+)$/ 

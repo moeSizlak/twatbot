@@ -67,7 +67,7 @@ module Plugins
         return
       end    
     
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
       a.strip!
       
       if a =~ /^(\d+)\s+(\d+)$/
@@ -88,15 +88,15 @@ module Plugins
               con.query("delete from quote_scr where id='#{con.escape(id)}' and handle='#{con.escape(m.user.to_s)}'")
             end
             
-            con.query("insert into quote_scr (handle, id, score) values ('#{con.escape(m.user.to_s)}', '#{con.escape(id)}', '#{score.to_s}')")
+            con.query("insert into quote_scr (handle, id, score) values ('#{con.escape(m.user.to_s)}', '#{con.escape(id)}', '#{score}')")
             result = con.query("select count(*) as count, AVG(score) as score from quote_scr where id='#{con.escape(id)}' group by id")
             
             if result && result.first
-              m.reply "#{score_updated == 1 ? "Your rating has been changed to #{score.to_s}.  " : "" }New score for quote #{id.to_s} is #{result.first['score'].to_f.round(2).to_s}, based on #{result.first['count'].to_s} ratings."
+              m.reply "#{score_updated == 1 ? "Your rating has been changed to #{score}.  " : "" }New score for quote #{id} is #{result.first['score'].to_f.round(2)}, based on #{result.first['count']} ratings."
             end
             
           else
-            m.reply "No such quote id (#{id.to_s})"
+            m.reply "No such quote id (#{id})"
           end
           
         else
@@ -118,7 +118,7 @@ module Plugins
         return
       end
       
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
       a.strip!
       return unless a.length > 0
       
@@ -140,7 +140,7 @@ module Plugins
       con.query("SET NAMES utf8")
       idclause = "  "
       if a =~ /^\d+$/
-        idclause = " or a.id='#{a.to_s}' "
+        idclause = " or a.id='#{a}' "
       end
       
       a.gsub!(/\s/, ' ')
@@ -173,7 +173,7 @@ module Plugins
         return
       end
       
-      info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"       
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"       
       a.strip!
       
       begin
@@ -191,7 +191,7 @@ module Plugins
         con.close if con
       end
       
-      m.reply "Added quote (id = #{id.to_s})."
+      m.reply "Added quote (id = #{id})."
       
     end
 
