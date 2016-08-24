@@ -13,7 +13,11 @@ module Plugins
     
     def initialize(*args)
       super
-      #@feeds = MyApp::Config::RSS_FEEDS
+      @speaks = MyApp::Config::DICKBOT_RANDOM_SPEAK
+      
+      @speaks.each do |speak|
+        speak[:last_spoke] = Time.now.to_i
+      end
     end
     
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
@@ -21,7 +25,7 @@ module Plugins
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
     match lambda {|m| /(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*[:,]?(?:\s+(.*))?$/i}, use_prefix: false
     #match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
-    match /(.*)/i , use_prefix: false, method: :anytext
+    #match /(.*)/i , use_prefix: false, method: :anytext
     match /(.*)/i , use_prefix: false, method: :ircaction, react_on: :action
     listen_to :join , method: :join_insult
     
@@ -33,7 +37,7 @@ module Plugins
     end
     
     def anytext(m, a)
-      #Channel("#testing12").send "AAA"
+      Channel("#testing12").send "AAA"
     end
     
     def weight_use(word, count)
@@ -46,9 +50,9 @@ module Plugins
     
     def weight_vulgar(word, count)
       if(word =~ /(fuck|shit|ass|cunt|twat|mother|rape|kill|cock|dick|schwanz|4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksucker|cocksucking|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cunts|cyalis|cyberfuc|cyberfucker|cyberfuckers|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculatings|ejaculation|ejakulate|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|feck|fecker|felching|fellate|fellatio|fingerfuckers|fistfuck|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fucks|fuckwhit|fuckwit|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jackoff|jap|jism|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3itch|labia|lmfao|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat|masterbat|masterbat|masterbat|masterbat|masturbat|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucker|mothafuckers|mothafuckin|mothafuckings|mothafucks|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|nob|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasm|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pissflaps|pissing|poop|porn|porno|pornography|pornos|prick|pron|pube|pusse|pussi|pussies|pussy|rectum|retard|rimjaw|rimming|s\.o\.b\.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex|sh1t|shag|shagger|shaggin|shagging|shemale|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitting|shittings|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)/i)
-        return 100
+        return (5 * count)
       else
-        return 1
+        return count
       end
     end
     
@@ -57,6 +61,7 @@ module Plugins
       info "SEED='#{seed}'" unless debug != 1
       
       order = 2 unless order == 1
+      #order = 1
       prng = Random.new      
       con =  Mysql2::Client.new(:host => MyApp::Config::DICKBOT_SQL_SERVER, :username => MyApp::Config::DICKBOT_SQL_USER, :password => MyApp::Config::DICKBOT_SQL_PASSWORD, :database => MyApp::Config::DICKBOT_SQL_DATABASE)
       con.query("SET NAMES utf8")
@@ -369,27 +374,35 @@ module Plugins
       recvd = String.new
       url = 'http://www.insultgenerator.org/'
       
-      begin
-        easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
-          'User-Agent' => 'foo'
-        }
-        easy.on_body do |chunk, easy|
-          recvd << chunk
+
+      easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
+        'User-Agent' => 'foo'
+      }
+      easy.on_body do |chunk, easy|
+        recvd << chunk
+        
+        recvd =~ Regexp.new('<div class="wrap">\s*<br><br>((?:(?!</div>).)+)', Regexp::MULTILINE | Regexp::IGNORECASE)
+        if title_found = $1
+          title_found = coder.decode title_found.force_encoding('utf-8')
+          title_found.strip!
+          #title_found.gsub!(/[\s\r\n]+/m, ' ')
+                    
+          begin
+            con =  Mysql2::Client.new(:host => MyApp::Config::DICKBOT_SQL_SERVER, :username => MyApp::Config::DICKBOT_SQL_USER, :password => MyApp::Config::DICKBOT_SQL_PASSWORD, :database => MyApp::Config::DICKBOT_SQL_DATABASE)
+            con.query("SET NAMES utf8")
+            con.query("INSERT INTO Insults(Hash, Insult) VALUES (UNHEX(MD5('#{con.escape(title_found)}')), '#{con.escape(title_found)}')")
+              
+          rescue Mysql2::Error => e
+            puts e.errno
+            puts e.error
+          end          
           
-          recvd =~ Regexp.new('<div class="wrap">\s*<br><br>((?:(?!</div>).)+)', Regexp::MULTILINE | Regexp::IGNORECASE)
-          if title_found = $1
-            title_found = coder.decode title_found.force_encoding('utf-8')
-            title_found.strip!
-            #title_found.gsub!(/[\s\r\n]+/m, ' ')
-            return Cinch::Helpers.sanitize title_found
-          end
-          
-          :abort if recvd.length > 131072 || title_found
+          return Cinch::Helpers.sanitize title_found
         end
-        easy.perform
-        rescue
-        # EXCEPTION!
+        
+        :abort if recvd.length > 131072 || title_found
       end
+      easy.perform
       
       return nil
     end
@@ -401,17 +414,23 @@ module Plugins
     
     def join_insult(m)
     
-      if !MyApp::Config::DICKBOT_JOIN_INSULTS.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+      if !MyApp::Config::DICKBOT_JOIN_INSULTS.map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
         return
       end
       
+      e = MyApp::Config::DICKBOT_JOIN_INSULTS.select{|x| x[:chan] == m.channel.to_s}[0]
+      e[:prob1] = 0 if !e[:prob1].is_a? Integer || e[:prob1] < 0
+      e[:prob1] = 100 if e[:prob1] > 100
+      e[:prob2] = 0 if !e[:prob2].is_a? Integer || e[:prob2] < 0
+      e[:prob2] = 100 if e[:prob2] > 100
+      
       info "[USER = #{m.user.to_s}] [CHAN = #{m.channel.to_s}] [TIME = #{m.time.to_s}] #{m.message.to_s}"  
       prng = Random.new  
-      randnum = prng.rand(5)
+      randnum = prng.rand(100)+1
       
-      if(randnum == 0) 
-        randnum = prng.rand(4)
-        if randnum == 0
+      if(randnum <= e[:prob1]) 
+        randnum = prng.rand(100)+1
+        if randnum <= e[:prob2]
           m.reply "stfu #{m.user} you fucking #{get_fom_insult}"
         else
           m.reply m.user.to_s + ": " + get_ig_insult()
