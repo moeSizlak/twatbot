@@ -11,6 +11,14 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
+    match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
+    match /^!insult\s+(\S+)/, use_prefix: false, method: :insult
+    match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
+    match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i}, use_prefix: false
+    #match /(.*)/i , use_prefix: false, method: :anytext
+    match /(.*)/i , use_prefix: false, method: :ircaction, react_on: :action
+    listen_to :join , method: :join_insult
+    
     timer 0,  {:method => :initialize_speak_timers, :shots => 1}
     
     def initialize(*args)
@@ -40,15 +48,6 @@ module Plugins
       info "Setting next speak timer for #{speak[:chan]} to #{next_timer} seconds, there are #{speak[:speaks_available]} speaks_available."
     end
     
-    match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate
-    match /^!insult\s+(\S+)/, use_prefix: false, method: :insult
-    match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
-    match lambda {|m| /(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*[:,]?(?:\s+(.*))?$/i}, use_prefix: false
-    #match /(?:twatbot|dickbot):?(?:\s+(.*))?$/i, use_prefix: false
-    #match /(.*)/i , use_prefix: false, method: :anytext
-    match /(.*)/i , use_prefix: false, method: :ircaction, react_on: :action
-    listen_to :join , method: :join_insult
-    
     def ircaction(m, a)
       if a =~ /dickbot|twatbot|sizlak|#{Regexp.escape(@bot.nick.to_s)}/
         m.reply "stfu #{m.user} you fucking #{get_fom_insult}"
@@ -76,13 +75,61 @@ module Plugins
       end
     end
     
-    def gentext(order, nicks, seed, weightsystem)
-      debug = 1
-      info "SEED='#{seed}'" unless debug != 1
+    def getWord(con, nickfilter, weightsystem, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
+      debug =1
+      q = "select #{outColumn} as outColumn, count(*) as count from #{table} where #{inColumn1} = '#{con.escape(inWord1)}' #{" and #{inColumn2} = '#{con.escape(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by #{outColumn} order by count(*) desc;"
+      info q if debug == 1
+      result = con.query(q)
+      info "done" if debug == 1
       
+      count = 0      
+      result.each do |r|
+        w = weightsystem.call(r[outColumn], r['count'])
+        count +=  w
+        r['weight'] = w
+      end
+      
+      outWord = nil
+      return outWord if count == 0
+      
+      prng = Random.new
+      rand = prng.rand(count)
+      info "#{rand} / #{count}" if debug == 1
+      
+      count = 0      
+      result.each do |r|
+        count += r['weight']
+        if count > rand
+          outWord = r['outColumn']
+          break
+        end
+      end 
+      
+      info "===>'#{outWord}'"
+      return outWord
+    end
+    
+    
+    def checkSeeds(con, nickfilter, seeds)
+      q = "select Word1, count(*) as count from WORDS1 where Word1 IN (#{seeds.map{|x| "'#{con.escape(x[0..254])}'"}.join(',')}) group by Word1 order by count(*) desc;"
+      result1 = con.query(q)
+      out = []
+
+      result1.each do |r|
+        out.push(r['Word1'])
+      end
+      
+      info "checkSeeds => #{out}"
+      return out      
+    end
+    
+    
+    def gentext(order, nicks, seeds, weightsystem)
+      debug = 1
+      info "SEEDS='#{seeds}'" if debug == 1      
       order = 2 unless order == 1
-      #order = 1
-      prng = Random.new      
+      prng = Random.new
+     
       con =  Mysql2::Client.new(:host => MyApp::Config::DICKBOT_SQL_SERVER, :username => MyApp::Config::DICKBOT_SQL_USER, :password => MyApp::Config::DICKBOT_SQL_PASSWORD, :database => MyApp::Config::DICKBOT_SQL_DATABASE)
       con.query("SET NAMES utf8")
       
@@ -96,227 +143,88 @@ module Plugins
         nick_filter.chomp!(",")
         nick_filter << ") "
       end      
-      info ">>>>>" + nick_filter
-         
-         
-      sentence = ""
+      info "nick_filter=" + nick_filter if debug == 1  
+      
+      
+      if seeds.kind_of?(Array) and seeds.length > 0
+        seedsChecked = checkSeeds(con, nick_filter, seeds)
         
-      if(!seed || seed == "" || seed =~ /^\s*$/)
-        word1 = dbsym("START")
-        word2 = ""
-
+        if seedsChecked.length > 0
+          choice = ((((Math.sqrt((8.0*((rand(seedsChecked.length*(seedsChecked.length+1)/2)+1).to_f))+1.0)-1.0)/2.0).ceil)-1.0).to_i
+          seed = seedsChecked[choice]
+          info "Choosing index #{choice} of #{seedsChecked.length-1}"
+        else
+          return nil
+        end
+        
       else
-        info "COMPUTE FROM SEED BACKWARDS TO START" unless debug != 1
-        seed.gsub!(/^\s*(\S+).*$/,'\1')
-        
-        if order == 1
-          word2 = seed.dup
-          sentence = seed.dup
-          word1 = ""
-          while word1 != dbsym("START") && word2 != dbsym("START")
-            q = "select Word1, count(*) as count from WORDS1 where Word2 = '#{con.escape(word2)}' #{nick_filter} group by Word1 order by count(*) desc;"
-            info q unless debug != 1
-            result = con.query(q)
-            info "done" unless debug != 1
-            count = 0
-            result.each do |r|
-              w = weightsystem.call(r['Word1'], r['count'])
-              count += w #1 #r['count']
-              r['weight'] = w
-            end
-            rand = prng.rand(count)
-            info "#{rand} / #{count}" unless debug != 1
-            count = 0
-            word2 = ""
-            result.each do |r|
-              count += r['weight']
-              if count > rand
-                word2 = r['Word1']
-                break
-              end
-            end
-            
-            if word2 != dbsym("START")
-              sentence = word2 + " " + sentence
-            end
-          end
-          
-          word1 = seed.dup
-          word2 = ""
-          sentence += " "
-          
-        elsif order == 2
-          word2 = seed.dup
-          sentence = seed.dup
-          word1 = ""
-        
-          q = "select Word1, count(*) as count from WORDS1 where Word2 = '#{con.escape(word2)}' #{nick_filter} group by Word1 order by count(*) desc;"
-          info q unless debug != 1
-          result = con.query(q)
-          info "done" unless debug != 1
-          count = 0
-          result.each do |r|
-            w = weightsystem.call(r['Word1'], r['count'])
-            count += w #1 #r['count']
-            r['weight'] = w
-          end
-          rand = prng.rand(count)
-          info "#{rand} / #{count}" unless debug != 1
-          count = 0
-          word1 = ""
-          result.each do |r|
-            count += r['weight']
-            if count > rand
-              word1 = r['Word1']
-              break
-            end
-          end
-          
-          word1save = word1.dup
-          word2save = word2.dup
-            
-          if word1 != dbsym("START")
-            sentence = word1 + " " + word2        
-          end
-          
-          word3 = word2.dup
-          word2 = word1.dup
-          
-        
-          while word2 != dbsym("START") && word3 != dbsym("START")
-            q = "select Word1, count(*) as count from WORDS2 where Word2 = '#{con.escape(word2)}' and Word3 = '#{con.escape(word3)}' #{nick_filter} group by Word1 order by count(*) desc;"
-            info q unless debug != 1
-            result = con.query(q)
-            info "done" unless debug != 1
-            
-            word3 = word2.dup
-            
-            count = 0
-            result.each do |r|
-              w = weightsystem.call(r['Word1'], r['count'])
-              count +=  w #1 #r['count']
-              r['weight'] = w
-            end
-            rand = prng.rand(count)
-            info "#{rand} / #{count}" unless debug != 1
-            count = 0
-            word2 = ""
-            result.each do |r|
-              count +=  r['weight']
-              if count > rand
-                word2 = r['Word1']
-                break
-              end
-            end
-            
-            if word2 != dbsym("START")
-              sentence = word2 + " " + sentence
-            end
-          end
-          
-          word1 = word1save.dup
-          word2 = word2save.dup
-          sentence += " "
-          
-        end
-      
-        info "DONE: COMPUTE FROM SEED BACKWARDS TO START" unless debug != 1
+        seeds = []
+        seedsChecked = []
+        seed = ""
       end
       
+      sentence = []
+      at_start = false
+      at_end = false
+        
+      if(!seed || seed.nil? || seed == "" || seed =~ /^\s*$/)
+        seed = getWord(con, nick_filter, weightsystem, 'WORDS1', 'Word1', dbsym("START"), nil, nil, 'Word2')
+        at_start = true
+      end
 
-  
-      if order == 1
-        while word1 != dbsym("END")
-          q = "select Word2, count(*) as count from WORDS1 where Word1 = '#{con.escape(word1)}' #{nick_filter} group by Word2 order by count(*) desc;"
-          info q unless debug != 1
-          result = con.query(q)
-          info "done" unless debug != 1
-          count = 0
-          result.each do |r|
-            w = weightsystem.call(r['Word2'], r['count'])
-            count +=  w #1 #r['count']
-            r['weight'] = w
-          end
-          rand = prng.rand(count)
-          info "#{rand} / #{count}" unless debug != 1
-          count = 0
-          word1 = ""
-          result.each do |r|
-            count += r['weight']
-            if count > rand
-              word1 = r['Word2']
-              break
-            end
-          end
-          
-          if word1 != dbsym("END")
-            sentence += word1 + " " 
-          end
-        end
-        
-      elsif order == 2
-        if word1 != dbsym("END") && word2 == ""
-          q = "select Word2, count(*) as count from WORDS1 where Word1 = '#{con.escape(word1)}' #{nick_filter} group by Word2 order by count(*) desc;"
-          info q unless debug != 1
-          result = con.query(q)
-          info "done" unless debug != 1
-          count = 0
-          result.each do |r|
-            w = weightsystem.call(r['Word2'], r['count'])
-            count +=  w #1 #r['count']
-            r['weight'] = w
-          end
-          rand = prng.rand(count)
-          info "#{rand} / #{count}" unless debug != 1
-          count = 0
-          word2 = ""
-          result.each do |r|
-            count += r['weight']
-            if count > rand
-              word2 = r['Word2']
-              break
-            end
-          end
-          
-          if word2 != dbsym("END")
-            sentence += word2 + " " 
-          end
-        end
-      
-        while word1 != dbsym("END") && word2 != dbsym("END")
-          q = "select Word3, count(*) as count from WORDS2 where Word1 = '#{con.escape(word1)}' and Word2 = '#{con.escape(word2)}' #{nick_filter} group by Word3 order by count(*) desc;"
-          info q unless debug != 1
-          result = con.query(q)
-          info "done" unless debug != 1
-          
-          word1 = word2.dup
-          
-          count = 0
-          result.each do |r|
-            w = weightsystem.call(r['Word3'], r['count'])
-            count += w #1 #r['count']
-            r['weight'] = w
-          end
-          rand = prng.rand(count)
-          info "#{rand} / #{count}" unless debug != 1
-          count = 0
-          word2 = ""
-          result.each do |r|
-            count +=  r['weight']
-            if count > rand
-              word2 = r['Word3']
-              break
-            end
-          end
-          
-          if word2 != dbsym("END")
-            sentence += word2 + " " 
-          end
-        end        
+      info "GET FIRST 2 WORDS, CHECK BACKWARD FIRST" if debug == 1       
+      sentence = [seed.dup]      
+    
+      if(!at_start)
+        word = getWord(con, nick_filter, weightsystem, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1')
+      else
+        word = nil
       end
       
-      return sentence.gsub(/Draylor/i, "Gaylord")
-    
+      if word != dbsym("START") && !word.nil?
+        sentence.unshift(word.dup)
+      else
+        at_start = true
+        word = getWord(con, nick_filter, weightsystem, 'WORDS1', 'Word1', sentence[0], nil, nil, 'Word2')
+        if word != dbsym("END") && !word.nil?
+          sentence.push(word.dup)
+        else
+          at_end = true
+          return sentence[0]
+        end
+      end
+        
+      info "GO BACKWARD TO START" if debug == 1
+      
+      loop do
+        word = getWord(con, nick_filter, weightsystem, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1') if order == 1
+        word = getWord(con, nick_filter, weightsystem, 'WORDS2', 'Word2', sentence[0], 'Word3' , sentence[1], 'Word1') if order == 2
+        
+        if word != dbsym("START") && !word.nil?
+          sentence.unshift(word.dup)
+        else
+          at_start = true
+        end
+        
+        break if at_start
+      end
+      
+      info "GO FORWARD TO END" if debug == 1
+      
+      loop do
+        word = getWord(con, nick_filter, weightsystem, 'WORDS1', 'Word1', sentence[-1], nil, nil, 'Word2') if order == 1
+        word = getWord(con, nick_filter, weightsystem, 'WORDS2', 'Word1', sentence[-2], 'Word2' , sentence[-1], 'Word3') if order == 2
+        
+        if word != dbsym("END") && !word.nil?
+          sentence.push(word.dup)
+        else
+          at_end = true
+        end
+        
+        break if at_end
+      end
+        
+      return sentence.join(' ').gsub(/Draylor/i, "Gaylord")  
     end
     
     def imitate(m, a)
@@ -465,9 +373,35 @@ module Plugins
       m.reply a + ": " + get_fom_insult()
     end
     
-    def execute(m, a)
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"           
-      m.reply gentext(2, nil, a, method(:weight_vulgar))      
+    def filter_msg(msg)
+      #msg.downcase!
+      msg.strip!
+      msg.gsub!(/[^ -~]/, '')
+      msg.gsub!(/["]/, '')
+      msg.gsub!(/^'/, '')
+      msg.gsub!(/'$/, '')
+      msg.gsub!(/ '/, ' ')
+      msg.gsub!(/' /, ' ')
+      msg.gsub!(/https?:\/\/[^ ]*/, '')  
+      msg.gsub!(/;/, ',') 
+      msg.gsub!(/  /, ' ') while msg =~ /  /
+      return msg.split(" ")
+    end
+    
+    def execute(m)
+      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"    
+      
+      x = m.message.to_s
+      addressed_directly = 0
+      if x =~ /^(?:(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})[:,]\s*)(.*)$/i
+        addressed_directly = 1
+        x = $1
+      end
+      
+      x.gsub!(/twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/,'')
+      
+      x = filter_msg(x)
+      m.reply gentext(2, nil, x, method(:weight_vulgar))      
     end
   
   end
