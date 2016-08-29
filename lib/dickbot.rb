@@ -18,7 +18,7 @@ module Plugins
     
     match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i}, use_prefix: false, method: :talkback    
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate   
-    #match /(.*)/i , use_prefix: false, method: :anytext
+    match /.*$/, use_prefix: false, method: :logtext
     
     timer 0,  {:method => :initialize_speak_timers, :shots => 1}
     
@@ -31,6 +31,7 @@ module Plugins
       @speaks.each do |speak|
         speak[:speaks_available] = 0 if !speak.key?(:speaks_available) || !speak[:speaks_available].is_a?(Integer) || speak[:speaks_available] < 0
         speak[:rate] = 0 if !speak.key?(:rate) || !speak[:rate].is_a?(Numeric) || speak[:rate] < 0
+        speak[:messages] = []
         
         if(speak[:rate] > 0)
           prng = Random.new  
@@ -45,8 +46,8 @@ module Plugins
       prng = Random.new
       next_timer = -60.0*Math.log(1.0-prng.rand).to_f/(1.0/speak[:rate].to_f)
       Timer next_timer, {:shots => 1} { speak_timer(speak) }
-      speak[:speaks_available] += 1
-      info "speak_timer(): Setting next speak timer for #{speak[:chan]} to #{next_timer} seconds, there are #{speak[:speaks_available]} speaks_available."
+      speak[:speaks_available] += 1 if speak[:speaks_available] < 4
+      #info "speak_timer(): Setting next speak timer for #{speak[:chan]} to #{next_timer} seconds, there are #{speak[:speaks_available]} speaks_available."
     end
     
     
@@ -196,8 +197,22 @@ module Plugins
       m.reply insult
     end
     
-    def anytext(m, a)
-      Channel("#testing12").send "AAA"
+    def logtext(m)
+      return if !MyApp::Config::DICKBOT_RANDOM_SPEAK.map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+      
+      prng = Random.new
+      
+      speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
+      speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
+      #info "logtext(), @speaks=#{@speaks}"
+      
+      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(2) == 0 || m.user.to_s =~ /fatman|sexygirl/)
+        seeds = filter_msg(m.message)
+        response = gentext(2, nil, seeds, method(:weight_vulgar)) 
+        Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
+        info "[logtext(), chan=#{m.channel}, user=#{m.user}] INPUT='#{m.message}' RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'" 
+        speak[:speaks_available] -= 1
+      end
     end
     
     def weight_use(word, count, seeds)
@@ -212,7 +227,7 @@ module Plugins
       #info "DEBUG word=#{word} seeds=#{inseeds}"
       seeds = inseeds.map {|s| Regexp.escape(s)}
       if seeds.length > 0 && word =~ /^(#{seeds.join('|')})$/i
-        info "TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT => #{word}"
+        #info "TESTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT => #{word}"
         return (100 * count)
       elsif(word =~ /(fuck|shit|ass|cunt|twat|mother|rape|kill|cock|dick|schwanz|4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksucker|cocksucking|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cunts|cyalis|cyberfuc|cyberfucker|cyberfuckers|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculatings|ejaculation|ejakulate|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|feck|fecker|felching|fellate|fellatio|fingerfuckers|fistfuck|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fucks|fuckwhit|fuckwit|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jackoff|jap|jism|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3itch|labia|lmfao|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat|masterbat|masterbat|masterbat|masterbat|masturbat|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucker|mothafuckers|mothafuckin|mothafuckings|mothafucks|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|nob|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasm|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pissflaps|pissing|poop|porn|porno|pornography|pornos|prick|pron|pube|pusse|pussi|pussies|pussy|rectum|retard|rimjaw|rimming|s\.o\.b\.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex(?!ten)|sh1t|shag|shagger|shaggin|shagging|shemale|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitting|shittings|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)/i)
         return (50 * count)
@@ -222,7 +237,7 @@ module Plugins
     end
     
     def getWord(con, nickfilter, weightsystem, seeds, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
-      debug =1
+      debug =0
       q = "select #{outColumn} as outColumn, count(*) as count from #{table} where #{inColumn1} = '#{con.escape(inWord1)}' #{" and #{inColumn2} = '#{con.escape(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by #{outColumn} order by count(*) desc;"
       info q if debug == 1
       result = con.query(q)
@@ -249,7 +264,7 @@ module Plugins
         end
       end 
       
-      info "===>'#{outWord}'"
+      info "===>'#{outWord}'" if debug == 1
       return outWord
     end
     
@@ -263,13 +278,13 @@ module Plugins
         out.push(r['Word1'])
       end
       
-      info "checkSeeds => #{out}"
+      #info "checkSeeds => #{out}"
       return out      
     end
     
     
     def gentext(order, nicks, seeds, weightsystem)
-      debug = 1
+      debug = 0
       info "gentext() seeds='#{seeds}'" if debug == 1      
       order = 2 unless order == 1
       prng = Random.new
@@ -296,7 +311,7 @@ module Plugins
         if seedsChecked.length > 0
           choice = ((((Math.sqrt((8.0*((rand(seedsChecked.length*(seedsChecked.length+1)/2)+1).to_f))+1.0)-1.0)/2.0).ceil)-1.0).to_i
           seed = seedsChecked[choice]
-          info "Choosing index #{choice} of #{seedsChecked.length-1}"
+          info "Choosing index #{choice} of #{seedsChecked.length-1}" if debug == 1   
         else
           return nil
         end
@@ -419,7 +434,9 @@ module Plugins
       x.gsub!(/\S*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*/,'')
       
       seeds = filter_msg(x)
-      m.reply gentext(2, nil, seeds, method(:weight_vulgar))      
+      response = gentext(2, nil, seeds, method(:weight_vulgar)) 
+      info "[talkback()] #{response}"  
+      m.reply response
     end
   
   end
