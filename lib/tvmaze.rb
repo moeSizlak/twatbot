@@ -7,10 +7,10 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
-    match /^@(\d*)\s*(\S.*)$/, use_prefix: false
+    match /^@(\d*)\s*(\S.*)$/, use_prefix: false, method: :tvmaze
     
-    def execute(m, hitno, id)
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
+    def tvmaze(m, hitno, id)
+      botlog "", m
       
       if MyApp::Config::TVMAZE_EXCLUDE_CHANS.include?(m.channel.to_s) || MyApp::Config::TVMAZE_EXCLUDE_USERS.include?(m.user.to_s)
         return
@@ -99,7 +99,6 @@ module Plugins
           imdbrating = nil
           if show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("imdb", nil)
             imdblink = show.body.fetch("externals").fetch("imdb")
-            #info imdblink
             i = Imdb::Search.new(imdblink)
       
             if i.movies && i.movies.size > 0

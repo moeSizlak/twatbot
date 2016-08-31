@@ -28,21 +28,20 @@ module Plugins
             end
             
             newentries.each do |newentry|
-              info "Printing new RSS entry \"#{newentry.title}\""
+              botlog "Printing new RSS entry \"#{newentry.title}\""
               printnew(newentry, feed[:name], feed[:chans])
             end
           end
           else
           #printnew(mostrecent, feed[:name], feed[:chans])          
         end 
-        #info "Setting #{feed[:name]}[:old] to \"#{mostrecent.title}\""
+        #botlog "Setting #{feed[:name]}[:old] to \"#{mostrecent.title}\""
         feed[:old] = mostrecent.url
       end
     end
     
     def printnew(entry, feedname, chans)
       chans.each do |chan|
-        #info "[USER = #{m.user}] [CHAN = #{chan}] [TIME = #{m.time}] #{m.message}"
         Channel(chan).send "\x02".b + "[#{feedname}]" + "\x0f".b + " #{entry.title} - #{entry.url}"
       end
     end

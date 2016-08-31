@@ -12,15 +12,15 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :channel
     
-    listen_to :channel
+    listen_to :channel, method: :urldb_listen
     
-    def listen(m)
+    def urldb_listen(m)
       if !MyApp::Config::URLDB_CHANS.include?(m.channel.to_s) || MyApp::Config::URLDB_EXCLUDE_USERS.include?(m.user.to_s)
         return
       end
       
       URI.extract(m.message, ["http", "https"]) do |url|
-        info "[URL = #{url}] [USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
+        botlog "[URLDB = #{url}]"
         
         ##########################################################
         if url =~ /https?:\/\/(?:[^\/.]+\.)*imgur.com(\/.+)$/ 
@@ -234,10 +234,6 @@ module Plugins
         end
         
         begin
-          #con = Mysql.new MyApp::Config::URLDB_SQL_SERVER, MyApp::Config::URLDB_SQL_USER, MyApp::Config::URLDB_SQL_PASSWORD, MyApp::Config::URLDB_SQL_DATABASE
-          #con.query("SET NAMES utf8")
-          #con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape_string(m.user.to_s)}', '#{con.escape_string(url)}', #{!mytitle.nil? ? "'" + con.escape_string(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape_string(imagefile) + "'"})")
-          
           con =  Mysql2::Client.new(:host => MyApp::Config::URLDB_SQL_SERVER, :username => MyApp::Config::URLDB_SQL_USER, :password => MyApp::Config::URLDB_SQL_PASSWORD, :database => MyApp::Config::URLDB_SQL_DATABASE)
           con.query("SET NAMES utf8")
           con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape(m.user.to_s)}', '#{con.escape(url)}', #{!mytitle.nil? ? "'" + con.escape(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape(imagefile) + "'"})")
@@ -246,7 +242,7 @@ module Plugins
           rescue Mysql2::Error => e
           puts e.errno
           puts e.error
-          info "[DEBUG] [TITLEBOT] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + e.errno.to_s + " " + e.error
+          botlog "[URLDB] [ERROR] #{e.errno} #{e.error}", m
           
           ensure
           con.close if con

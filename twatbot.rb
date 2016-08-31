@@ -19,6 +19,18 @@ def class_from_string_array(arr)
   end
 end
 
+def botlog(msg, m = nil)
+  logmsg = "[#{caller_locations(1,1)[0].base_label}] "
+  
+  if m
+    logmsg << "[#{m.user} @ #{m.channel}] [MSG = '#{m.message}'] "
+  end
+  
+  logmsg << "#{msg}"
+  
+  info logmsg
+end
+
 if !ARGV || ARGV.length != 1
   abort "ERROR: Usage: ruby #{$0} <CONFIG_FILE>"
   elsif !File.exist?(ARGV[0])

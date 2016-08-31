@@ -5,10 +5,10 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
-    match /^[.!]imdb\s+(.*)$/i, use_prefix: false
+    match /^[.!]imdb\s+(.*)$/i, use_prefix: false, method: :imdb
     
-    def execute(m, id)
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
+    def imdb(m, id)
+      botlog "", m
       
       
       if MyApp::Config::IMDB_EXCLUDE_CHANS.include?(m.channel.to_s) || MyApp::Config::IMDB_EXCLUDE_USERS.include?(m.user.to_s)

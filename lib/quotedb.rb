@@ -54,7 +54,7 @@ module Plugins
           if result && result.count > 0
             Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{result.first['id']} / #{result.first['score'] ? result.first['score'].to_f.round(2).to_s + " (#{result.first['count']} votes)" : '(0 votes)'} / #{result.first['nick']} @ #{Time.at(result.first['timestamp'].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result.first['quote']}"
           else
-            info "WTF!!!! No quotes available for timed interval randquote in chan #{chan}, but there should be."
+            botlog "WTF!!!! No quotes available for timed interval randquote in chan #{chan}, but there should be."
           end
         end  
         
@@ -67,7 +67,7 @@ module Plugins
         return
       end    
     
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
+      botlog "",m
       a.strip!
       
       if a =~ /^(\d+)\s+(\d+)$/
@@ -118,7 +118,7 @@ module Plugins
         return
       end
       
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
+      botlog "", m
       a.strip!
       return unless a.length > 0
       
@@ -133,8 +133,8 @@ module Plugins
         @lastquotes[lqkey][:time] = Time.now.getutc.to_i
       end
 
-      info @lastquotes[lqkey][:offset].to_s
-      #info @lastquotes.key(lqkey) && @lastquotes[lqkey][:quote] == a && @lastquote[lqkey][:time] >= (Time.now.getutc.to_i - 60))
+      botlog @lastquotes[lqkey][:offset].to_s, m
+      #botlog @lastquotes.key(lqkey) && @lastquotes[lqkey][:quote] == a && @lastquote[lqkey][:time] >= (Time.now.getutc.to_i - 60)), m
 
       con =  Mysql2::Client.new(:host => MyApp::Config::QUOTEDB_SQL_SERVER, :username => MyApp::Config::QUOTEDB_SQL_USER, :password => MyApp::Config::QUOTEDB_SQL_PASSWORD, :database => MyApp::Config::QUOTEDB_SQL_DATABASE)
       con.query("SET NAMES utf8")
@@ -173,7 +173,7 @@ module Plugins
         return
       end
       
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"       
+      botlog "", m       
       a.strip!
       
       begin
@@ -185,7 +185,7 @@ module Plugins
         rescue Mysql2::Error => e
         puts e.errno
         puts e.error
-        info "[DEBUG] [QUOTEDB] [" + m.user.to_s + "] [" + m.channel.to_s + "] [" + m.time.to_s + "]" + e.errno.to_s + " " + e.error
+        botlog "[ERROR] #{e.errno} #{e.error}", m
         
         ensure
         con.close if con

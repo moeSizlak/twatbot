@@ -3,10 +3,10 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
-    match /^\.moe/i, use_prefix: false
+    match /^\.moe/i, use_prefix: false, method: :moebtc
     
-    def execute(m)
-      info "[USER = #{m.user}] [CHAN = #{m.channel}] [TIME = #{m.time}] #{m.message}"
+    def moebtc(m)
+      botlog "", m
     
       x = rand
       myreply = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
