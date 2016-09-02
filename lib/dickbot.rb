@@ -18,7 +18,7 @@ module Plugins
     
     match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i}, use_prefix: false, method: :talkback    
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate   
-    match /.*$/, use_prefix: false, method: :speak
+    match /^(?!!)(?!@)(?!\.).*$/, use_prefix: false, method: :speak
     
     timer 0,  {:method => :initialize_speak_timers, :shots => 1}
     
@@ -394,7 +394,7 @@ module Plugins
       insult = gentext(2, nicks, nil, method(:weight_vulgar))
       if !insult.nil?
         botlog "[nicks = #{nicks}] [insult = #{insult}]", m
-        m.reply
+        m.reply insult
       end
     end
     

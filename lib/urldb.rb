@@ -20,7 +20,7 @@ module Plugins
       end
       
       URI.extract(m.message, ["http", "https"]) do |url|
-        botlog "[URLDB = #{url}]"
+        botlog "[URLDB = #{url}]",m
         
         ##########################################################
         if url =~ /https?:\/\/(?:[^\/.]+\.)*imgur.com(\/.+)$/ 

@@ -94,7 +94,12 @@ module MyApp
     DICKBOT_SQL_PASSWORD = 'yoursqlpassword'
     DICKBOT_SQL_DATABASE = "yoursqldatabase"
     
+    # Plugins::Weather
+    WUNDERGROUND_API_KEY = 'YOUR_API_KEY_HERE'
+    WUNDERGROUND_API_RATE_LIMIT_MINUTE = 10
+    WUNDERGROUND_API_RATE_LIMIT_DAY = 250
+    
   end
 end
-  
+
     
