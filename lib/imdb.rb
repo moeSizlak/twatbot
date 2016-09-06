@@ -23,17 +23,25 @@ module Plugins
       id.gsub!(/\s+$/, "")
       id.gsub!(/\s+/, " ")
       id.gsub!(/[^ -~]/, "")
-      i = Imdb::Search.new(id)
       
-      if i.movies && i.movies.size > 0
-        myrating = i.movies[0].mpaa_rating.to_s
+      if id =~ /^tt(\d+)$/
+        i = Imdb::Movie.new($1)
+      else
+        i = Imdb::Search.new(id)
+        if i.movies && i.movies.size > 0
+          i = i.movies[0]
+        end
+      end
+      
+      if i.title
+        myrating = i.mpaa_rating.to_s
         if myrating =~ /Rated\s+(\S+)/i
           myrating = "[" + $1 + "] "
           else
           myrating = ""
         end
         
-        mygenres = i.movies[0].genres
+        mygenres = i.genres
         if(!mygenres.nil? && mygenres.length > 0)
           mygenres = "[" + mygenres.join(", ") + "] "
           else
@@ -41,11 +49,11 @@ module Plugins
         end
         
         myreply = 
-        "\x03".b + color_name + i.movies[0].title + "\x0f".b + 
-        "\x03".b + color_rating + " [IMDB: " + i.movies[0].rating.to_s + "/10] [" + i.movies[0].votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
+        "\x03".b + color_name + i.title + "\x0f".b + 
+        "\x03".b + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
         myrating + mygenres + "\x0f".b + 
-        "\x03".b + color_url + i.movies[0].url.gsub!(/\/combined/, "").gsub!(/akas\.imdb\.com/,"www.imdb.com") + "\x0f".b + 
-        " - " + (i.movies[0].plot ? (i.movies[0].plot)[0..255] : "")
+        "\x03".b + color_url + i.url.gsub!(/\/combined/, "").gsub!(/akas\.imdb\.com/,"www.imdb.com") + "\x0f".b + 
+        " - " + (i.plot ? (i.plot)[0..255] : "")
         
         m.reply myreply
         return
