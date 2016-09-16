@@ -181,7 +181,7 @@ module Plugins
         end
         
         botlog "[insult: #{insult}]", m
-        m.reply insult
+        m.reply insult.gsub(/Draylor/i, "Gaylord")
       end
 
     end
@@ -206,7 +206,7 @@ module Plugins
       speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
       speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
       
-      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(2) == 0 || m.user.to_s =~ /fatman|sexygirl/)
+      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(4) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(2) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
         Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
@@ -215,26 +215,26 @@ module Plugins
       end
     end
     
-    def weight_use(word, count, seeds)
+    def weight_use(word, count, seeds, insentence)
       return count
     end
     
-    def weight_one(word, count, seeds)
+    def weight_one(word, count, seeds, insentence)
       return 1
     end
     
-    def weight_vulgar(word, count, inseeds)
-      seeds = inseeds.map {|s| Regexp.escape(s)}
+    def weight_vulgar(word, count, inseeds, insentence)
+      seeds = (inseeds-insentence).map {|s| Regexp.escape(s)}
       if seeds.length > 0 && word =~ /^(#{seeds.join('|')})$/i
         return (100 * count)
-      elsif(word =~ /(fuck|shit|ass|cunt|twat|mother|rape|kill|cock|dick|schwanz|4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksucker|cocksucking|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cunts|cyalis|cyberfuc|cyberfucker|cyberfuckers|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculatings|ejaculation|ejakulate|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|feck|fecker|felching|fellate|fellatio|fingerfuckers|fistfuck|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fucks|fuckwhit|fuckwit|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jackoff|jap|jism|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3itch|labia|lmfao|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat|masterbat|masterbat|masterbat|masterbat|masturbat|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucker|mothafuckers|mothafuckin|mothafuckings|mothafucks|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|nob|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasm|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pissflaps|pissing|poop|porn|porno|pornography|pornos|prick|pron|pube|pusse|pussi|pussies|pussy|rectum|retard|rimjaw|rimming|s\.o\.b\.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex(?!ten)|sh1t|shag|shagger|shaggin|shagging|shemale|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitting|shittings|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)/i)
+      elsif(word =~ /(fuck|shit|ass|cunt|twat|mother|rape|kill|cock|dick|schwanz|4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksucker|cocksucking|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cunts|cyalis|cyberfuc|cyberfucker|cyberfuckers|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculatings|ejaculation|ejakulate|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|felching|fellate|fellatio|fingerfuckers|fistfuck|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fucks|fuckwhit|fuckwit|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jackoff|jap|jism|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3itch|labia|lmfao|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat|masterbat|masterbat|masterbat|masterbat|masturbat|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucker|mothafuckers|mothafuckin|mothafuckings|mothafucks|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|fecking|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|nob|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasm|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pissflaps|pissing|poop|porn|porno|pornography|pornos|prick|pron|pube|pusse|pussi|pussies|pussy|rectum|retard|rimjaw|rimming|s\.o\.b\.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex(?!ten)|sh1t|shag|shagger|shaggin|shagging|shemale|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitting|shittings|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)/i)
         return (50 * count)
       else
         return count
       end
     end
     
-    def getWord(con, nickfilter, weightsystem, seeds, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
+    def getWord(con, nickfilter, weightsystem, seeds, sentence, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
       debug =0
       q = "select #{outColumn} as outColumn, count(*) as count from #{table} where #{inColumn1} = '#{con.escape(inWord1)}' #{" and #{inColumn2} = '#{con.escape(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by #{outColumn} order by count(*) desc;"
       botlog q if debug == 1
@@ -242,7 +242,7 @@ module Plugins
       
       count = 0      
       result.each do |r|
-        w = weightsystem.call(r['outColumn'], r['count'], seeds)
+        w = weightsystem.call(r['outColumn'], r['count'], seeds, sentence)
         count +=  w
         r['weight'] = w
       end
@@ -325,7 +325,7 @@ module Plugins
       at_end = false
         
       if(!seed || seed.nil? || seed == "" || seed =~ /^\s*$/)
-        seed = getWord(con, nick_filter, weightsystem, seeds, 'WORDS1', 'Word1', dbsym("START"), nil, nil, 'Word2')
+        seed = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', dbsym("START"), nil, nil, 'Word2')
         at_start = true
       end
 
@@ -333,7 +333,7 @@ module Plugins
       sentence = [seed.dup]      
     
       if(!at_start)
-        word = getWord(con, nick_filter, weightsystem, seeds, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1')
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1')
       else
         word = nil
       end
@@ -342,7 +342,7 @@ module Plugins
         sentence.unshift(word.dup)
       else
         at_start = true
-        word = getWord(con, nick_filter, weightsystem, seeds, 'WORDS1', 'Word1', sentence[0], nil, nil, 'Word2')
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[0], nil, nil, 'Word2')
         if word != dbsym("END") && !word.nil?
           sentence.push(word.dup)
         else
@@ -354,8 +354,8 @@ module Plugins
       botlog "GO BACKWARD TO START" if debug == 1
       
       loop do
-        word = getWord(con, nick_filter, weightsystem, seeds, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1') if order == 1
-        word = getWord(con, nick_filter, weightsystem, seeds, 'WORDS2', 'Word2', sentence[0], 'Word3' , sentence[1], 'Word1') if order == 2
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1') if order == 1
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word2', sentence[0], 'Word3' , sentence[1], 'Word1') if order == 2
         
         if word != dbsym("START") && !word.nil?
           sentence.unshift(word.dup)
@@ -369,8 +369,8 @@ module Plugins
       botlog "GO FORWARD TO END" if debug == 1
       
       loop do
-        word = getWord(con, nick_filter, weightsystem, seeds, 'WORDS1', 'Word1', sentence[-1], nil, nil, 'Word2') if order == 1
-        word = getWord(con, nick_filter, weightsystem, seeds, 'WORDS2', 'Word1', sentence[-2], 'Word2' , sentence[-1], 'Word3') if order == 2
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[-1], nil, nil, 'Word2') if order == 1
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word1', sentence[-2], 'Word2' , sentence[-1], 'Word3') if order == 2
         
         if word != dbsym("END") && !word.nil?
           sentence.push(word.dup)
@@ -391,7 +391,7 @@ module Plugins
       a = a.split(" ")
       nicks = a[0].split(",")
       
-      insult = gentext(2, nicks, nil, method(:weight_vulgar))
+      insult = gentext(2, nicks, nil, method(:weight_one))
       if !insult.nil?
         botlog "[nicks = #{nicks}] [insult = #{insult}]", m
         m.reply insult

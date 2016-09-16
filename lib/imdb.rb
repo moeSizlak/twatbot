@@ -30,10 +30,12 @@ module Plugins
         i = Imdb::Search.new(id)
         if i.movies && i.movies.size > 0
           i = i.movies[0]
+        else
+          i = nil
         end
       end
       
-      if i.title
+      if i && i.title
         myrating = i.mpaa_rating.to_s
         if myrating =~ /Rated\s+(\S+)/i
           myrating = "[" + $1 + "] "
