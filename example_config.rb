@@ -16,6 +16,7 @@ module MyApp
       #"Plugins::URLDB",
       #"Plugins::MoeBTC",
       #"Plugins::QuoteDB",
+      "Plugins::Election",
     ]
     
     # Plugins::URL
