@@ -1,6 +1,14 @@
 require 'cgi'
 require 'unirest'
 require 'time'
+require 'sequel'
+
+
+
+
+class IMDBCacheEntry < Sequel::Model(:imdb_cache_entries)
+end
+IMDBCacheEntry.unrestrict_primary_key
 
 module Plugins
   class TvMaze
@@ -24,9 +32,11 @@ module Plugins
       id.gsub!(/[^ -~]/, "")
       
       search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id))
+      showID = nil
       
       if search.body && search.body.size > hitno  && search.body[hitno].key?("show") && search.body[hitno]["show"].key?("id")
-        show = Unirest::get("http://api.tvmaze.com/shows/" + CGI.escape(search.body[hitno]["show"]["id"].to_s))
+        showID = search.body[hitno]["show"]["id"]
+        show = Unirest::get("http://api.tvmaze.com/shows/" + CGI.escape(showID.to_s))
         
         if show.body && show.body.size>0
           
@@ -96,7 +106,7 @@ module Plugins
             "\x03".b + color_text + network + "\x0f".b
           end
           
-          if show.body.fetch("genres", nil)
+          if show.body.fetch("genres", nil) && show.body.fetch("genres", Array.new).join(", ").length > 0
             myreply <<
             " | " + 
             #"\x0f".b + "\x03".b + color_title + "Genre" + "\x0f".b +  ": " +
@@ -110,6 +120,7 @@ module Plugins
             "\x03".b + color_text + show.body.fetch("url", "UNKNOWN_URL").to_s + "\x0f".b
           end
           
+          countdown = ""
           if (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("airstamp", nil))
             now = Time.now
             showtime = DateTime.iso8601(nextep.body.fetch("airstamp")).to_time
@@ -129,30 +140,70 @@ module Plugins
               minutes = ((diff-(days*60*60*24)-(hours*60*60))/60).floor
               seconds = (diff-(days*60*60*24)-(hours*60*60)-(minutes*60)).floor
               
-              myreply = myreply + 
-              " | " + "\x0f".b + "\x03".b + color_title + "Countdown" + "\x0f".b +  ":" +"\x03".b + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s" + "\x0f".b
+              countdown = " | " + "\x0f".b + "\x03".b + color_title + "Countdown" + "\x0f".b +  ":" +"\x03".b + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s" + "\x0f".b
             end
           end
           
-          m.reply myreply
-          
-          
-=begin          
+          c = IMDBCacheEntry[showID]
+          if c
+            myreply <<
+            " | " + 
+            #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
+            "\x03".b + color_text + c.imdburl + "\x0f".b +
+            
+            " | " + 
+            #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
+            "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+            
+            myreply << countdown
+            m.reply myreply
+          end
+   
+
           imdbrating = nil
           if show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("imdb", nil)
             imdblink = show.body.fetch("externals").fetch("imdb")
             i = Imdb::Search.new(imdblink)
       
             if i.movies && i.movies.size > 0
-              imdbrating = i.movies[0].rating.to_s + "/10 (" + i.movies[0].votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)"
+              imdblink = 'http://www.imdb.com/title/' + imdblink if imdblink !~ /http/
+              
+              imdbrating = i.movies[0].rating
+              imdbvotes = i.movies[0].votes
+              
+              if !imdbrating || imdbrating.to_s.length <= 0
+                imdbrating = 0
+              end
+              
+              if !imdbvotes || imdbvotes.to_s.length <= 0
+                imdbvotes = 0
+              end
+      
+              if c
+                c.imdburl = imdblink
+                c.imdb_score = imdbrating
+                c.imdb_votes = imdbvotes
+                c.name = show.body["name"]
+                c.save
+              else
+                c = IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => imdblink, :imdb_score => imdbrating, :imdb_votes => imdbvotes, :name => show.body["name"])
+                
+                myreply <<
+                " | " + 
+                #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
+                "\x03".b + color_text + c.imdburl + "\x0f".b +
+                
+                " | " + 
+                #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
+                "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+              end
             end
           end  
           
-          if imdbrating 
-            m.reply "\x03".b + color_name + show.body["name"] + "\x0f".b +
-            " | " +"\x03".b + color_title + "IMDb" + "\x0f".b +  ":" +"\x03".b + color_text + " " + imdbrating + " http://www.imdb.com/title/#{imdblink}/" + "\x0f".b
+          if !c
+            myreply << countdown
+            m.reply myreply
           end
-=end         
           
           
         end

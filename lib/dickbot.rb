@@ -209,6 +209,7 @@ module Plugins
       if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(4) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(2) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
+        botlog "response=\"#{response}\"", m
         Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
         botlog "RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
         speak[:speaks_available] -= 1

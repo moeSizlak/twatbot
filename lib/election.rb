@@ -8,7 +8,7 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
-    match /^!(?:election|trump|clinton|cunt|president)/, use_prefix: false, method: :get_chart
+    match /^!(?:election|trump|clinton|cunt|president|hillary|donald|don|thedonald|the donald|donny)/i, use_prefix: false, method: :get_chart
         
     def get_chart(m)
       botlog "", m
@@ -53,9 +53,9 @@ module Plugins
              
           myreply = ""
           myreply << "\x03".b + color_name + "2016 Election" + "\x0f".b
-          myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + clinton + "\x0f".b
-          myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + trump   + "\x0f".b
-          myreply << " | " + "\x03".b + "Other"   + "\x0f".b + ": " +"\x03".b + color_text + other   + "\x0f".b
+          myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + clinton.to_s + "\x0f".b
+          myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + trump.to_s   + "\x0f".b
+          myreply << " | " + "\x03".b + "Other"   + "\x0f".b + ": " +"\x03".b + color_text + other.to_s   + "\x0f".b
           myreply << " | " + "\x03".b + "Days Left"   + "\x0f".b + ": " +"\x03".b + color_text + "#{daysLeft.to_i}"   + "\x0f".b
 
           m.reply myreply

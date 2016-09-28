@@ -1,4 +1,4 @@
-require 'mysql2'
+require 'sequel'
 require 'unirest'
 require 'ethon'
 require 'filemagic'
@@ -234,18 +234,14 @@ module Plugins
         end
         
         begin
-          con =  Mysql2::Client.new(:host => MyApp::Config::URLDB_SQL_SERVER, :username => MyApp::Config::URLDB_SQL_USER, :password => MyApp::Config::URLDB_SQL_PASSWORD, :database => MyApp::Config::URLDB_SQL_DATABASE)
-          con.query("SET NAMES utf8")
-          con.query("INSERT INTO TitleBot(Date, Nick, URL, Title, ImageFile) VALUES (NOW(), '#{con.escape(m.user.to_s)}', '#{con.escape(url)}', #{!mytitle.nil? ? "'" + con.escape(mytitle.force_encoding('utf-8')) + "'" : "''"}, #{imagefile.nil? ? "NULL" : "'" + con.escape(imagefile) + "'"})")
+          mytitle = '' if mytitle.nil?
           
-          
-          rescue Mysql2::Error => e
-          puts e.errno
-          puts e.error
-          botlog "[URLDB] [ERROR] #{e.errno} #{e.error}", m
-          
-          ensure
-          con.close if con
+          entries = DB[:TitleBot]
+          entries.insert(:Date => Sequel.function(:now), :Nick => m.user.to_s, :URL => url, :Title => mytitle.force_encoding('utf-8'), :ImageFile => imagefile)
+            
+          rescue Sequel::Error => e
+          puts e.message
+          botlog "[URLDB] [ERROR] #{e.message}", m
         end
         
         

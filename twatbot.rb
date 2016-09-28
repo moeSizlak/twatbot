@@ -2,7 +2,7 @@
 
 # Requires {{{
 require 'cinch'
-Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
+require 'sequel'
 # }}}
 
 def class_from_string(str)
@@ -39,6 +39,9 @@ if !ARGV || ARGV.length != 1
   require File.absolute_path(ARGV[0])
 end
 
+DB = Sequel.connect(MyApp::Config::TWATBOT_DB)
+Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
+
 a = Thread.new do
   bot = Cinch::Bot.new do
     configure do |c|
@@ -53,7 +56,7 @@ a = Thread.new do
     end    
   end
 
-  puts "A"
+  puts "Starting twatbot..."
   bot.loggers.level = :info
   bot.start
 end
@@ -73,7 +76,7 @@ if MyApp::Config::DICKBOT_ENABLE == 1
       end    
     end
     
-    puts "B"
+    puts "Starting dickbot..."
     dickbot.loggers.level = :info
     dickbot.start
   end

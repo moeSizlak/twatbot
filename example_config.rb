@@ -16,8 +16,11 @@ module MyApp
       #"Plugins::URLDB",
       #"Plugins::MoeBTC",
       #"Plugins::QuoteDB",
+      "Plugins::Weather",
       "Plugins::Election",
     ]
+    
+    TWATBOT_DB = 'mysql2://user:pass@127.0.0.1/twatbotdb?encoding=utf8'
     
     # Plugins::URL
     URL_SUB_PLUGINS = [  # each one of these will be tried in order until one of them works:
@@ -48,20 +51,17 @@ module MyApp
     # Plugins::QuoteDB
     QUOTEDB_CHANS = []
     QUOTEDB_EXCLUDE_USERS = []
-    QUOTEDB_SQL_SERVER = '127.0.0.1'
-    QUOTEDB_SQL_USER = 'yoursqlusername'
-    QUOTEDB_SQL_PASSWORD = 'yoursqlpassword'
-    QUOTEDB_SQL_DATABASE = "yoursqldatabase"
     QUOTEDB_ENABLE_RANDQUOTE = 1
     
     # Plugins::URLDB
     URLDB_CHANS = []
     URLDB_EXCLUDE_USERS = []
-    URLDB_SQL_SERVER = '127.0.0.1'
-    URLDB_SQL_USER = 'yoursqlusername'
-    URLDB_SQL_PASSWORD = 'yoursqlpassword'
-    URLDB_SQL_DATABASE = "yoursqldatabase"
     URLDB_IMAGEDIR = ""  # set this to a real path and images will be saved in it
+    
+    # Plugins::Weather
+    WUNDERGROUND_API_KEY = 'YOUR_API_KEY_HERE'
+    WUNDERGROUND_API_RATE_LIMIT_MINUTE = 10
+    WUNDERGROUND_API_RATE_LIMIT_DAY = 250
     
     # Plugins::DickBot
     DICKBOT_ENABLE = 0
@@ -94,11 +94,6 @@ module MyApp
     DICKBOT_SQL_USER = 'yoursqlusername'
     DICKBOT_SQL_PASSWORD = 'yoursqlpassword'
     DICKBOT_SQL_DATABASE = "yoursqldatabase"
-    
-    # Plugins::Weather
-    WUNDERGROUND_API_KEY = 'YOUR_API_KEY_HERE'
-    WUNDERGROUND_API_RATE_LIMIT_MINUTE = 10
-    WUNDERGROUND_API_RATE_LIMIT_DAY = 250
     
   end
 end
