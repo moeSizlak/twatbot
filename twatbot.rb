@@ -3,6 +3,7 @@
 # Requires {{{
 require 'cinch'
 require 'sequel'
+require 'logger'
 # }}}
 
 def class_from_string(str)
@@ -39,7 +40,8 @@ if !ARGV || ARGV.length != 1
   require File.absolute_path(ARGV[0])
 end
 
-DB = Sequel.connect(MyApp::Config::TWATBOT_DB)
+STDOUT.sync = true
+DB = Sequel.connect(MyApp::Config::TWATBOT_SQL, :loggers => [Logger.new($stdout)])
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
 
 a = Thread.new do

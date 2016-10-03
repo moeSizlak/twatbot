@@ -19,8 +19,8 @@ module MyApp
       "Plugins::Weather",
       "Plugins::Election",
     ]
-    
-    TWATBOT_DB = 'mysql2://user:pass@127.0.0.1/twatbotdb?encoding=utf8'
+  
+    TWATBOT_SQL = 'postgres://user:pass@localhost/twatbot?encoding=utf8'
     
     # Plugins::URL
     URL_SUB_PLUGINS = [  # each one of these will be tried in order until one of them works:
@@ -82,19 +82,14 @@ module MyApp
     DICKBOT_JOIN_INSULTS = [
       {:chan => "#chan1", :prob1 => 35, :prob2 => 25},
       {:chan => "#chan2", :prob1 => 50, :prob2 => 25},
-      ]
+    ]
       
     # rate is average number of minutes between "random" speaks, implemented as a Poisson Process
     DICKBOT_RANDOM_SPEAK = [
       {:chan => "#chan2", :rate => 0.5}, 
       {:chan => "#chan1", :rate => 1},
-      ]
-    
-    DICKBOT_SQL_SERVER = '127.0.0.1'
-    DICKBOT_SQL_USER = 'yoursqlusername'
-    DICKBOT_SQL_PASSWORD = 'yoursqlpassword'
-    DICKBOT_SQL_DATABASE = "yoursqldatabase"
-    
+    ]
+  
   end
 end
 

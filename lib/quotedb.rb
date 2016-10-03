@@ -24,7 +24,7 @@ module Plugins
       MyApp::Config::QUOTEDB_CHANS.each do |chan|   
         quotes = DB[:quotes].where(:channel => chan)
         if quotes.count > 0
-          scores = DB[:quote_scr].group_and_count(:id___idx).select_append{avg(score).as(:score)}        
+          scores = DB[:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)}        
           prng = Random.new
           myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
 
@@ -58,7 +58,7 @@ module Plugins
             end
             
             DB[:quote_scr].insert(:id => id, :handle => m.user.to_s, :score => score)
-            result = DB[:quote_scr].group_and_count(:id).select_append{avg(score).as(:score)}.where(:id => id).first
+            result = DB[:quote_scr].group_and_count(:id).select_append{avg(:score).as(:score)}.where(:id => id).first
             m.reply "#{score_updated == 1 ? "Your rating has been changed to #{score}.  " : "" }New score for quote #{id} is #{result[:score].to_f.round(2)}, based on #{result[:count]} ratings."
 
           else
@@ -124,10 +124,10 @@ module Plugins
       rc = quotes.count
       
       if rc && rc > 0      
-        scores = DB[:quote_scr].group_and_count(:id___idx).select_append{avg(score).as(:score)} 
-        result = quotes.order(Sequel.desc(:timestamp)).limit(1, @lastquotes[lqkey][:offset]).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count))   
-        if result && result.count > 0
-          m.reply "\x03".b + "04" + "[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] " + "\x0f".b + "\x03".b + "03" + "[#{result.first[:id]} / #{result.first[:score].to_f.round(2)} (#{result.first[:count]} votes) / #{result.first[:nick]} @ #{Time.at(result.first[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result.first[:quote]}"
+        scores = DB[:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)} 
+        result = quotes.order(Sequel.desc(:timestamp)).limit(1, @lastquotes[lqkey][:offset]).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first   
+        if result
+          m.reply "\x03".b + "04" + "[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] " + "\x0f".b + "\x03".b + "03" + "[#{result[:id]} / #{result[:score].to_f.round(2)} (#{result[:count]} votes) / #{result[:nick]} @ #{Time.at(result[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result[:quote]}"
         else
           m.reply "No additional matches."
           @lastquotes[lqkey][:offset] = -1

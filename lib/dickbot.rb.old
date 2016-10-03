@@ -1,6 +1,6 @@
 require 'ethon'
 require 'htmlentities'
-require 'sequel'
+require 'mysql2'
 
 def dbsym(msg)
   return ":::::"+msg.to_s+":::::"
@@ -132,7 +132,7 @@ module Plugins
           #title_found.gsub!(/[\s\r\n]+/m, ' ')
                     
           begin
-            DB[:insults].insert(:hash => Sequel.cast(Sequel.function(:md5, title_found), :uuid), :insult => title_found)
+            YYZXXX[:insults].insert(:hash => Sequel.cast(Sequel.function(:md5, title_found), :uuid), :insult => title_found)
               
           rescue Sequel::Error => e
             p e.message
@@ -207,7 +207,7 @@ module Plugins
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
         botlog "response=\"#{response}\"", m
-        sleep (prng.rand(8))
+        sleep (prng.rand(11) + 5)
         Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
         botlog "RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
         speak[:speaks_available] -= 1
@@ -233,27 +233,17 @@ module Plugins
       end
     end
     
-    def getWord(nickfilter, weightsystem, seeds, sentence, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
+    def getWord(con, nickfilter, weightsystem, seeds, sentence, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
       debug =0
-      
-      #result = DB["select \"#{outColumn}\" as \"outColumn\", count(*) as \"count\" from \"#{table}\" where \"#{inColumn1}\" = '#{con.escape_string(inWord1)}' #{" and \"#{inColumn2}\" = '#{con.escape_string(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by \"#{outColumn}\" order by count(*) desc;"].all
-      result = DB[table.to_sym].reverse_order(:count).group_and_count("#{outColumn}___outColumn".to_sym).where(inColumn1.to_sym => inWord1)
-      
-      if !inColumn2.nil? && !inWord2.nil?
-        result = result.where(inColumn2.to_sym => inWord2)
-      end
-      
-      if nickfilter && nickfilter.length > 0
-        result = result.where(:Nick => nickfilter)
-      end
-      
-      result = result.all
+      q = "select #{outColumn} as outColumn, count(*) as count from #{table} where #{inColumn1} = '#{con.escape(inWord1)}' #{" and #{inColumn2} = '#{con.escape(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by #{outColumn} order by count(*) desc;"
+      botlog q if debug == 1
+      result = con.query(q)
       
       count = 0      
       result.each do |r|
-        w = weightsystem.call(r[:outColumn], r[:count], seeds, sentence)
+        w = weightsystem.call(r['outColumn'], r['count'], seeds, sentence)
         count +=  w
-        r[:weight] = w
+        r['weight'] = w
       end
       outWord = nil
       return outWord if count == 0
@@ -264,9 +254,9 @@ module Plugins
       
       count = 0      
       result.each do |r|
-        count += r[:weight]
+        count += r['weight']
         if count > rand
-        outWord = r[:outColumn]
+          outWord = r['outColumn']
           break
         end
       end 
@@ -276,13 +266,13 @@ module Plugins
     end
     
     
-    def checkSeeds(nickfilter, seeds)
-      #result1 = DB["select \"Word1\", count(*) as \"count\" from \"WORDS1\" where \"Word1\" IN (#{seeds.map{|x| "'#{con.escape_string(x[0..254])}'"}.join(',')}) group by \"Word1\" order by count(*) desc;"].all
-      result1 = DB[:WORDS1].reverse_order(:count).group_and_count(:Word1).where(:Word1 => seeds.map{|x| x[0..254]})
+    def checkSeeds(con, nickfilter, seeds)
+      q = "select Word1, count(*) as count from WORDS1 where Word1 IN (#{seeds.map{|x| "'#{con.escape(x[0..254])}'"}.join(',')}) group by Word1 order by count(*) desc;"
+      result1 = con.query(q)
       out = []
 
       result1.each do |r|
-        out.push(r[:Word1])
+        out.push(r['Word1'])
       end
       
       #botlog "checkSeeds => #{out}"
@@ -296,18 +286,24 @@ module Plugins
       order = 2 unless order == 1
       prng = Random.new
      
-      nick_filter = nil
-
-      if !nicks || nicks == "" || nicks.length == 0 || !nicks.kind_of?(Array)
-        nick_filter = []
+      con =  Mysql2::Client.new(:host => MyApp::Config::DICKBOT_SQL_SERVER, :username => MyApp::Config::DICKBOT_SQL_USER, :password => MyApp::Config::DICKBOT_SQL_PASSWORD, :database => MyApp::Config::DICKBOT_SQL_DATABASE)
+      con.query("SET NAMES utf8")
+      
+      if !nicks || nicks == "" || nicks.length == 0
+        nick_filter = ""
       else
-        nick_filter = nicks
+        nick_filter = " and Nick in ("
+        nicks.each do |nick|
+          nick_filter << "'#{nick}',"
+        end
+        nick_filter.chomp!(",")
+        nick_filter << ") "
       end      
-      botlog "nick_filter='#{nick_filter}' seeds='#{seeds}'" if debug == 1  
+      botlog "nick_filter='#{nick_filter}'" if debug == 1  
       
       
       if seeds.kind_of?(Array) and seeds.length > 0
-        seedsChecked = checkSeeds(nick_filter, seeds)
+        seedsChecked = checkSeeds(con, nick_filter, seeds)
         
         if seedsChecked.length > 0
           choice = ((((Math.sqrt((8.0*((rand(seedsChecked.length*(seedsChecked.length+1)/2)+1).to_f))+1.0)-1.0)/2.0).ceil)-1.0).to_i
@@ -328,8 +324,7 @@ module Plugins
       at_end = false
         
       if(!seed || seed.nil? || seed == "" || seed =~ /^\s*$/)
-        seed = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', dbsym("START"), nil, nil, 'Word2')
-        botlog "nick_filter='#{nick_filter}' seeds='#{seeds}' seed='#{seed}'" if debug == 1
+        seed = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', dbsym("START"), nil, nil, 'Word2')
         at_start = true
       end
 
@@ -337,7 +332,7 @@ module Plugins
       sentence = [seed.dup]      
     
       if(!at_start)
-        word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1')
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1')
       else
         word = nil
       end
@@ -346,7 +341,7 @@ module Plugins
         sentence.unshift(word.dup)
       else
         at_start = true
-        word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[0], nil, nil, 'Word2')
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[0], nil, nil, 'Word2')
         if word != dbsym("END") && !word.nil?
           sentence.push(word.dup)
         else
@@ -358,8 +353,8 @@ module Plugins
       botlog "GO BACKWARD TO START" if debug == 1
       
       loop do
-        word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1') if order == 1
-        word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word2', sentence[0], 'Word3' , sentence[1], 'Word1') if order == 2
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1') if order == 1
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word2', sentence[0], 'Word3' , sentence[1], 'Word1') if order == 2
         
         if word != dbsym("START") && !word.nil?
           sentence.unshift(word.dup)
@@ -373,8 +368,8 @@ module Plugins
       botlog "GO FORWARD TO END" if debug == 1
       
       loop do
-        word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[-1], nil, nil, 'Word2') if order == 1
-        word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word1', sentence[-2], 'Word2' , sentence[-1], 'Word3') if order == 2
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[-1], nil, nil, 'Word2') if order == 1
+        word = getWord(con, nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word1', sentence[-2], 'Word2' , sentence[-1], 'Word3') if order == 2
         
         if word != dbsym("END") && !word.nil?
           sentence.push(word.dup)
@@ -391,11 +386,10 @@ module Plugins
     
     def imitate(m, a)
       a.strip!
-      a.gsub!(/,/, " ")
       a.gsub!(/  /, " ") while a =~ /  /
-      nicks = a.split(" ")
+      a = a.split(" ")
+      nicks = a[0].split(",")
       
-      botlog "[nicks = #{nicks}]", m
       insult = gentext(2, nicks, nil, method(:weight_one))
       if !insult.nil?
         botlog "[nicks = #{nicks}] [insult = #{insult}]", m

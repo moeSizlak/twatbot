@@ -3,10 +3,7 @@ require 'unirest'
 require 'time'
 require 'sequel'
 
-
-
-
-class IMDBCacheEntry < Sequel::Model(:imdb_cache_entries)
+class IMDBCacheEntry < Sequel::Model(DB[:imdb_cache_entries])
 end
 IMDBCacheEntry.unrestrict_primary_key
 
@@ -37,11 +34,13 @@ module Plugins
       if search.body && search.body.size > hitno  && search.body[hitno].key?("show") && search.body[hitno]["show"].key?("id")
         showID = search.body[hitno]["show"]["id"]
         show = Unirest::get("http://api.tvmaze.com/shows/" + CGI.escape(showID.to_s))
-        
+        #botlog show.body, m
+
         if show.body && show.body.size>0
           
           if show.body.key?("_links") && show.body["_links"].key?("previousepisode") && show.body["_links"]["previousepisode"]["href"]
             lastep = Unirest::get(show.body["_links"]["previousepisode"]["href"])
+            #botlog lastep.body, m 
           end
           
           maxEpNumber = nil
@@ -74,7 +73,7 @@ module Plugins
             network = ""
           end
           
-          myreply = "\x03".b + color_name + show.body["name"] + "\x0f".b +
+          myreply = "\x03".b + color_name + show.body["name"].to_s + "\x0f".b +
           
           " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (nextep.body.fetch("airstamp", nil) ? DateTime.iso8601(nextep.body.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +
           
@@ -196,6 +195,8 @@ module Plugins
                 " | " + 
                 #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
                 "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+                
+                c = nil
               end
             end
           end  
@@ -212,7 +213,6 @@ module Plugins
         m.reply myreply
       end
     end
-    
-    
+   
   end
 end
