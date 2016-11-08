@@ -12,6 +12,8 @@ module Plugins
     set :react_on, :message
     
     match /^!insult\s+(\S+)/, use_prefix: false, method: :insult
+    match /^!latest/, use_prefix: false, method: :insult3
+    match /^!list/, use_prefix: false, method: :insult3
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
     match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :action_insult, react_on: :action
     listen_to :join , method: :join_insult
@@ -153,6 +155,25 @@ module Plugins
       botlog "[insult: #{insult}]", m
       m.reply "#{a}: #{insult}"
     end
+ 
+
+    def insult3(m)
+      e = 25
+        
+      prng = Random.new  
+      insult = ""
+      
+      randnum = prng.rand(100)+1
+      if randnum <= e
+        insult = "stfu #{m.user} you fucking #{get_fom_insult}"
+      else
+        insult = "#{m.user}: #{get_ig_insult()}"
+      end
+      
+      botlog "[insult3: #{insult}]", m
+      m.reply insult.gsub(/Draylor/i, "Gaylord")
+
+    end
     
     def join_insult(m)    
       if !MyApp::Config::DICKBOT_JOIN_INSULTS.map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
@@ -203,7 +224,7 @@ module Plugins
       speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
       speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
       
-      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(4) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(2) == 0))
+      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(4) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(2) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
         botlog "response=\"#{response}\"", m
