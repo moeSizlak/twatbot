@@ -18,6 +18,7 @@ module MyApp
       #"Plugins::QuoteDB",
       "Plugins::Weather",
       "Plugins::Election",
+      "Plugins::RottenTomatoes",
     ]
   
     TWATBOT_SQL = 'postgres://user:pass@localhost/twatbot?encoding=utf8'
@@ -33,6 +34,10 @@ module MyApp
     
     YOUTUBE_GOOGLE_SERVER_KEY = "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API"
     IMGUR_API_CLIENT_ID = "YOUR IMGUR API CLIENT ID"
+    
+    # Plugins::RottenTomatoes
+    RT_EXCLUDE_CHANS = []
+    RT_EXCLUDE_USERS = ["dickbot", "dickbot_"]
     
     # Plugins::IMDB
     IMDB_EXCLUDE_CHANS = []
