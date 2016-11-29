@@ -44,6 +44,9 @@ module MyApp
     IMDB_EXCLUDE_USERS = ["dickbot", "dickbot_"]
     
     # Plugins::TvMaze
+    TVDB_API_USERNAME = 'fake'
+    TVDB_API_USERKEY = '0123456789ABCDEF'
+    TVDB_API_KEY = '0123456789ABCDEF'
     TVMAZE_EXCLUDE_CHANS = []
     TVMAZE_EXCLUDE_USERS = ["dickbot", "dickbot_"]
     

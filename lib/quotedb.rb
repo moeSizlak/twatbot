@@ -7,7 +7,7 @@ module Plugins
     
     #set :react_on, :channel 
     #timer 0,  {:method => :randquote, :shots => 1}
-    timer 21600, {:method => :randquote}
+    timer 43200, {:method => :randquote}
     
     match /^!ratequote\s+(\S.*)$/, use_prefix: false, method: :ratequote
     match /^!addquote\s+(\S.*)$/, use_prefix: false, method: :addquote

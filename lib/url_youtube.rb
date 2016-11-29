@@ -32,7 +32,11 @@ module URLHandlers
             if search.body["items"][0]["contentDetails"].key?("duration")
               duration = search.body["items"][0]["contentDetails"]["duration"]
               if duration.size > 0
-                duration = Duration.load(duration).format("%tm:%S")
+                if Duration.load(duration).format("%tm").to_f >= 60
+                  duration = Duration.load(duration).format("%h:%M:%S")
+                else
+                  duration = Duration.load(duration).format("%tm:%S")
+                end
               end
             end  
           end

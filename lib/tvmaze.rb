@@ -2,10 +2,73 @@ require 'cgi'
 require 'unirest'
 require 'time'
 require 'sequel'
+require 'nokogiri'
+require 'open-uri'
 
 class IMDBCacheEntry < Sequel::Model(DB[:imdb_cache_entries])
 end
 IMDBCacheEntry.unrestrict_primary_key
+
+
+class TVDB
+  def initialize(id = nil)
+    @id = id
+    @show = nil
+    @@current_auth_token = nil
+  end
+  
+  def self.getAuthToken
+    login = Unirest::post('https://api.thetvdb.com/login', 
+      headers:{ "Accept" => "application/json", "Content-Type" => "application/json" }, 
+      parameters:{:apikey => MyApp::Config::TVDB_API_KEY, :username => MyApp::Config::TVDB_API_USERNAME, :userkey => MyApp::Config::TVDB_API_USERKEY}.to_json)
+      
+    @@current_auth_token = login.body["token"] rescue nil
+  end
+  private_class_method :getAuthToken
+  
+  def show(id=nil)
+    if id.nil? && @id.nil?
+      return nil
+    end
+    
+    if id == @id || id.nil?
+      if !@show.nil?
+        return @show
+      else
+        return doGetShow
+      end
+    else
+      @id = id
+      @show = nil
+      return doGetShow
+    end    
+  end
+  
+  private
+  
+  def doGetShow
+    return nil if @id.nil?
+    TVDB.send :getAuthToken if @@current_auth_token.nil?
+    myshow = Unirest::get("https://api.thetvdb.com/series/#{CGI.escape(@id)}", 
+      headers:{ "Accept" => "application/json", "Authorization" => 'Bearer ' + @@current_auth_token })
+    
+    if myshow.code == '401'
+      TVDB.send :getAuthToken
+      myshow = Unirest::get("https://api.thetvdb.com/series/#{CGI.escape(@id)}", 
+        headers:{ "Accept" => "application/json", "Authorization" => 'Bearer ' + @@current_auth_token })
+    end
+    
+    if myshow && myshow.body && myshow.body.key?("data")
+      @show = myshow.body["data"].clone
+    else
+      @show = nil
+    end
+    
+    return @show    
+  end
+  
+end
+
 
 module Plugins
   class TvMaze
@@ -160,32 +223,25 @@ module Plugins
    
 
           imdbrating = nil
+          imdblink = nil
           if show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("imdb", nil)
             imdblink = show.body.fetch("externals").fetch("imdb")
-            i = Imdb::Search.new(imdblink)
-      
-            if i.movies && i.movies.size > 0
-              imdblink = 'http://www.imdb.com/title/' + imdblink if imdblink !~ /http/
-              
-              imdbrating = i.movies[0].rating
-              imdbvotes = i.movies[0].votes
-              
-              if !imdbrating || imdbrating.to_s.length <= 0
-                imdbrating = 0
-              end
-              
-              if !imdbvotes || imdbvotes.to_s.length <= 0
-                imdbvotes = 0
-              end
-      
+          elsif show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("thetvdb", nil)
+            tvdblink = show.body.fetch("externals").fetch("thetvdb")
+            imdblink = TVDB.new(tvdblink.to_s).show["imdbId"] rescue nil
+          end
+          
+          if imdblink  
+            i = IMDB::getImdb(imdblink)
+            if i
               if c
-                c.imdburl = imdblink
-                c.imdb_score = imdbrating
-                c.imdb_votes = imdbvotes
+                c.imdburl = 'http://www.imdb.com/title/' + imdblink
+                c.imdb_score = i[:score].gsub(/\/.*$/,'')
+                c.imdb_votes = i[:votes].gsub(/,/,'')
                 c.name = show.body["name"]
                 c.save
               else
-                c = IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => imdblink, :imdb_score => imdbrating, :imdb_votes => imdbvotes, :name => show.body["name"])
+                c = IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => 'http://www.imdb.com/title/' + imdblink, :imdb_score => i[:score].gsub(/\/.*$/,''), :imdb_votes => i[:votes].gsub(/,/,''), :name => show.body["name"])
                 
                 myreply <<
                 " | " + 

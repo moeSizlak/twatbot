@@ -5,6 +5,18 @@ module URLHandlers
     def self.parse(url)
       if(url =~ /https?:\/\/[^\/]*imdb.com.*\/title\/\D*(\d+)/i)
         id = $1
+        
+        i = Plugins::IMDB::getImdb('tt'+id)
+        return unless i
+        
+        myreply = Plugins::IMDB::getImdbString(i)
+        if myreply.length > 0
+          return myreply[:title] + " " + myreply[:rating] + " - " + myreply[:synopsis]
+        end
+        return nil
+        
+        
+=begin
         i = Imdb::Movie.new(id)
         
         if i.title
@@ -35,6 +47,7 @@ module URLHandlers
           
           return myreply
         end
+=end
       end
       return nil
     end
