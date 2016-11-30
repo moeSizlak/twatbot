@@ -88,8 +88,13 @@ module Plugins
             myscore = iscore
           end
         else
-          myvotes = ovotes
-          myscore = oscore
+          if ovotes && ovotes =~ /^\d+$/
+            myvotes = ovotes
+            myscore = oscore
+          else
+            myvotes = 0
+            myscore = 0.0
+          end
         end        
         myvotes = myvotes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
         myscore = myscore.to_s + "/10"

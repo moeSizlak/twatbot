@@ -23,10 +23,18 @@ module Plugins
     match /^(?!!)(?!@)(?!\.).*$/, use_prefix: false, method: :speak
     
     timer 0,  {:method => :initialize_speak_timers, :shots => 1}
+    timer 0,  {:method => :initialize_nicks, :shots => 1}
+    timer 24*60*60,  {:method => :initialize_nicks}
     
     def initialize(*args)
       super
       @speaks = MyApp::Config::DICKBOT_RANDOM_SPEAK      
+    end
+    
+    def initialize_nicks
+      @replace_nicks = []
+      @replace_nicks = DB[:WORDS1].distinct(:Nick).select(:Nick).all.map{|x| x[:Nick].gsub(/^ACTION__/,"")}.select{|x| !x.nil? && x.length > 4}.uniq
+    
     end
     
     def initialize_speak_timers
@@ -35,6 +43,7 @@ module Plugins
         speak[:rate] = 0 if !speak.key?(:rate) || !speak[:rate].is_a?(Numeric) || speak[:rate] < 0
         speak[:max_speaks] = 4 if !speak.key?(:max_speaks) || !speak[:max_speaks].is_a?(Numeric) || speak[:max_speaks] < 0
         speak[:messages] = []
+        speak[:messagesNicks] = []
         
         if(speak[:rate] > 0)
           prng = Random.new  
@@ -216,6 +225,23 @@ module Plugins
       m.reply insult
     end
     
+    
+    
+    def replace_nicks(text, replace_nicks, nick1, nicks=nil)
+      nicks = [nick1] if nicks.nil? || nicks.count == 0
+      i = text.index(/(^|\s|\W)(#{replace_nicks.map{|x| Regexp.escape(x)}.join('|')})(?=$|\s|\W)/)
+      if !i.nil? && !replace_nicks.nil? && replace_nicks.count > 0 && !nick1.nil?
+        i = i + $1.length + $2.length
+        p1 = text.slice(0, i).gsub(/(^|\s|\W)(#{replace_nicks.map{|x| Regexp.escape(x)}.join('|')})(?=$|\s|\W)/,'\1'+nick1)
+        p2 = text.slice(i,text.length).gsub(/(^|\s|\W)(#{replace_nicks.map{|x| Regexp.escape(x)}.join('|')})(?=$|\s|\W)/,'\1'+nicks.sample)
+        return p1 + p2
+      else
+        return text
+      end    
+    end
+    
+    
+    
     def speak(m)
       return if !MyApp::Config::DICKBOT_RANDOM_SPEAK.map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
       
@@ -223,13 +249,24 @@ module Plugins
       
       speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
       speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
+      speak[:messagesNicks].unshift(m.user.to_s).delete_at(10)
       
-      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(4) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(2) == 0))
+      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(5) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(3) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
         botlog "response=\"#{response}\"", m
+        
+        if !seeds.nil? && seeds.count > 0
+          if compare_response(seeds, response) != 0
+            response << " " + gentext(2, nil, [], method(:weight_vulgar)) 
+            botlog "ZFIX- " + response, m
+          end
+        end
+        
         sleep (prng.rand(8))
         Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
+        botlog "RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
+        response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], speak[:messagesNicks].sample, speak[:messagesNicks])
         botlog "RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
         speak[:speaks_available] -= 1
       end
@@ -441,6 +478,26 @@ module Plugins
       return msg.split(" ")
     end
     
+    def compare_response(seeds,response)
+      c = (response.split(" ") - seeds).count  
+      r = 0
+      r = 9 if c == 0
+      r = 8 if c == 1
+      r = 7 if c == 2
+      r = 4 if c == 3
+      if r > 0
+        prng = Random.new  
+        x = prng.rand(10) + 1
+        if x <= r
+          return 1
+        else
+          return 0
+        end
+      else
+        return 0        
+      end
+    end
+    
     
     def talkback(m)
       return if m.action?  
@@ -456,6 +513,25 @@ module Plugins
       
       seeds = filter_msg(x)
       response = gentext(2, nil, seeds, method(:weight_vulgar)) 
+
+      speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
+      botlog response, m
+      
+      if !seeds.nil? && seeds.count > 0
+        if compare_response(seeds, response) != 0
+          response << " " + gentext(2, nil, [], method(:weight_vulgar)) 
+          botlog "ZFIX- " + response, m
+        end
+      end
+        
+=begin
+      puts "A1 => '#{response}'"
+      puts "A2 => '#{@replace_nicks.to_s}'"
+      puts "A3 => '#{m.user.to_s}'"
+      puts "A4 => '#{['zzz1','zzz2', 'zzz3'].to_s}'"
+      puts "A5 => '#{speak[:messagesNicks]}'"
+=end
+      response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], m.user.to_s, speak[:messagesNicks] - [m.user.to_s])
       botlog response, m
       m.reply response
     end
