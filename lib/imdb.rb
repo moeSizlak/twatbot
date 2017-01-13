@@ -29,8 +29,8 @@ module Plugins
       
       if i && i.title
       
-        omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id))
-        if !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
+        omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id)) rescue nil
+        if !omdb || !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
           omdb = nil
         end           
              
@@ -99,7 +99,7 @@ module Plugins
         myvotes = myvotes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
         myscore = myscore.to_s + "/10"
         
-        if omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0
+        if omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /unknown/i
           myplot = omdb.body["Plot"]
         else
           myplot = i.plot

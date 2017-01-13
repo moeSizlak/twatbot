@@ -43,7 +43,7 @@ module Plugins
         if !check_api_rate_limit(3)
           errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@apicalls_minute.size}, last day = #{@apicalls_day.size}) [Error: API_LIMIT_A]"
           botlog errormsg, m
-          m.reply errormsg
+          m.user.notice errormsg
           return
         end
           
@@ -51,7 +51,7 @@ module Plugins
           if !check_api_rate_limit(1)
             errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@apicalls_minute.size}, last day = #{@apicalls_day.size}) [Error: API_LIMIT_B]"
             botlog errormsg, m
-            m.reply errormsg
+            m.user.notice errormsg
             return
           end
           url = "http://api.wunderground.com/api/#{CGI.escape(MyApp::Config::WUNDERGROUND_API_KEY).gsub('+','%20')}/conditions/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
@@ -64,7 +64,7 @@ module Plugins
             if weather.body["response"].key?("error")
               errormsg = "ERROR: #{weather.body["response"]["error"]["type"]}: #{weather.body["response"]["error"]["description"]}"
               botlog errormsg, m
-              m.reply errormsg
+              m.user.notice errormsg
               return
             end  
             
@@ -74,7 +74,7 @@ module Plugins
               else
                 errormsg = "Be more specific."
                 botlog errormsg, m
-                m.reply errormsg
+                m.user.notice errormsg
                 return
               end
             else
@@ -88,7 +88,7 @@ module Plugins
         if !check_api_rate_limit(1)
           errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@apicalls_minute.size}, last day = #{@apicalls_day.size}) [Error: API_LIMIT_C]"
           botlog errormsg, m
-          m.reply errormsg
+          m.user.notice errormsg
           return
         end
         url = "http://api.wunderground.com/api/#{CGI.escape(MyApp::Config::WUNDERGROUND_API_KEY).gsub('+','%20')}/forecast/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
@@ -154,7 +154,7 @@ module Plugins
           end
         end
                   
-        m.reply myreply
+        m.user.notice myreply
              
       end      
     end

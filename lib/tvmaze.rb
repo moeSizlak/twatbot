@@ -93,6 +93,7 @@ module Plugins
       
       search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id))
       showID = nil
+
       
       if search.body && search.body.size > hitno  && search.body[hitno].key?("show") && search.body[hitno]["show"].key?("id")
         showID = search.body[hitno]["show"]["id"]
@@ -109,6 +110,8 @@ module Plugins
           maxEpNumber = nil
           maxEp = nil
           if show.body["_links"] && show.body["_links"]["nextepisode"] && show.body["_links"]["nextepisode"]["href"]
+            #puts show.body["_links"]["nextepisode"]["href"]
+
             nextep = Unirest::get(show.body["_links"]["nextepisode"]["href"])
             
             if (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("season", nil))

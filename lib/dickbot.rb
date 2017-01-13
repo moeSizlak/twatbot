@@ -119,7 +119,7 @@ module Plugins
       end
 
       return sentence.chomp(" ")
-    
+      
     end
     
     # Insult Generator
@@ -248,26 +248,29 @@ module Plugins
       prng = Random.new
       
       speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
-      speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
-      speak[:messagesNicks].unshift(m.user.to_s).delete_at(10)
+      
+      if(m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i)
+        speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
+        speak[:messagesNicks].unshift(m.user.to_s).delete_at(10)
+      end
       
       if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(5) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(3) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
-        botlog "response=\"#{response}\"", m
+        botlog "RESPONSE_1=\"#{response}\"", m
         
         if !seeds.nil? && seeds.count > 0
           if compare_response(seeds, response) != 0
             response << " " + gentext(2, nil, [], method(:weight_vulgar)) 
-            botlog "ZFIX- " + response, m
+            botlog "RESPONSE_ZFIX=\"#{response}\"", m
           end
         end
         
         sleep (prng.rand(8))
-        Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
-        botlog "RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
+        botlog "RESPONSE_2='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
         response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], speak[:messagesNicks].sample, speak[:messagesNicks])
-        botlog "RESPONSE='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
+        botlog "RESPONSE=3'#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
+        Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
         speak[:speaks_available] -= 1
       end
     end
@@ -372,7 +375,9 @@ module Plugins
           seed = seedsChecked[choice]
           botlog "Choosing index #{choice} of #{seedsChecked.length-1}" if debug == 1   
         else
-          return nil
+          seeds = []
+          seedsChecked = []
+          seed = ""
         end
         
       else
@@ -419,7 +424,7 @@ module Plugins
         word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word2', sentence[0], nil, nil, 'Word1') if order == 1
         word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word2', sentence[0], 'Word3' , sentence[1], 'Word1') if order == 2
         
-        if word != dbsym("START") && !word.nil?
+        if word != dbsym("START") && !word.nil? && sentence.count < 100
           sentence.unshift(word.dup)
         else
           at_start = true
@@ -434,7 +439,7 @@ module Plugins
         word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS1', 'Word1', sentence[-1], nil, nil, 'Word2') if order == 1
         word = getWord(nick_filter, weightsystem, seeds, sentence, 'WORDS2', 'Word1', sentence[-2], 'Word2' , sentence[-1], 'Word3') if order == 2
         
-        if word != dbsym("END") && !word.nil?
+        if word != dbsym("END") && !word.nil? && sentence.count < 100
           sentence.push(word.dup)
         else
           at_end = true
@@ -512,11 +517,12 @@ module Plugins
       x.gsub!(/\S*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*/,'')
       
       seeds = filter_msg(x)
+        puts "S='#{seeds}'" 
       response = gentext(2, nil, seeds, method(:weight_vulgar)) 
 
       speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
       botlog response, m
-      
+  puts "'#{response}'"    
       if !seeds.nil? && seeds.count > 0
         if compare_response(seeds, response) != 0
           response << " " + gentext(2, nil, [], method(:weight_vulgar)) 

@@ -56,6 +56,14 @@ a = Thread.new do
       c.nick = MyApp::Config::IRC_NICK
       c.plugins.plugins = class_from_string_array(MyApp::Config::IRC_PLUGINS)
     end    
+    
+    on :kick do |m|
+        if User(m.params[1]) == bot.nick
+          botlog "auto_rejoin,  #{m.params[1]}", m
+          Timer 300, {:shots => 1} { m.channel.join(m.channel.key) }
+        end
+    end
+    
   end
 
   puts "Starting twatbot..."
@@ -75,7 +83,15 @@ if MyApp::Config::DICKBOT_ENABLE == 1
         c.ssl.use = MyApp::Config::DICKBOT_IRC_SSL
         c.nick = MyApp::Config::DICKBOT_IRC_NICK
         c.plugins.plugins = class_from_string_array(MyApp::Config::DICKBOT_IRC_PLUGINS)
-      end    
+      end  
+      
+      on :kick do |m|
+        if User(m.params[1]) == dickbot.nick
+          botlog "auto_rejoin,  #{m.params[1]}", m
+          Timer 300, {:shots => 1} { m.channel.join(m.channel.key) }
+        end
+      end
+      
     end
     
     puts "Starting dickbot..."
