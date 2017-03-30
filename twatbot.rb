@@ -59,8 +59,8 @@ a = Thread.new do
     
     on :kick do |m|
         if User(m.params[1]) == bot.nick
-          botlog "auto_rejoin,  #{m.params[1]}", m
-          Timer 300, {:shots => 1} { m.channel.join(m.channel.key) }
+          botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
+          Timer 300, {:shots => 1} { bot.join(m.channel.name, m.channel.key) }
         end
     end
     
@@ -87,8 +87,8 @@ if MyApp::Config::DICKBOT_ENABLE == 1
       
       on :kick do |m|
         if User(m.params[1]) == dickbot.nick
-          botlog "auto_rejoin,  #{m.params[1]}", m
-          Timer 300, {:shots => 1} { m.channel.join(m.channel.key) }
+          botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
+          Timer 300, {:shots => 1} { dickbot.join(m.channel.name, m.channel.key) }
         end
       end
       

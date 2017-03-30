@@ -32,7 +32,9 @@ module Plugins
         omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id)) rescue nil
         if !omdb || !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
           omdb = nil
-        end           
+        end     
+        
+        puts "===>" + omdb.nil?.to_s + "\n"
              
         tomato = nil
         if omdb && omdb.body.key?('tomatoURL') && omdb.body["tomatoURL"] =~ /^http/
@@ -103,6 +105,10 @@ module Plugins
           myplot = omdb.body["Plot"]
         else
           myplot = i.plot
+          if myplot.nil?
+            myplot = ""
+          end
+          myplot.gsub!(/[\r\n].*/, "")
         end  
         
         return { :id => i.id, :title => i.title, :year => i.year, :url => 'http://www.imdb.com/title/tt' + CGI.escape(i.id) + '/', :plot => myplot, :tomato => tomato,

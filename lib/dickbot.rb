@@ -161,8 +161,10 @@ module Plugins
     
     def insult(m, a)  
       insult = get_ig_insult()
-      botlog "[insult: #{insult}]", m
-      m.reply "#{a}: #{insult}"
+      if !insult.nil? && insult.length > 0
+        botlog "[insult: #{insult}]", m
+        m.reply "#{a}: #{insult}".gsub(/Draylor/i, "Gaylord")
+      end
     end
  
 
@@ -207,8 +209,10 @@ module Plugins
           insult = "#{m.user}: #{get_ig_insult()}"
         end
         
-        botlog "[insult: #{insult}]", m
-        m.reply insult.gsub(/Draylor/i, "Gaylord")
+        if !insult.nil? && insult !~ /^#{m.user}:\s*$/
+          botlog "[insult: #{insult}]", m
+          m.reply insult.gsub(/Draylor/i, "Gaylord")
+        end
       end
 
     end
@@ -216,13 +220,13 @@ module Plugins
     def insult2(m, a)
       insult = get_fom_insult()
       botlog "[insult: #{insult}]", m
-      m.reply "#{a}: #{insult}"
+      m.reply "#{a}: #{insult}".gsub(/Draylor/i, "Gaylord")
     end
     
     def action_insult(m)
       insult = "stfu #{m.user} you fucking #{get_fom_insult}"
       botlog "[insult: #{insult}]", m
-      m.reply insult
+      m.reply insult.gsub(/Draylor/i, "Gaylord")
     end
     
     
@@ -270,7 +274,7 @@ module Plugins
         botlog "RESPONSE_2='#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
         response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], speak[:messagesNicks].sample, speak[:messagesNicks])
         botlog "RESPONSE=3'#{response}' speaks_available(prior)='#{speak[:speaks_available]}'", m
-        Channel(m.channel.to_s).send Cinch::Helpers.sanitize response
+        Channel(m.channel.to_s).send Cinch::Helpers.sanitize response.gsub(/Draylor/i, "Gaylord")
         speak[:speaks_available] -= 1
       end
     end
@@ -288,6 +292,17 @@ module Plugins
       if seeds.length > 0 && word =~ /^(#{seeds.join('|')})$/i
         return (100 * count)
       elsif(word =~ /(fuck|shit|ass|cunt|twat|mother|rape|kill|cock|dick|schwanz|4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksucker|cocksucking|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cunts|cyalis|cyberfuc|cyberfucker|cyberfuckers|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculatings|ejaculation|ejakulate|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|felching|fellate|fellatio|fingerfuckers|fistfuck|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fucks|fuckwhit|fuckwit|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jackoff|jap|jism|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3itch|labia|lmfao|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat|masterbat|masterbat|masterbat|masterbat|masturbat|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucker|mothafuckers|mothafuckin|mothafuckings|mothafucks|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|fecking|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|nob|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasm|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pissflaps|pissing|poop|porn|porno|pornography|pornos|prick|pron|pube|pusse|pussi|pussies|pussy|rectum|retard|rimjaw|rimming|s\.o\.b\.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex(?!ten)|sh1t|shag|shagger|shaggin|shagging|shemale|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitting|shittings|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)/i)
+        return (50 * count)
+      else
+        return count
+      end
+    end
+    
+    def weight_kind(word, count, inseeds, insentence)
+      seeds = (inseeds-insentence).map {|s| Regexp.escape(s)}
+      if seeds.length > 0 && word =~ /^(#{seeds.join('|')})$/i
+        return (100 * count)
+      elsif(word =~ /(penetrate|kind|gentle|love|<3|like|yum|m+|vagina|pussy|cock|tits|schwanz|ass|suck|accessible|accommodating|affable|affectionate|agreeable|allied|altruistic|amiable|amicable|angel|approachable|associative|attentive|benedictory|beneficent|beneficial|benevolent|benign|benignant|big-hearted|brotherly|buddy|charitable|chummy|civil|close|clubby|communicative|companiable|compassionate|comrade|congenial|considerate|cordial|cosy|courteous|couthy|decent|delicate|easy-going|expansive|faithful|familiar|favorable|fellow|feeling|fond|forbearing|friendly|generous|genial|gentle|good|good-hearted|good-humored|good intentionate|good-natured|good willing|gracious|gregarious|hail-fellow-well-met|heartfelt|helpful|hospitable|humane|indulgent|kind|kind-hearted|kindly|likable|loving|loyal|magnanimous|mannered|motherly|neighborly|nice|open-handed|open-hearted|open|minded|outgoing|pal|pally|patient|peaceful|philanthropic|pleasant|propitious|receptive|salutary|smiling|sociable|social|soft|hearted|solicitous|sportive|sporty|sweet|sympathetic|tactful|tender|tender-hearted|thoughtful|tolerant|understanding|unselfish|warm|warm|hearted|welcoming|well|disposed|well|meaning|absolutely|abundant|accept|acclaimed|accomplishment|achievement|action|active|activist|acumen|adjust|admire|adopt|adorable|adored|adventure|affirmation|affirmative|affluent|agree|airy|alive|alliance|ally|alter|amaze|amity|animated|answer|appreciation|approve|aptitude|artistic|assertive|astonish|astounding|astute|attractive|authentic|basic|beaming|beautiful|believe|benefactor|benefit|bighearted|blessed|bliss|bloom|bountiful|bounty|brave|bright|brilliant|bubbly|bunch|burgeon|calm|care|celebrate|certain|change|character|charitable|charming|cheer|cherish|clarity|classy|clean|clever|closeness|commend|companionship|complete|comradeship|confident|connect|connected|constant|content|conviction|copious|core|coupled|courageous|creative|cuddle|cultivate|cure|curious|cute|dazzling|delight|direct|discover|distinguished|divine|donate|each|day|eager|earnest|easy|ecstasy|effervescent|efficient|effortless|electrifying|elegance|embrace|encompassing|encourage|endorse|energized|energy|enjoy|enormous|enthuse|enthusiastic|entirely|essence|established|esteem|everyday|everyone|excited|exciting|exhilarating|expand|explore|express|exquisite|exultant|faith|familiar|family|famous|feat|fit|flourish|fortunate|fortune|freedom|fresh|friendship|full|funny|gather|generous|genius|genuine|give|glad|glow|good|gorgeous|grace|graceful|gratitude|green|grin|group|grow|handsome|happy|harmony|healed|healing|healthful|healthy|heart|hearty|heavenly|helpful|here|highest|good|hold|holy|honest|honor|hug|i|affirm|i|allow|i|am|willing|i|am.|i|can|i|choose|i|create|i|follow|i|know|i|know,|without|a|doubt|i|make|i|realize|i|take|action|i|trust|idea|ideal|imaginative|increase|incredible|independent|ingenious|innate|innovate|inspire|instantaneous|instinct|intellectual|intelligence|intuitive|inventive|joined|jovial|joy|jubilation|keen|key|kind|kiss|knowledge|laugh|leader|learn|legendary|let|go|light|lively|love|loveliness|lucidity|lucrative|luminous|maintain|marvelous|master|meaningful|meditate|mend|metamorphosis|mind-blowing|miracle|mission|modify|motivate|moving|natural|nature|nourish|nourished|novel|now|nurture|nutritious|one|open|openhanded|optimistic|paradise|party|peace|perfect|phenomenon|pleasure|plenteous|plentiful|plenty|plethora|poise|polish|popular|positive|powerful|prepared|pretty|principle|productive|project|prominent|prosperous|protect|proud|purpose|quest|quick|quiet|ready|recognize|refinement|refresh|rejoice|rejuvenate|relax|reliance|rely|remarkable|renew|renowned|replenish|resolution|resound|resources|respect|restore|revere|revolutionize|rewarding|rich|robust|rousing|safe|secure|see|sensation|serenity|shift|shine|show|silence|simple|sincerity|smart|smile|smooth|solution|soul|sparkling|spirit|spirited|spiritual|splendid|spontaneous|still|stir|strong|style|success|sunny|support|sure|surprise|sustain|synchronized|team|thankful|therapeutic|thorough|thrilled|thrive|today|together|tranquil|transform|triumph|trust|truth|unity|unusual|unwavering|upbeat|value|vary|venerate|venture|very|vibrant|victory|vigorous|vision|visualize|vital|vivacious|voyage|wealthy|welcome|well|whole|wholesome|willing|wonder|wonderful|wondrous|xanadu|yes|yippee|young|youth|youthful|zeal|zest|zing|zip)/i)
         return (50 * count)
       else
         return count
@@ -462,7 +477,7 @@ module Plugins
       insult = gentext(2, nicks, nil, method(:weight_one))
       if !insult.nil?
         botlog "[nicks = #{nicks}] [insult = #{insult}]", m
-        m.reply insult
+        m.reply insult.gsub(/Draylor/i, "Gaylord")
       end
     end
     
@@ -539,7 +554,7 @@ module Plugins
 =end
       response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], m.user.to_s, speak[:messagesNicks] - [m.user.to_s])
       botlog response, m
-      m.reply response
+      m.reply response.gsub(/Draylor/i, "Gaylord")
     end
   
   end
