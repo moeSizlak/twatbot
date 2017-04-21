@@ -37,6 +37,7 @@ module Plugins
         end 
         #botlog "Setting #{feed[:name]}[:old] to \"#{mostrecent.title}\""
         feed[:old] = mostrecent.url
+        #puts mostrecent.url
       end
     end
     
