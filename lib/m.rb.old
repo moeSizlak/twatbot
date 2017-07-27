@@ -1,0 +1,81 @@
+module Plugins  
+  class MoeBTC
+    include Cinch::Plugin
+    set :react_on, :message
+    
+    match /^\.moe/i, use_prefix: false, method: :moebtc
+    match /^\.r\s*$/i, use_prefix: false, method: :getBTCRates
+    
+    timer 0,  {:method => :updateBTC, :shots => 1}
+    timer 300, {:method => :updateBTC}  
+    
+    def initialize(*args)
+      super
+      @btcChans = MyApp::Config::BTC_CHANS
+    end
+    
+    def updateBTC   
+      bs = Unirest::get("https://www.bitstamp.net/api/v2/ticker/btcusd/")
+      bspx = bs.body["last"] rescue nil         
+      
+      cb = Unirest::get("https://api.coinbase.com/v2/prices/spot?currency=USD")
+      cbpx = cb.body["data"]["amount"] rescue nil
+
+      bdiff = 0
+      cdiff = 0
+      
+      @btcChans.each do |c|    
+        doPrint = 0
+        
+        if !bspx.nil?
+          if !c[:bspl].nil?
+            bdiff = ((bspx-c[:bspl])/c[:bspl]) * 100.0
+          end
+          
+          c[:bsp] = bspx
+        end
+        
+        if !cbpx.nil?
+          if !c[:cbpl].nil?
+            cdiff = ((cbpx-c[:cbpl])/c[:cbpl]) * 100.0
+          end
+          
+          c[:cbp] = cbpx
+        end
+        
+        
+        if (abs(bdiff)/c[:bspl]) >= 10.0
+          doPrint = 1
+        end
+      end
+
+    end
+    
+    
+    def moebtc(m)
+      botlog "", m
+    
+      x = rand
+      myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
+      myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
+      m.reply myreply1
+      m.reply myreply2
+    end
+    
+    
+    def getBTCRates(m) 
+      if !MyApp::Config::BTC_CHANS.map{|x| x[:chan]}.include?(m.channel.to_s)
+        return
+      end
+    
+      myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + @btcChans.select{|k,v| k == :chan }@bsp
+      myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + @cbp
+      m.reply myreply1
+      m.reply myreply2
+      
+      @bspl = @bsp
+      @cbpl = @cbp    
+    end
+    
+  end  
+end

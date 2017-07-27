@@ -90,6 +90,7 @@ module Plugins
       id.gsub!(/\s+$/, "")
       id.gsub!(/\s+/, " ")
       id.gsub!(/[^ -~]/, "")
+      id.gsub!(/^\s*saul\s*$/i, "better call saul")
       
       search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id))
       showID = nil

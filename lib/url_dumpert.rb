@@ -14,14 +14,16 @@ module URLHandlers
           search = Unirest::get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(title.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))
           
           if search.body
-            search = search.body
-            search.gsub!(/,+/, ',')
-            search.gsub!(/\[,/, '[')
-            search = JSON.parse(search.body)
+            search = search.body[0][0][0] rescue nil
+            #puts "ZZZZ\n#{search[0][0][0]}"
+            #search.gsub!(/,+/, ',')
+            #search.gsub!(/\[,/, '[')
+            #search = JSON.parse(search.body)
             
-            if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
+            #if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
+            if !search.nil? && search.length > 0
               title = title + 
-              "\x03".b + "04" + "  [" + search[0][0][0] + "]" + "\x0f".b
+              "\x03".b + "04" + "  [" + search + "]" + "\x0f".b
               
               return title
             end
