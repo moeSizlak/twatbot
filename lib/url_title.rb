@@ -26,7 +26,7 @@ module URLHandlers
       t.close
       
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, headers: {
+        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, accept_encoding: ['identity','gzip','deflate'], headers: {
         #easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
           'User-Agent' => 'foo'
         }
@@ -66,13 +66,14 @@ module URLHandlers
       t.close
       
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, headers: {
+        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, accept_encoding: ['identity','gzip','deflate'], headers: {
         #easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
           'User-Agent' => 'foo'
         }
         easy.on_body do |chunk, easy|
           myurl = easy.effective_url
           recvd << chunk
+
           
           recvd =~ Regexp.new('<title[^>]*>\s*((?:(?!</title>).){0,250})\s*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
