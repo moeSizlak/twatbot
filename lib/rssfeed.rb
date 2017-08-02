@@ -16,28 +16,18 @@ module Plugins
     def updatefeed
       @feeds.each do |feed|      
         feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])    
-        mostrecent = feedparsed.entries.first
         
         if !feed[:old].nil?
-          if(mostrecent.url != feed[:old])
-            newentries = []
-            
-            feedparsed.entries.slice(0..10).each do |entry|
-              break if entry.url == feed[:old]
-              newentries.unshift entry
+          feedparsed.entries.slice(0..10).reverse.each do |entry|
+            if !feed[:old].include?(entry.url)
+              botlog "Printing new RSS entry \"#{entry.title}\""
+              printnew(entry, feed[:name], feed[:chans])
             end
-            
-            newentries.each do |newentry|
-              botlog "Printing new RSS entry \"#{newentry.title}\""
-              printnew(newentry, feed[:name], feed[:chans])
-            end
-          end
-          else
-          #printnew(mostrecent, feed[:name], feed[:chans])          
+          end 
         end 
-        #botlog "Setting #{feed[:name]}[:old] to \"#{mostrecent.title}\""
-        feed[:old] = mostrecent.url
-        #puts mostrecent.url
+        mostrecent10url = feedparsed.entries.slice(0..10).map{|x| x.url}
+        #botlog "Setting #{feed[:name]}[:old] to \"#{mostrecent10url}\""
+        feed[:old] = mostrecent10url
       end
     end
     
