@@ -4,6 +4,7 @@ require 'time'
 require 'sequel'
 require 'nokogiri'
 require 'open-uri'
+require 'tzinfo'
 
 class IMDBCacheEntry < Sequel::Model(DB[:imdb_cache_entries])
 end
@@ -131,20 +132,42 @@ module Plugins
           color_colons = "12"
           color_text = "07"
                     
-          
+          tz = TZInfo::Timezone.get('America/New_York')
+
           if show.body.fetch("network", nil) && show.body.fetch("network").fetch("name", nil)
             network = show.body.fetch("network").fetch("name");
+            tz = TZInfo::Timezone.get(show.body.fetch("network").fetch("country", nil).fetch("timezone", nil)) rescue TZInfo::Timezone.get('America/New_York')
             elsif show.body.fetch("webChannel", nil) && show.body.fetch("webChannel").fetch("name", nil)
             network = show.body.fetch("webChannel").fetch("name");
+            tz = TZInfo::Timezone.get(show.body.fetch("webChannel").fetch("country", nil).fetch("timezone", nil)) rescue TZInfo::Timezone.get('America/New_York')
             else
             network = ""
+          end
+
+          airstamp_next = nil
+          airstamp_last = nil
+          airstamp_next_utc = nil
+          airstamp_last_utc = nil
+          airstamp_next_local = nil
+          airstamp_last_local = nil
+
+          if (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("airstamp", nil))
+            airstamp_next = DateTime.iso8601(nextep.body.fetch("airstamp", nil)) rescue nil
+            airstamp_next_utc = airstamp_next.new_offset("+00:00") rescue nil
+            airstamp_next_local = DateTime.parse(Time.parse(airstamp_next_utc.to_s).getlocal(tz.period_for_utc(Time.parse(airstamp_next_utc.to_s)).utc_total_offset).to_s)
+          end
+
+          if (lastep && lastep.body && lastep.body.size > 0 && lastep.body.fetch("airstamp", nil))
+            airstamp_last = DateTime.iso8601(lastep.body.fetch("airstamp", nil)) rescue nil
+            airstamp_last_utc = airstamp_last.new_offset("+00:00") rescue nil
+            airstamp_last_local = DateTime.parse(Time.parse(airstamp_last_utc.to_s).getlocal(tz.period_for_utc(Time.parse(airstamp_last_utc.to_s)).utc_total_offset).to_s)
           end
           
           myreply = "\x03".b + color_name + show.body["name"].to_s + "\x0f".b +
           
-          " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (nextep.body.fetch("airstamp", nil) ? DateTime.iso8601(nextep.body.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +
+          " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +
           
-          " | " + "\x0f".b + "\x03".b + color_title + "Prev" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (lastep.body.fetch("airstamp", nil) ? DateTime.iso8601(lastep.body.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b 
+          " | " + "\x0f".b + "\x03".b + color_title + "Prev" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b 
                   
           if(maxEpNumber)
             #myreply << " | " + "\x0f".b + "\x03".b + color_title + "Season Finale" + "\x0f".b +  ":" +"\x03".b + color_text + " " + nextep.body.fetch("season").to_s + "x" + maxEpNumber.to_s + " (" + (maxEp.fetch("airstamp", nil) ? DateTime.iso8601(maxEp.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")""\x0f".b
@@ -157,14 +180,35 @@ module Plugins
             #"\x0f".b + "\x03".b + color_title + "Status" + "\x0f".b +  ": " +
             "\x03".b + color_text + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f".b
           end
-            
-          if nextep && nextep.body.fetch("airstamp", nil)
+=begin            
+          if nextep && nextep.body.fetch("airstamp", nil)       
             myreply <<
             " | " + 
             #"\x0f".b + "\x03".b + color_title + "Airs" + "\x0f".b +  ": " +
             "\x03".b + color_text + (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("airstamp", nil) ? DateTime.iso8601(nextep.body.fetch("airstamp")).strftime("%A %I:%M %p (UTC%z)") : (lastep && lastep.body && lastep.body.size > 0 && lastep.body.fetch("airstamp", nil) ? DateTime.iso8601(lastep.body.fetch("airstamp")).strftime("%A %I:%M %p (UTC%z)") : "UNKOWN_AIRTIME")) + "\x0f".b
           end 
-           
+=end
+          days = nil
+          if show.body.fetch("schedule", nil) && show.body.fetch("schedule").fetch("days", nil) && show.body.fetch("schedule").fetch("days", Array.new).join(", ").length > 0
+            if show.body.fetch("schedule").fetch("days", Array.new).length  == 1
+              days = show.body.fetch("schedule").fetch("days", Array.new).join(", ")
+            else
+              days = show.body.fetch("schedule").fetch("days", Array.new).map{|x| x[0..2]}.join(", ")
+            end
+          end
+
+          if airstamp_next_local
+            myreply <<
+            " | " + 
+            "\x03".b + color_text + airstamp_next_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
+          elsif airstamp_last_local
+            myreply <<
+            " | " + 
+            "\x03".b + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
+          end 
+
+
+
           if network && network.length > 0
             myreply << 
             " | " + 
