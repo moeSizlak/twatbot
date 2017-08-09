@@ -100,24 +100,23 @@ module Plugins
       if search.body && search.body.size > hitno  && search.body[hitno].key?("show") && search.body[hitno]["show"].key?("id")
         showID = search.body[hitno]["show"]["id"]
         show = Unirest::get("http://api.tvmaze.com/shows/" + CGI.escape(showID.to_s))
-        #botlog show.body, m
 
         if show.body && show.body.size>0
           
-          if show.body.key?("_links") && show.body["_links"].key?("previousepisode") && show.body["_links"]["previousepisode"]["href"]
-            lastep = Unirest::get(show.body["_links"]["previousepisode"]["href"])
-            #botlog lastep.body, m 
+          lastepLink = show.body.dig("_links", "previousepisode", "href")
+          if lastepLink
+            lastep = Unirest::get(lastepLink)
           end
           
           maxEpNumber = nil
           maxEp = nil
-          if show.body["_links"] && show.body["_links"]["nextepisode"] && show.body["_links"]["nextepisode"]["href"]
-            #puts show.body["_links"]["nextepisode"]["href"]
 
-            nextep = Unirest::get(show.body["_links"]["nextepisode"]["href"])
+          nextepLink = show.body.dig("_links", "nextepisode", "href")
+          if nextepLink
+            nextep = Unirest::get(nextepLink)
             
-            if (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("season", nil))
-              thisSeason = nextep.body.fetch("season")
+            if (nextep && nextep.body && nextep.body.dig("season"))
+              thisSeason = nextep.body.dig("season")
               eps = Unirest::get("http://api.tvmaze.com/shows/#{CGI.escape(show.body.fetch("id").to_s)}/episodes")
               if eps.body && eps.body.size>0
                 maxEp = eps.body.select { |e| e.fetch("season", nil) && e.fetch("number", nil) && e.fetch("season") == thisSeason }.max { |a,b| a["number"] <=> b["number"]}
@@ -134,12 +133,13 @@ module Plugins
                     
           tz = TZInfo::Timezone.get('America/New_York')
 
-          if show.body.fetch("network", nil) && show.body.fetch("network").fetch("name", nil)
+          network = show.body.dig("network", "name")
+          if network
             network = show.body.fetch("network").fetch("name");
-            tz = TZInfo::Timezone.get(show.body.fetch("network").fetch("country", nil).fetch("timezone", nil)) rescue TZInfo::Timezone.get('America/New_York')
-            elsif show.body.fetch("webChannel", nil) && show.body.fetch("webChannel").fetch("name", nil)
-            network = show.body.fetch("webChannel").fetch("name");
-            tz = TZInfo::Timezone.get(show.body.fetch("webChannel").fetch("country", nil).fetch("timezone", nil)) rescue TZInfo::Timezone.get('America/New_York')
+            tz = TZInfo::Timezone.get(show.body.dig("network","country","timezone")) rescue TZInfo::Timezone.get('America/New_York')
+            elsif show.body.dig("webChannel", "name")
+            network = show.body.dig("webChannel", "name")
+            tz = TZInfo::Timezone.get(show.body.dig("webChannel","country","timezone")) rescue TZInfo::Timezone.get('America/New_York')
             else
             network = ""
           end
@@ -154,48 +154,40 @@ module Plugins
           if (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("airstamp", nil))
             airstamp_next = DateTime.iso8601(nextep.body.fetch("airstamp", nil)) rescue nil
             airstamp_next_utc = airstamp_next.new_offset("+00:00") rescue nil
-            airstamp_next_local = DateTime.parse(Time.parse(airstamp_next_utc.to_s).getlocal(tz.period_for_utc(Time.parse(airstamp_next_utc.to_s)).utc_total_offset).to_s)
+            airstamp_next_utc_time = Time.parse(airstamp_next_utc.to_s)
+            airstamp_next_local = DateTime.parse(airstamp_next_utc_time.getlocal(tz.period_for_utc(airstamp_next_utc_time).utc_total_offset).to_s)
           end
 
           if (lastep && lastep.body && lastep.body.size > 0 && lastep.body.fetch("airstamp", nil))
             airstamp_last = DateTime.iso8601(lastep.body.fetch("airstamp", nil)) rescue nil
             airstamp_last_utc = airstamp_last.new_offset("+00:00") rescue nil
-            airstamp_last_local = DateTime.parse(Time.parse(airstamp_last_utc.to_s).getlocal(tz.period_for_utc(Time.parse(airstamp_last_utc.to_s)).utc_total_offset).to_s)
+            airstamp_last_utc_time = Time.parse(airstamp_last_utc.to_s)
+            airstamp_last_local = DateTime.parse(airstamp_last_utc_time.getlocal(tz.period_for_utc(airstamp_last_utc_time).utc_total_offset).to_s)
           end
           
-          myreply = "\x03".b + color_name + show.body["name"].to_s + "\x0f".b +
-          
-          " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +
-          
+          myreply = "\x03".b + color_name + show.body["name"].to_s + "\x0f".b +          
+          " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +          
           " | " + "\x0f".b + "\x03".b + color_title + "Prev" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b 
                   
           if(maxEpNumber)
-            #myreply << " | " + "\x0f".b + "\x03".b + color_title + "Season Finale" + "\x0f".b +  ":" +"\x03".b + color_text + " " + nextep.body.fetch("season").to_s + "x" + maxEpNumber.to_s + " (" + (maxEp.fetch("airstamp", nil) ? DateTime.iso8601(maxEp.fetch("airstamp")).strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")""\x0f".b
             myreply << " | " + "\x0f".b + "\x03".b + color_title + "Final" + "\x0f".b +  ":" +"\x03".b + color_text + " " + nextep.body.fetch("season").to_s + "x" + sprintf("%02d", maxEpNumber.to_s) + "\x0f".b          
           end
           
           if show.body.fetch("status", nil)
             myreply <<
             " | " + 
-            #"\x0f".b + "\x03".b + color_title + "Status" + "\x0f".b +  ": " +
             "\x03".b + color_text + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f".b
           end
-=begin            
-          if nextep && nextep.body.fetch("airstamp", nil)       
-            myreply <<
-            " | " + 
-            #"\x0f".b + "\x03".b + color_title + "Airs" + "\x0f".b +  ": " +
-            "\x03".b + color_text + (nextep && nextep.body && nextep.body.size > 0 && nextep.body.fetch("airstamp", nil) ? DateTime.iso8601(nextep.body.fetch("airstamp")).strftime("%A %I:%M %p (UTC%z)") : (lastep && lastep.body && lastep.body.size > 0 && lastep.body.fetch("airstamp", nil) ? DateTime.iso8601(lastep.body.fetch("airstamp")).strftime("%A %I:%M %p (UTC%z)") : "UNKOWN_AIRTIME")) + "\x0f".b
-          end 
-=end
-          days = nil
-          if show.body.fetch("schedule", nil) && show.body.fetch("schedule").fetch("days", nil) && show.body.fetch("schedule").fetch("days", Array.new).join(", ").length > 0
-            if show.body.fetch("schedule").fetch("days", Array.new).length  == 1
-              days = show.body.fetch("schedule").fetch("days", Array.new).join(", ")
-            else
-              days = show.body.fetch("schedule").fetch("days", Array.new).map{|x| x[0..2]}.join(", ")
-            end
+
+          days = show.body.dig("schedule","days") || []
+          if days.length  == 1
+            days = days.join(", ")
+          elsif days.length > 1
+            days = days.map{|x| x[0..2]}.join(", ")
+          else
+            days = nil
           end
+
 
           if airstamp_next_local
             myreply <<
@@ -212,21 +204,18 @@ module Plugins
           if network && network.length > 0
             myreply << 
             " | " + 
-            #"\x0f".b + "\x03".b + color_title + "Network" + "\x0f".b +  ": " +
             "\x03".b + color_text + network + "\x0f".b
           end
           
           if show.body.fetch("genres", nil) && show.body.fetch("genres", Array.new).join(", ").length > 0
             myreply <<
             " | " + 
-            #"\x0f".b + "\x03".b + color_title + "Genre" + "\x0f".b +  ": " +
             "\x03".b + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f".b
           end
             
           if show.body.fetch("url", nil)
             myreply <<
             " | " + 
-            #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
             "\x03".b + color_text + show.body.fetch("url", "UNKNOWN_URL").to_s + "\x0f".b
           end
           
@@ -258,11 +247,9 @@ module Plugins
           if c
             myreply <<
             " | " + 
-            #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
             "\x03".b + color_text + c.imdburl + "\x0f".b +
             
             " | " + 
-            #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
             "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
             
             myreply << countdown
@@ -271,11 +258,10 @@ module Plugins
    
 
           imdbrating = nil
-          imdblink = nil
-          if show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("imdb", nil)
-            imdblink = show.body.fetch("externals").fetch("imdb")
-          elsif show.body.fetch("externals", nil) && show.body.fetch("externals").fetch("thetvdb", nil)
-            tvdblink = show.body.fetch("externals").fetch("thetvdb")
+          imdblink = show.body.dig("externals", "imdb")
+          tvdblink = show.body.dig("externals", "thetvdb")
+
+          if imdblink.nil? && !tvdblink.nil?
             imdblink = TVDB.new(tvdblink.to_s).show["imdbId"] rescue nil
           end
           
@@ -293,11 +279,9 @@ module Plugins
                 
                 myreply <<
                 " | " + 
-                #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
                 "\x03".b + color_text + c.imdburl + "\x0f".b +
                 
                 " | " + 
-                #"\x0f".b + "\x03".b + color_title + "URL" + "\x0f".b +  ": " +
                 "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
                 
                 c = nil
