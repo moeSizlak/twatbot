@@ -87,7 +87,7 @@ config.values.each_with_index do |server_config, i|
       on :kick do |m|
         if User(m.params[1]) == bot.nick
           botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
-          Timer 10, {:shots => 1} { bot.join(m.channel.name, m.channel.key) }
+          Timer 300, {:shots => 1} { bot.join(m.channel.name, m.channel.key) }
         end
       end  
 
