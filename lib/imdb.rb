@@ -155,7 +155,7 @@ module Plugins
     def imdb(m, id)
       botlog "", m      
       
-      if MyApp::Config::IMDB_EXCLUDE_CHANS.include?(m.channel.to_s) || MyApp::Config::IMDB_EXCLUDE_USERS.include?(m.user.to_s)
+      if m.bot.botconfig[:IMDB_EXCLUDE_CHANS].include?(m.channel.to_s) || m.bot.botconfig[:IMDB_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end   
 

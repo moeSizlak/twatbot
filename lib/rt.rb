@@ -102,7 +102,7 @@ module Plugins
     def rt(m, hitno, id)
       botlog "", m      
       
-      if MyApp::Config::RT_EXCLUDE_CHANS.include?(m.channel.to_s) || MyApp::Config::RT_EXCLUDE_USERS.include?(m.user.to_s)
+      if m.bot.botconfig[:RT_EXCLUDE_CHANS].include?(m.channel.to_s) || m.bot.botconfig[:RT_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end
       

@@ -3,8 +3,8 @@ require 'time'
 require_relative 'url_title.rb'
 
 module URLHandlers
-  class Imgur
-    def self.parse(url)  
+  module Imgur
+    def parse(url)  
       if url =~ /https?:\/\/(?:[^\/.]+\.)*imgur.com(\/.+)$/ 
         path = $1
         path.gsub!(/\/$/, "")
@@ -29,16 +29,16 @@ module URLHandlers
           image = nil
           
           if type == "gallery"
-            gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+            gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
             
             if gallery.body && gallery.body.key?("success") && gallery.body["success"] == true && gallery.body.key?("data")
               if gallery.body["data"].key?("is_album") && gallery.body["data"]["is_album"] == true
-                album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
                 if !album.body || !album.body.key?("success") || !album.body["success"] == true || !album.body.key?("data")
                   album = nil
                 end
               else
-                image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
                 if !image.body || !image.body.key?("success") || !image.body["success"] == true || !image.body.key?("data")
                   image = nil
                 end
@@ -48,11 +48,11 @@ module URLHandlers
             end
             
           elsif type == "album"
-            album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+            album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
             
             if album.body && album.body.key?("success") && album.body["success"] == true && album.body.key?("data")
               if album.body["data"].key?("in_gallery") && album.body["data"]["in_gallery"] == true
-                gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
                 if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
                   gallery = nil
                 end
@@ -62,11 +62,11 @@ module URLHandlers
             end
             
           elsif type == "image"
-            image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+            image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
             
             if image.body && image.body.key?("success") && image.body["success"] == true && image.body.key?("data")
               if image.body["data"].key?("in_gallery") && image.body["data"]["in_gallery"] == true
-                gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
                 if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
                   gallery = nil
                 end
@@ -142,7 +142,7 @@ module URLHandlers
             elsif title
               mytitle = title
             else
-              mytitle = TitleBot::getTitle(gallery ? "http://imgur.com/gallery/#{path}" : (album ? "http://imgur.com/a/#{path}" : "http://imgur.com/#{path}")).to_s
+              mytitle = getTitle(gallery ? "http://imgur.com/gallery/#{path}" : (album ? "http://imgur.com/a/#{path}" : "http://imgur.com/#{path}")).to_s
             end
             
             if mytitle && mytitle.length > 0 && mytitle !~ /Imgur: The most awesome images on the Internet/

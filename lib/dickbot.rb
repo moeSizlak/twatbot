@@ -28,12 +28,13 @@ module Plugins
     
     def initialize(*args)
       super
-      @speaks = MyApp::Config::DICKBOT_RANDOM_SPEAK      
+      @config = bot.botconfig
+      @speaks = @config[:DICKBOT_RANDOM_SPEAK]      
     end
     
     def initialize_nicks
       @replace_nicks = []
-      @replace_nicks = DB[:WORDS1].distinct(:Nick).select(:Nick).all.map{|x| x[:Nick].gsub(/^ACTION__/,"")}.select{|x| !x.nil? && x.length > 4}.uniq
+      @replace_nicks = @config[:DB][:WORDS1].distinct(:Nick).select(:Nick).all.map{|x| x[:Nick].gsub(/^ACTION__/,"")}.select{|x| !x.nil? && x.length > 4}.uniq
     
     end
     
@@ -143,7 +144,7 @@ module Plugins
           #title_found.gsub!(/[\s\r\n]+/m, ' ')
                     
           begin
-            DB[:insults].insert(:hash => Sequel.cast(Sequel.function(:md5, title_found), :uuid), :insult => title_found)
+            @config[:DB][:insults].insert(:hash => Sequel.cast(Sequel.function(:md5, title_found), :uuid), :insult => title_found)
               
           rescue Sequel::Error => e
             p e.message
@@ -187,11 +188,11 @@ module Plugins
     end
     
     def join_insult(m)    
-      if !MyApp::Config::DICKBOT_JOIN_INSULTS.map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+      if !@config[:DICKBOT_JOIN_INSULTS].map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
         return
       end
       
-      e = MyApp::Config::DICKBOT_JOIN_INSULTS.select{|x| x[:chan] == m.channel.to_s}[0]
+      e = @config[:DICKBOT_JOIN_INSULTS].select{|x| x[:chan] == m.channel.to_s}[0]
       e[:prob1] = 0 if !e[:prob1].is_a? Integer || e[:prob1] < 0
       e[:prob1] = 100 if e[:prob1] > 100
       e[:prob2] = 0 if !e[:prob2].is_a? Integer || e[:prob2] < 0
@@ -247,7 +248,7 @@ module Plugins
     
     
     def speak(m)
-      return if !MyApp::Config::DICKBOT_RANDOM_SPEAK.map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+      return if !@config[:DICKBOT_RANDOM_SPEAK].map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
       
       prng = Random.new
       
@@ -312,8 +313,8 @@ module Plugins
     def getWord(nickfilter, weightsystem, seeds, sentence, table, inColumn1, inWord1, inColumn2, inWord2, outColumn, avoidStartEnd=0, debug=0)
       debug =0
       
-      #result = DB["select \"#{outColumn}\" as \"outColumn\", count(*) as \"count\" from \"#{table}\" where \"#{inColumn1}\" = '#{con.escape_string(inWord1)}' #{" and \"#{inColumn2}\" = '#{con.escape_string(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by \"#{outColumn}\" order by count(*) desc;"].all
-      result = DB[table.to_sym].reverse_order(:count).group_and_count("#{outColumn}___outColumn".to_sym).where(inColumn1.to_sym => inWord1)
+      #result = @config[:DB]["select \"#{outColumn}\" as \"outColumn\", count(*) as \"count\" from \"#{table}\" where \"#{inColumn1}\" = '#{con.escape_string(inWord1)}' #{" and \"#{inColumn2}\" = '#{con.escape_string(inWord2)}' " if !inColumn2.nil? && !inWord2.nil?} #{nickfilter} group by \"#{outColumn}\" order by count(*) desc;"].all
+      result = @config[:DB][table.to_sym].reverse_order(:count).group_and_count("#{outColumn}___outColumn".to_sym).where(inColumn1.to_sym => inWord1)
       
       if !inColumn2.nil? && !inWord2.nil?
         result = result.where(inColumn2.to_sym => inWord2)
@@ -353,8 +354,8 @@ module Plugins
     
     
     def checkSeeds(nickfilter, seeds)
-      #result1 = DB["select \"Word1\", count(*) as \"count\" from \"WORDS1\" where \"Word1\" IN (#{seeds.map{|x| "'#{con.escape_string(x[0..254])}'"}.join(',')}) group by \"Word1\" order by count(*) desc;"].all
-      result1 = DB[:WORDS1].reverse_order(:count).group_and_count(:Word1).where(:Word1 => seeds.map{|x| x[0..254]})
+      #result1 = @config[:DB]["select \"Word1\", count(*) as \"count\" from \"WORDS1\" where \"Word1\" IN (#{seeds.map{|x| "'#{con.escape_string(x[0..254])}'"}.join(',')}) group by \"Word1\" order by count(*) desc;"].all
+      result1 = @config[:DB][:WORDS1].reverse_order(:count).group_and_count(:Word1).where(:Word1 => seeds.map{|x| x[0..254]})
       out = []
 
       result1.each do |r|

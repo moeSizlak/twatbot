@@ -4,12 +4,12 @@ require 'ruby-duration'
 
 
 module URLHandlers
-  class Youtube
-    def self.parse(url)      
+  module Youtube
+    def parse(url)      
       if(url =~ /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*/i)
         id = $1
-        search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + MyApp::Config::YOUTUBE_GOOGLE_SERVER_KEY + "&part=snippet,contentDetails,statistics,status")
-        
+        search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status")
+
         if search.body && search.body.key?("items") && search.body["items"].size > 0
           if search.body["items"][0].key?("snippet") 
             if search.body["items"][0]["snippet"].key?("publishedAt")

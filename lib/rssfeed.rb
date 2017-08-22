@@ -10,7 +10,8 @@ module Plugins
     
     def initialize(*args)
       super
-      @feeds = MyApp::Config::RSS_FEEDS
+      @config = bot.botconfig
+      @feeds = @config[:RSS_FEEDS]
     end
     
     def updatefeed

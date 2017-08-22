@@ -15,7 +15,7 @@ module Plugins
     listen_to :channel, method: :urldb_listen
     
     def urldb_listen(m)
-      if !MyApp::Config::URLDB_CHANS.include?(m.channel.to_s) || MyApp::Config::URLDB_EXCLUDE_USERS.include?(m.user.to_s)
+      if !m.bot.botconfig[:URLDB_CHANS].include?(m.channel.to_s) || m.bot.botconfig[:URLDB_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end
       
@@ -47,16 +47,16 @@ module Plugins
             image = nil
             
             if type == "gallery"
-              gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+              gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
               
               if gallery.body && gallery.body.key?("success") && gallery.body["success"] == true && gallery.body.key?("data")
                 if gallery.body["data"].key?("is_album") && gallery.body["data"]["is_album"] == true
-                  album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                  album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
                   if !album.body || !album.body.key?("success") || !album.body["success"] == true || !album.body.key?("data")
                     album = nil
                   end
                 else
-                  image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                  image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
                   if !image.body || !image.body.key?("success") || !image.body["success"] == true || !image.body.key?("data")
                     image = nil
                   end
@@ -66,11 +66,11 @@ module Plugins
               end
               
             elsif type == "album"
-              album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+              album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
               
               if album.body && album.body.key?("success") && album.body["success"] == true && album.body.key?("data")
                 if album.body["data"].key?("in_gallery") && album.body["data"]["in_gallery"] == true
-                  gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                  gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
                   if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
                     gallery = nil
                   end
@@ -80,11 +80,11 @@ module Plugins
               end
               
             elsif type == "image"
-              image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+              image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
               
               if image.body && image.body.key?("success") && image.body["success"] == true && image.body.key?("data")
                 if image.body["data"].key?("in_gallery") && image.body["data"]["in_gallery"] == true
-                  gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                  gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
                   if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
                     gallery = nil
                   end
@@ -127,7 +127,7 @@ module Plugins
                 imgurtitle = "[ALBUM] " + imgurtitle
                 if search.body["data"].key?("cover") && !search.body["data"]["cover"].nil? && search.body["data"]["cover"].length > 0
                   cover = search.body["data"]["cover"]
-                  image = Unirest::get("https://api.imgur.com/3/image/#{cover}.json", headers:{ "Authorization" => "Client-ID " + MyApp::Config::IMGUR_API_CLIENT_ID })
+                  image = Unirest::get("https://api.imgur.com/3/image/#{cover}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
                   if !image.body || !image.body.key?("success") || image.body["success"] != true || !image.body.key?("data")
                     image = nil
                   end
@@ -156,8 +156,8 @@ module Plugins
         
         imagefile = nil
 
-        if Dir.exists?(MyApp::Config::URLDB_IMAGEDIR)
-          imagedir = MyApp::Config::URLDB_IMAGEDIR
+        if Dir.exists?(m.bot.botconfig[:URLDB_IMAGEDIR])
+          imagedir = m.bot.botconfig[:URLDB_IMAGEDIR]
           imagedir = imagedir + '/' unless imagedir =~ /\/$/
         
           recvd = ""
@@ -236,7 +236,7 @@ module Plugins
         begin
           mytitle = '' if mytitle.nil?
           
-          entries = DB[:TitleBot]
+          entries = m.bot.botconfig[:DB][:TitleBot]
           entries.insert(:Date => Sequel.function(:now), :Nick => m.user.to_s, :URL => url, :Title => mytitle.force_encoding('utf-8'), :ImageFile => imagefile)
             
           rescue Sequel::Error => e

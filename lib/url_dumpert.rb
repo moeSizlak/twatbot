@@ -5,10 +5,10 @@ require 'nokogiri'
 require_relative 'url_title.rb'
 
 module URLHandlers  
-  class Dumpert
-    def self.parse(url)
+  module Dumpert
+    def parse(url)
       if(url =~ /(https?:\/\/([^\/\.]*\.)*dumpert\.nl\S+)/i)      
-        title = TitleBot::getTitle(url)
+        title = getTitle(url)
         if !title.nil?          
           title = '' + Nokogiri::HTML.parse(title.force_encoding('utf-8').gsub(/\s{2,}/, ' ')).text        
           search = Unirest::get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(title.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))

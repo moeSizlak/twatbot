@@ -5,9 +5,9 @@ require 'tempfile'
 
 
 module URLHandlers  
-  class TitleBot
-    def self.parse(url)
-      title = TitleBot::getTitleAndLocation(url);
+  module TitleBot
+    def parse(url)
+      title = getTitleAndLocation(url);
       if !title.nil? && !title[:title].nil?
         #url =~ /https?:\/\/([^\/]+)/
         title[:effective_url] =~ /https?:\/\/([^\/]+)/
@@ -18,7 +18,7 @@ module URLHandlers
       return nil    
     end  
     
-    def self.getTitle(url)
+    def getTitle(url)
       coder = HTMLEntities.new
       recvd = String.new
       t = Tempfile.new(['url_cookies', '.dat'])
@@ -55,7 +55,7 @@ module URLHandlers
       return nil
     end
     
-    def self.getTitleAndLocation(url)
+    def getTitleAndLocation(url)
       coder = HTMLEntities.new
       recvd = String.new
       mytitle = nil
@@ -72,7 +72,6 @@ module URLHandlers
         }
         easy.on_body do |chunk, easy|
           myurl = easy.effective_url
-          puts chunk
           recvd << chunk
 
           
@@ -99,6 +98,9 @@ module URLHandlers
     end
     
     
+  module_function :parse
+  module_function :getTitle
+  module_function :getTitleAndLocation
     
   end  
 end

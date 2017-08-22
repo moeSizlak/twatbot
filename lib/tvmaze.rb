@@ -6,26 +6,24 @@ require 'nokogiri'
 require 'open-uri'
 require 'tzinfo'
 
-class IMDBCacheEntry < Sequel::Model(DB[:imdb_cache_entries])
-end
-IMDBCacheEntry.unrestrict_primary_key
-
 
 class TVDB
-  def initialize(id = nil)
+  def initialize(api_key, username, user_key, id = nil)
+    @api_key = api_key
+    @username = username
+    @user_key = user_key
     @id = id
     @show = nil
-    @@current_auth_token = nil
+    @current_auth_token = nil
   end
   
-  def self.getAuthToken
+  def getAuthToken
     login = Unirest::post('https://api.thetvdb.com/login', 
       headers:{ "Accept" => "application/json", "Content-Type" => "application/json" }, 
-      parameters:{:apikey => MyApp::Config::TVDB_API_KEY, :username => MyApp::Config::TVDB_API_USERNAME, :userkey => MyApp::Config::TVDB_API_USERKEY}.to_json)
-      
-    @@current_auth_token = login.body["token"] rescue nil
+      parameters:{:apikey => @api_key, :username => @username, :userkey => @user_key}.to_json)
+     
+    @current_auth_token = login.body["token"] rescue nil
   end
-  private_class_method :getAuthToken
   
   def show(id=nil)
     if id.nil? && @id.nil?
@@ -49,14 +47,15 @@ class TVDB
   
   def doGetShow
     return nil if @id.nil?
-    TVDB.send :getAuthToken if @@current_auth_token.nil?
+    getAuthToken if @current_auth_token.nil?
+
     myshow = Unirest::get("https://api.thetvdb.com/series/#{CGI.escape(@id)}", 
-      headers:{ "Accept" => "application/json", "Authorization" => 'Bearer ' + @@current_auth_token })
+      headers:{ "Accept" => "application/json", "Authorization" => 'Bearer ' + @current_auth_token })
     
     if myshow.code == '401'
-      TVDB.send :getAuthToken
+      getAuthToken
       myshow = Unirest::get("https://api.thetvdb.com/series/#{CGI.escape(@id)}", 
-        headers:{ "Accept" => "application/json", "Authorization" => 'Bearer ' + @@current_auth_token })
+        headers:{ "Accept" => "application/json", "Authorization" => 'Bearer ' + @current_auth_token })
     end
     
     if myshow && myshow.body && myshow.body.key?("data")
@@ -77,11 +76,18 @@ module Plugins
     set :react_on, :message
     
     match /^@(\d*)\s*(\S.*)$/, use_prefix: false, method: :tvmaze
+
+
+    def initialize(*args)
+      super
+      @IMDBCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:imdb_cache_entries]))
+      @IMDBCacheEntry.unrestrict_primary_key
+    end
     
     def tvmaze(m, hitno, id)
       botlog "", m
       
-      if MyApp::Config::TVMAZE_EXCLUDE_CHANS.include?(m.channel.to_s) || MyApp::Config::TVMAZE_EXCLUDE_USERS.include?(m.user.to_s)
+      if m.bot.botconfig[:TVMAZE_EXCLUDE_CHANS].include?(m.channel.to_s) || m.bot.botconfig[:TVMAZE_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end
       
@@ -95,9 +101,16 @@ module Plugins
       
       search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id))
       showID = nil
+      skipcheck = 0
+
+      if !search.body || search.body.size <= hitno  || !search.body[hitno].key?("show") || !search.body[hitno]["show"].key?("id")
+        search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id.gsub(/\./, " ")))
+      else
+        skipcheck = 1
+      end
 
       
-      if search.body && search.body.size > hitno  && search.body[hitno].key?("show") && search.body[hitno]["show"].key?("id")
+      if skipcheck == 1 || (search.body && search.body.size > hitno  && search.body[hitno].key?("show") && search.body[hitno]["show"].key?("id"))
         showID = search.body[hitno]["show"]["id"]
         show = Unirest::get("http://api.tvmaze.com/shows/" + CGI.escape(showID.to_s))
 
@@ -193,10 +206,10 @@ module Plugins
             myreply <<
             " | " + 
             "\x03".b + color_text + airstamp_next_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
-          elsif airstamp_last_local
-            myreply <<
-            " | " + 
-            "\x03".b + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
+          #elsif airstamp_last_local
+          #  myreply <<
+          #  " | " + 
+          #  "\x03".b + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
           end 
 
 
@@ -243,7 +256,7 @@ module Plugins
             end
           end
           
-          c = IMDBCacheEntry[showID]
+          c = @IMDBCacheEntry[showID]
           if c
             myreply <<
             " | " + 
@@ -262,7 +275,7 @@ module Plugins
           tvdblink = show.body.dig("externals", "thetvdb")
 
           if imdblink.nil? && !tvdblink.nil?
-            imdblink = TVDB.new(tvdblink.to_s).show["imdbId"] rescue nil
+            imdblink = TVDB.new(m.bot.botconfig[:TVDB_API_KEY], m.bot.botconfig[:TVDB_API_USERNAME], m.bot.botconfig[:TVDB_API_USERKEY], tvdblink.to_s).show["imdbId"] rescue nil
           end
           
           if imdblink  
@@ -275,7 +288,7 @@ module Plugins
                 c.name = show.body["name"]
                 c.save
               else
-                c = IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => 'http://www.imdb.com/title/' + imdblink, :imdb_score => i[:score].gsub(/\/.*$/,''), :imdb_votes => i[:votes].gsub(/,/,''), :name => show.body["name"])
+                c = @IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => 'http://www.imdb.com/title/' + imdblink, :imdb_score => i[:score].gsub(/\/.*$/,''), :imdb_votes => i[:votes].gsub(/,/,''), :name => show.body["name"])
                 
                 myreply <<
                 " | " + 

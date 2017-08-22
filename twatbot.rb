@@ -6,6 +6,12 @@ require 'sequel'
 require 'logger'
 # }}}
 
+class MyBot < Cinch::Bot
+  @botconfig
+  attr_accessor :botconfig
+end
+
+
 def class_from_string(str)
   str.split('::').inject(Object) do |mod, class_name|
     mod.const_get(class_name)
@@ -20,11 +26,23 @@ def class_from_string_array(arr)
   end
 end
 
+class Module
+  def all_the_modules
+    [self] + constants.map {|const| const_get(const) }
+    .select {|const| const.is_a? Module }
+    .flat_map {|const| const.all_the_modules }
+  end
+end
+
+def config_server(x)
+  Kernel.const_get("MyApp::Config::#{x}").config
+end
+
 def botlog(msg, m = nil)
   logmsg = "[#{caller_locations(1,1)[0].base_label}] "
   
   if m
-    logmsg << "[#{m.user} @ #{m.channel}] [MSG = '#{m.message}'] "
+    logmsg << "{#{m.bot.botconfig[:NAME]}} [#{m.user} @ #{m.channel}] [MSG = '#{m.message}'] "
   end
   
   logmsg << "#{msg}"
@@ -32,73 +50,93 @@ def botlog(msg, m = nil)
   info logmsg
 end
 
+
+
 if !ARGV || ARGV.length != 1
   abort "ERROR: Usage: ruby #{$0} <CONFIG_FILE>"
-  elsif !File.exist?(ARGV[0])
+elsif !File.exist?(ARGV[0])
   abort "ERROR: Config file not found: #{ARGV[0]}"
-  else
+else
   require File.absolute_path(ARGV[0])
 end
 
 STDOUT.sync = true
-DB = Sequel.connect(MyApp::Config::TWATBOT_SQL, :loggers => [Logger.new($stdout)])
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
 
-a = Thread.new do
-  bot = Cinch::Bot.new do
-    configure do |c|
-      c.server = MyApp::Config::IRC_SERVER
-      c.port = MyApp::Config::IRC_PORT
-      c.channels = MyApp::Config::IRC_CHANNELS
-      c.user = MyApp::Config::IRC_USER
-      c.password = MyApp::Config::IRC_PASSWORD
-      c.ssl.use = MyApp::Config::IRC_SSL
-      c.nick = MyApp::Config::IRC_NICK
-      c.plugins.plugins = class_from_string_array(MyApp::Config::IRC_PLUGINS)
-    end    
-    
-    on :kick do |m|
-        if User(m.params[1]) == bot.nick
-          botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
-          Timer 300, {:shots => 1} { bot.join(m.channel.name, m.channel.key) }
-        end
-    end
-    
-  end
+config = Hash[MyApp::Config.all_the_modules.select{|x| x.to_s =~ /^MyApp::Config::[a-zA-Z]((?!::).)*$/}.collect{ |x| [x.to_s.gsub(/^MyApp::Config::/,""), config_server(x.to_s.gsub(/^MyApp::Config::/,"")).merge({:NAME => x.to_s.gsub(/^MyApp::Config::/,"")})]}]
 
-  puts "Starting twatbot..."
-  bot.loggers.level = :info
-  bot.start
-end
+config.values.each_with_index do |server_config, i|
 
-if MyApp::Config::DICKBOT_ENABLE == 1
-  b = Thread.new do
-    dickbot = Cinch::Bot.new do
+  server_config[:DB] = Sequel.connect(server_config[:TWATBOT_SQL], :loggers => [Logger.new($stdout)])
+
+  server_config[:THREAD] = Thread.new(i) do |x|
+    config.values[x][:BOT] = MyBot.new do
+      @botconfig = config.values[x]
+
       configure do |c|
-        c.server = MyApp::Config::DICKBOT_IRC_SERVER
-        c.port = MyApp::Config::DICKBOT_IRC_PORT
-        c.channels = MyApp::Config::DICKBOT_IRC_CHANNELS
-        c.user = MyApp::Config::DICKBOT_IRC_USER
-        c.password = MyApp::Config::DICKBOT_IRC_PASSWORD
-        c.ssl.use = MyApp::Config::DICKBOT_IRC_SSL
-        c.nick = MyApp::Config::DICKBOT_IRC_NICK
-        c.plugins.plugins = class_from_string_array(MyApp::Config::DICKBOT_IRC_PLUGINS)
-      end  
+        c.server = @botconfig[:IRC_SERVER]
+        c.port = @botconfig[:IRC_PORT]
+        c.channels = @botconfig[:IRC_CHANNELS]
+        c.user = @botconfig[:IRC_USER]
+        c.password = @botconfig[:IRC_PASSWORD]
+        c.ssl.use = @botconfig[:IRC_SSL]
+        c.nick = @botconfig[:IRC_NICK]
+        c.plugins.plugins = class_from_string_array(@botconfig[:IRC_PLUGINS])
+      end    
       
       on :kick do |m|
-        if User(m.params[1]) == dickbot.nick
+        if User(m.params[1]) == bot.nick
           botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
-          Timer 300, {:shots => 1} { dickbot.join(m.channel.name, m.channel.key) }
+          Timer 10, {:shots => 1} { bot.join(m.channel.name, m.channel.key) }
         end
+      end  
+
+    end
+
+    puts "Started twatbot on server #{config.values[x][:NAME]}...\n"
+    config.values[x][:BOT].loggers.level = :info
+    config.values[x][:BOT].start
+  end
+
+
+
+  if server_config[:DICKBOT_ENABLE] == 1
+    server_config[:DICKBOTTHREAD] = Thread.new(i) do |x|
+      config.values[x][:DICKBOT] = MyBot.new do
+        @botconfig = config.values[x]
+
+        configure do |c|
+          c.server = @botconfig[:DICKBOT_IRC_SERVER]
+          c.port = @botconfig[:DICKBOT_IRC_PORT]
+          c.channels = @botconfig[:DICKBOT_IRC_CHANNELS]
+          c.user = @botconfig[:DICKBOT_IRC_USER]
+          c.password = @botconfig[:DICKBOT_IRC_PASSWORD]
+          c.ssl.use = @botconfig[:DICKBOT_IRC_SSL]
+          c.nick = @botconfig[:DICKBOT_IRC_NICK]
+          c.plugins.plugins = class_from_string_array(@botconfig[:DICKBOT_IRC_PLUGINS])
+        end  
+        
+        on :kick do |m|
+          if User(m.params[1]) ==  bot.nick
+            botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
+            Timer 300, {:shots => 1} {  bot.join(m.channel.name, m.channel.key) }
+          end
+        end
+
       end
       
+      puts "Started dickbot on server #{config.values[x][:NAME]}...\n"
+      config.values[x][:DICKBOT].loggers.level = :info
+      config.values[x][:DICKBOT].start
     end
-    
-    puts "Starting dickbot..."
-    dickbot.loggers.level = :info
-    dickbot.start
   end
+
 end
 
-a.join
-b.join if MyApp::Config::DICKBOT_ENABLE == 1
+
+config.each do |servername, server|
+  server[:THREAD].join
+  server[:DICKBOTTHREAD].join if server[:DICKBOT_ENABLE] == 1
+end
+
+

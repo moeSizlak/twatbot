@@ -6,15 +6,18 @@ require 'thread'
 module Plugins
   class Weather
     include Cinch::Plugin
+
+    @@apicalls_minute = []
+    @@apicalls_day = []
+    @@apicalls_mutex = Mutex.new
+
     set :react_on, :message
     
     match /^!w\s+(\S.*)$/, use_prefix: false, method: :get_weather
     
     def initialize(*args)
       super
-      @apicalls_minute = []
-      @apicalls_day = []
-      @apicalls_mutex = Mutex.new
+      @config = bot.botconfig
     end
     
     def check_api_rate_limit(x=1)
@@ -22,10 +25,10 @@ module Plugins
       minute_ago = now - 60
       day_ago = now - (60*60*24)
       
-      @apicalls_minute = @apicalls_minute.take_while { |x| x >= minute_ago }
-      @apicalls_day = @apicalls_day.take_while { |x| x >= day_ago }
+      @@apicalls_minute = @@apicalls_minute.take_while { |x| x >= minute_ago }
+      @@apicalls_day = @@apicalls_day.take_while { |x| x >= day_ago }
       
-      if (@apicalls_minute.size + x) <= MyApp::Config::WUNDERGROUND_API_RATE_LIMIT_MINUTE && (@apicalls_day.size + x) <= MyApp::Config::WUNDERGROUND_API_RATE_LIMIT_DAY
+      if (@@apicalls_minute.size + x) <= @config[:WUNDERGROUND_API_RATE_LIMIT_MINUTE] && (@@apicalls_day.size + x) <= @config[:WUNDERGROUND_API_RATE_LIMIT_DAY]
         return true
       else
         return false
@@ -39,9 +42,9 @@ module Plugins
       forecast = nil
       pws = '0'
         
-      @apicalls_mutex.synchronize do
+      @@apicalls_mutex.synchronize do
         if !check_api_rate_limit(3)
-          errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@apicalls_minute.size}, last day = #{@apicalls_day.size}) [Error: API_LIMIT_A]"
+          errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@@apicalls_minute.size}, last day = #{@@apicalls_day.size}) [Error: API_LIMIT_A]"
           botlog errormsg, m
           m.user.notice errormsg
           return
@@ -49,15 +52,15 @@ module Plugins
           
         loop do      
           if !check_api_rate_limit(1)
-            errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@apicalls_minute.size}, last day = #{@apicalls_day.size}) [Error: API_LIMIT_B]"
+            errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@@apicalls_minute.size}, last day = #{@@apicalls_day.size}) [Error: API_LIMIT_B]"
             botlog errormsg, m
             m.user.notice errormsg
             return
           end
-          url = "http://api.wunderground.com/api/#{CGI.escape(MyApp::Config::WUNDERGROUND_API_KEY).gsub('+','%20')}/conditions/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
+          url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/conditions/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
           weather = Unirest::get(url)
-          @apicalls_day.unshift(Time.now.to_i)
-          @apicalls_minute.unshift(Time.now.to_i)          
+          @@apicalls_day.unshift(Time.now.to_i)
+          @@apicalls_minute.unshift(Time.now.to_i)          
           
           if weather.body && weather.body.key?("response")
           
@@ -86,15 +89,15 @@ module Plugins
       
     
         if !check_api_rate_limit(1)
-          errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@apicalls_minute.size}, last day = #{@apicalls_day.size}) [Error: API_LIMIT_C]"
+          errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@@apicalls_minute.size}, last day = #{@@apicalls_day.size}) [Error: API_LIMIT_C]"
           botlog errormsg, m
           m.user.notice errormsg
           return
         end
-        url = "http://api.wunderground.com/api/#{CGI.escape(MyApp::Config::WUNDERGROUND_API_KEY).gsub('+','%20')}/forecast/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
+        url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/forecast/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
         forecast = Unirest::get(url)
-        @apicalls_day.unshift(Time.now.to_i)
-        @apicalls_minute.unshift(Time.now.to_i)        
+        @@apicalls_day.unshift(Time.now.to_i)
+        @@apicalls_minute.unshift(Time.now.to_i)        
       end
       
       if forecast.body && forecast.body.key?("response") && !forecast.body["response"].key?("error") && !forecast.body["response"].key?("results") &&

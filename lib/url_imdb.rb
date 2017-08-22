@@ -1,8 +1,8 @@
 require 'imdb'
 
 module URLHandlers  
-  class IMDB
-    def self.parse(url)
+  module IMDB
+    def parse(url)
       if(url =~ /https?:\/\/[^\/]*imdb.com.*\/title\/\D*(\d+)/i)
         id = $1
         

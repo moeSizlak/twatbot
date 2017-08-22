@@ -15,16 +15,17 @@ module Plugins
     
     def initialize(*args)
       super
+      @config = bot.botconfig
       @lastquotes = Hash.new
     end
     
     def randquote
-      return if MyApp::Config::QUOTEDB_ENABLE_RANDQUOTE == 0
+      return if @config[:QUOTEDB_ENABLE_RANDQUOTE] == 0
       
-      MyApp::Config::QUOTEDB_CHANS.each do |chan|   
-        quotes = DB[:quotes].where(:channel => chan)
+      @config[:QUOTEDB_CHANS].each do |chan|   
+        quotes = @config[:DB][:quotes].where(:channel => chan)
         if quotes.count > 0
-          scores = DB[:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)}        
+          scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)}        
           prng = Random.new
           myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
 
@@ -36,7 +37,7 @@ module Plugins
     end
     
     def ratequote(m, a)    
-      if !MyApp::Config::QUOTEDB_CHANS.include?(m.channel.to_s) || MyApp::Config::QUOTEDB_EXCLUDE_USERS.include?(m.user.to_s)
+      if !@config[:QUOTEDB_CHANS].include?(m.channel.to_s) || @config[:QUOTEDB_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end    
     
@@ -48,17 +49,17 @@ module Plugins
         score = $2.to_i
         
         if score >=0 && score <= 10
-          if DB[:quotes].where(:channel => m.channel.to_s, :id => id).count > 0
+          if @config[:DB][:quotes].where(:channel => m.channel.to_s, :id => id).count > 0
             
             score_updated = 0
-            userscores = DB[:quote_scr].where(:id => id, :handle => m.user.to_s)
+            userscores = @config[:DB][:quote_scr].where(:id => id, :handle => m.user.to_s)
             if userscores.count != 0
               score_updated = 1
               userscores.delete
             end
             
-            DB[:quote_scr].insert(:id => id, :handle => m.user.to_s, :score => score)
-            result = DB[:quote_scr].group_and_count(:id).select_append{avg(:score).as(:score)}.where(:id => id).first
+            @config[:DB][:quote_scr].insert(:id => id, :handle => m.user.to_s, :score => score)
+            result = @config[:DB][:quote_scr].group_and_count(:id).select_append{avg(:score).as(:score)}.where(:id => id).first
             m.reply "#{score_updated == 1 ? "Your rating has been changed to #{score}.  " : "" }New score for quote #{id} is #{result[:score].to_f.round(2)}, based on #{result[:count]} ratings."
 
           else
@@ -84,7 +85,7 @@ module Plugins
         mychan = m.channel.to_s
       end
       
-      if !MyApp::Config::QUOTEDB_CHANS.include?(mychan) || MyApp::Config::QUOTEDB_EXCLUDE_USERS.include?(m.user.to_s)
+      if !@config[:QUOTEDB_CHANS].include?(mychan) || @config[:QUOTEDB_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end
       
@@ -112,7 +113,7 @@ module Plugins
       a.gsub!(/\s\s/, ' ') while a =~ /\s\s/
       words = a.split(" ")
       
-      quotes = DB[:quotes].where(:channel => mychan)
+      quotes = @config[:DB][:quotes].where(:channel => mychan)
       words.each do |word|
         quotes = quotes.where(Sequel.ilike(:quote, '%'+quotes.escape_like(word)+'%'))
       end     
@@ -124,7 +125,7 @@ module Plugins
       rc = quotes.count
       
       if rc && rc > 0      
-        scores = DB[:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)} 
+        scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)} 
         result = quotes.order(Sequel.desc(:timestamp)).limit(1, @lastquotes[lqkey][:offset]).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first   
         if result
           m.reply "\x03".b + "04" + "[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] " + "\x0f".b + "\x03".b + "03" + "[#{result[:id]} / #{result[:score].to_f.round(2)} (#{result[:count]} votes) / #{result[:nick]} @ #{Time.at(result[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result[:quote]}"
@@ -142,14 +143,14 @@ module Plugins
     
     def addquote(m, a)
     
-      if !MyApp::Config::QUOTEDB_CHANS.include?(m.channel.to_s) || MyApp::Config::QUOTEDB_EXCLUDE_USERS.include?(m.user.to_s)
+      if !@config[:QUOTEDB_CHANS].include?(m.channel.to_s) || @config[:QUOTEDB_EXCLUDE_USERS].include?(m.user.to_s)
         return
       end
       
       botlog "", m       
       a.strip!      
 
-      id = DB[:quotes].insert(:nick => m.user.to_s, :host => m.user.mask.to_s, :quote => a, :channel => m.channel.to_s, :timestamp => m.time.to_i.to_s)
+      id = @config[:DB][:quotes].insert(:nick => m.user.to_s, :host => m.user.mask.to_s, :quote => a, :channel => m.channel.to_s, :timestamp => m.time.to_i.to_s)
 
       m.reply "Added quote (id = #{id})."
       
