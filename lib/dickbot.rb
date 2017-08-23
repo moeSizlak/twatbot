@@ -34,7 +34,7 @@ module Plugins
     
     def initialize_nicks
       @replace_nicks = []
-      @replace_nicks = @config[:DB][:WORDS1].distinct(:Nick).select(:Nick).all.map{|x| x[:Nick].gsub(/^ACTION__/,"")}.select{|x| !x.nil? && x.length > 4}.uniq
+      @replace_nicks = @config[:DB][:WORDS1].select(:Nick).distinct.all.map{|x| x[:Nick].gsub(/^ACTION__/,"")}.select{|x| !x.nil? && x.length > 4}.uniq
     
     end
     
@@ -188,11 +188,11 @@ module Plugins
     end
     
     def join_insult(m)    
-      if !@config[:DICKBOT_JOIN_INSULTS].map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+      if !@config[:DICKBOT_JOIN_INSULTS].map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase) || m.bot.nick.downcase == m.user.to_s.downcase
         return
       end
       
-      e = @config[:DICKBOT_JOIN_INSULTS].select{|x| x[:chan] == m.channel.to_s}[0]
+      e = @config[:DICKBOT_JOIN_INSULTS].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0]
       e[:prob1] = 0 if !e[:prob1].is_a? Integer || e[:prob1] < 0
       e[:prob1] = 100 if e[:prob1] > 100
       e[:prob2] = 0 if !e[:prob2].is_a? Integer || e[:prob2] < 0
@@ -248,18 +248,18 @@ module Plugins
     
     
     def speak(m)
-      return if !@config[:DICKBOT_RANDOM_SPEAK].map{|x| x[:chan]}.include?(m.channel.to_s) || m.bot.nick == m.user.to_s
+      return if !@config[:DICKBOT_RANDOM_SPEAK].map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase) || m.bot.nick.downcase == m.user.to_s.downcase
       
       prng = Random.new
       
-      speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
+      speak = @speaks.select{|x| x[:chan] =~ /^#{m.channel}$/i }[0]
       
-      if(m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i)
+      if(speak && m.user.to_s.downcase !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s.downcase)}/i)
         speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
         speak[:messagesNicks].unshift(m.user.to_s).delete_at(10)
       end
       
-      if speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(5) == 0 || (m.user.to_s =~ /fatman|sexygirl/ && prng.rand(3) == 0))
+      if speak && speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(5) == 0 || (m.user.to_s =~ /fatman|sexygirl/i && prng.rand(3) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
         botlog "RESPONSE_1=\"#{response}\"", m
@@ -530,17 +530,18 @@ module Plugins
         x = $1
       end
       
-      x.gsub!(/\S*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*/,'')
+      x.gsub!(/\S*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*/i,'')
       
       seeds = filter_msg(x)
         puts "S='#{seeds}'" 
       response = gentext(2, nil, seeds, method(:weight_vulgar)) 
 
-      speak = @speaks.select{|x| x[:chan] == m.channel.to_s}[0]
-      botlog response, m
-  puts "'#{response}'"    
+      speak = @speaks.select{|x| x[:chan] =~ /^#{m.channel}$/i}[0]
+      botlog "KKKK=>" + response, m
+
       if !seeds.nil? && seeds.count > 0
         if compare_response(seeds, response) != 0
+          puts "FFFF"
           response << " " + gentext(2, nil, [], method(:weight_vulgar)) 
           botlog "ZFIX- " + response, m
         end
@@ -553,8 +554,9 @@ module Plugins
       puts "A4 => '#{['zzz1','zzz2', 'zzz3'].to_s}'"
       puts "A5 => '#{speak[:messagesNicks]}'"
 =end
+      puts "GGGG '#{speak}', '#{@speaks}', '#{m.channel.to_s}'"
       response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], m.user.to_s, speak[:messagesNicks] - [m.user.to_s])
-      botlog response, m
+      botlog "JJJ=>"+response, m
       m.reply response.gsub(/Draylor/i, "Gaylord")
     end
   

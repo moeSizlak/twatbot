@@ -91,10 +91,23 @@ config.values.each_with_index do |server_config, i|
         end
       end  
 
+
+      on :connect do |m|
+        (bot.botconfig[:IRC_RUN_AFTER_CONNECT] || []).each{ |s| self.instance_eval(&s) }
+      end
+
+
+      #on :connect do |m|
+      #  Timer 5, {} do 
+      #    bot.channel_list.find_ensured('#testing12').send("TIMER")
+      #    this.stop
+      #  end
+      #end
+
     end
 
     puts "Started twatbot on server #{config.values[x][:NAME]}...\n"
-    config.values[x][:BOT].loggers.level = :info
+    config.values[x][:BOT].loggers.level = config.values[x][:IRC_LOGLEVEL] || :info
     config.values[x][:BOT].start
   end
 
@@ -123,10 +136,14 @@ config.values.each_with_index do |server_config, i|
           end
         end
 
+        on :connect do |m|
+          (bot.botconfig[:DICKBOT_IRC_RUN_AFTER_CONNECT] || []).each{ |s| self.instance_eval(&s) }
+        end
+
       end
       
       puts "Started dickbot on server #{config.values[x][:NAME]}...\n"
-      config.values[x][:DICKBOT].loggers.level = :info
+      config.values[x][:DICKBOT].loggers.level = config.values[x][:DICKBOT_IRC_LOGLEVEL] || :info
       config.values[x][:DICKBOT].start
     end
   end

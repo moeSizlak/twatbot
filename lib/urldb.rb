@@ -15,7 +15,7 @@ module Plugins
     listen_to :channel, method: :urldb_listen
     
     def urldb_listen(m)
-      if !m.bot.botconfig[:URLDB_CHANS].include?(m.channel.to_s) || m.bot.botconfig[:URLDB_EXCLUDE_USERS].include?(m.user.to_s)
+      if !m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:URLDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end
       

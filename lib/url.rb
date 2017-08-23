@@ -19,7 +19,7 @@ module Plugins
     def url_listen(m)
       URI.extract(m.message, ["http", "https"]) do |link|
         @handlers.each do |handler|
-          if !handler[:excludeChans].include?(m.channel.to_s) && !handler[:excludeNicks].include?(m.user.to_s)
+          if !handler[:excludeChans].map(&:downcase).include?(m.channel.to_s.downcase) && !handler[:excludeNicks].map(&:downcase).include?(m.user.to_s.downcase)
             #output = class_from_string(handler[:class])::parse(link)
             output = class_from_string(handler[:class]).instance_method( :parse ).bind( self ).call(link)
             if !output.nil?

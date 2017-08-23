@@ -87,7 +87,7 @@ module Plugins
     def tvmaze(m, hitno, id)
       botlog "", m
       
-      if m.bot.botconfig[:TVMAZE_EXCLUDE_CHANS].include?(m.channel.to_s) || m.bot.botconfig[:TVMAZE_EXCLUDE_USERS].include?(m.user.to_s)
+      if m.bot.botconfig[:TVMAZE_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:TVMAZE_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end
       

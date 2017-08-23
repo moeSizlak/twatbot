@@ -30,6 +30,17 @@ module MyApp
           "Plugins::RottenTomatoes",
         ],
       
+        :IRC_RUN_AFTER_CONNECT => [
+          proc do 
+            User('some_user').send('some message')
+            sleep 3
+            Channel('#some_chan').join
+            #etc ...
+          end
+        ],
+
+        :IRC_LOGLEVEL => :info ,  # :debug
+
         :TWATBOT_SQL => 'postgres://user:pass@localhost/twatbot?encoding=utf8' ,
         
         # Plugins::URL
@@ -92,6 +103,17 @@ module MyApp
         :DICKBOT_IRC_PLUGINS => [ 
           #"Plugins:DickBot",
         ],
+
+        :DICKBOT_IRC_RUN_AFTER_CONNECT => [
+          proc do 
+            User('some_user').send('some message')
+            sleep 3
+            Channel('#some_chan').join
+            #etc ...
+          end
+        ],
+
+        :DICKBOT_IRC_LOGLEVEL => :info ,  # :debug
         
         # prob1 is the percentage probability a insult will be thrown at someone who joins.
         # prob1 is the percentage probability that a thrown insult will be of the type Foul-O-Matic,

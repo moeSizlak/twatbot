@@ -37,7 +37,7 @@ module Plugins
     end
     
     def ratequote(m, a)    
-      if !@config[:QUOTEDB_CHANS].include?(m.channel.to_s) || @config[:QUOTEDB_EXCLUDE_USERS].include?(m.user.to_s)
+      if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end    
     
@@ -85,7 +85,7 @@ module Plugins
         mychan = m.channel.to_s
       end
       
-      if !@config[:QUOTEDB_CHANS].include?(mychan) || @config[:QUOTEDB_EXCLUDE_USERS].include?(m.user.to_s)
+      if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(mychan.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end
       
@@ -143,7 +143,7 @@ module Plugins
     
     def addquote(m, a)
     
-      if !@config[:QUOTEDB_CHANS].include?(m.channel.to_s) || @config[:QUOTEDB_EXCLUDE_USERS].include?(m.user.to_s)
+      if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end
       
