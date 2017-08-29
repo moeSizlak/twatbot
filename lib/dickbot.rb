@@ -521,7 +521,7 @@ module Plugins
     
     
     def talkback(m)
-      return if m.action? || m.user.to_s !~ /twatbot|kissinger|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i
+      return if m.action? || m.user.to_s =~ /twatbot|kissinger|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i
       
       x = m.message.to_s.dup
       addressed_directly = false
