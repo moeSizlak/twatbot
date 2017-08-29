@@ -15,10 +15,10 @@ module Plugins
     match /^!latest/, use_prefix: false, method: :insult3
     match /^!list/, use_prefix: false, method: :insult3
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
-    match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :action_insult, react_on: :action
+    match lambda {|m| /dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :action_insult, react_on: :action
     listen_to :join , method: :join_insult
     
-    match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :talkback    
+    match lambda {|m| /dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :talkback    
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate   
     match /^(?!!)(?!@)(?!\.).*$/, use_prefix: false, method: :speak
     
@@ -254,12 +254,12 @@ module Plugins
       
       speak = @speaks.select{|x| x[:chan] =~ /^#{m.channel}$/i }[0]
       
-      if(speak && m.user.to_s.downcase !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s.downcase)}/i)
+      if(speak && m.user.to_s.downcase !~ /kissinger|dickbot|#{Regexp.escape(m.bot.nick.to_s.downcase)}/i)
         speak[:messages].unshift(m.message.gsub(/[^ -~]/,'')).delete_at(10)
         speak[:messagesNicks].unshift(m.user.to_s).delete_at(10)
       end
       
-      if speak && speak[:speaks_available] > 0 && m.message !~ /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(5) == 0 || (m.user.to_s =~ /fatman|sexygirl/i && prng.rand(3) == 0))
+      if speak && speak[:speaks_available] > 0 && m.message !~ /dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && m.user.to_s !~ /kissinger|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/i && (prng.rand(5) == 0 || (m.user.to_s =~ /fatman|sexygirl/i && prng.rand(3) == 0))
         seeds = filter_msg(m.message)
         response = gentext(2, nil, seeds, method(:weight_vulgar)) 
         botlog "RESPONSE_1=\"#{response}\"", m
@@ -525,12 +525,12 @@ module Plugins
       
       x = m.message.to_s.dup
       addressed_directly = false
-      if x =~ /^(?:(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})[:,]\s*)(.*)$/i
+      if x =~ /^(?:(?:dickbot|#{Regexp.escape(m.bot.nick.to_s)})[:,]\s*)(.*)$/i
         addressed_directly = true
         x = $1
       end
       
-      x.gsub!(/\S*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*/i,'')
+      x.gsub!(/\S*(?:dickbot|#{Regexp.escape(m.bot.nick.to_s)})\S*/i,'')
       
       seeds = filter_msg(x)
         puts "S='#{seeds}'" 
@@ -554,7 +554,7 @@ module Plugins
       puts "A4 => '#{['zzz1','zzz2', 'zzz3'].to_s}'"
       puts "A5 => '#{speak[:messagesNicks]}'"
 =end
-      puts "GGGG '#{speak}', '#{@speaks}', '#{m.channel.to_s}'"
+#      puts "GGGG '#{speak}', '#{@speaks}', '#{m.channel.to_s}'"
       response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], m.user.to_s, speak[:messagesNicks] - [m.user.to_s])
       botlog "JJJ=>"+response, m
       m.reply response.gsub(/Draylor/i, "Gaylord")

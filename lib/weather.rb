@@ -37,6 +37,7 @@ module Plugins
     
     def get_weather(m, location)
       botlog "", m
+      location = "78233" if location == "kl666"
       mylocation = location.dup
       weather = nil
       forecast = nil
