@@ -25,16 +25,27 @@ module Plugins
       cb = Unirest::get("https://api.coinbase.com/v2/prices/spot?currency=USD")
       cbp = cb.body["data"]["amount"] rescue ""
 
+      cbl = Unirest::get("https://api.coinbase.com/v2/prices/LTC-USD/spot")
+      cblp = cbl.body["data"]["amount"] rescue ""
+
+      cbe = Unirest::get("https://api.coinbase.com/v2/prices/ETH-USD/spot")
+      cbep = cbe.body["data"]["amount"] rescue ""
 
       mc = Unirest::get("https://api.coinmarketcap.com/v1/ticker/bitcoin-cash/")
       mcp = mc.body[0]["price_usd"].gsub(/(\.\d\d)\d+/,'\1') rescue ""
       
-      myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + bsp
-      myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + cbp
-      myreply3 = "\x03".b + "04" + "BCH     " + "\x0f".b + " | Buy: $" + mcp
-      m.reply myreply1
-      m.reply myreply2
-      m.reply myreply3
+      #myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + bsp
+      #myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + cbp
+      #myreply3 = "\x03".b + "04" + "BCH     " + "\x0f".b + " | Buy: $" + mcp
+      #m.reply myreply1
+      #m.reply myreply2
+      #m.reply myreply3
+
+      m.reply "\x03".b + "04" + "Bitstamp:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x03".b + "04" + "Coinbase:" + "\x0f".b + " $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x03".b + "04" + "BCH:"      + "\x0f".b + " $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x03".b + "04" + "LTC:"      + "\x0f".b + " $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))
     
     
     end

@@ -19,16 +19,20 @@ module Plugins
         feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])    
         
         if !feed[:old].nil?
+          i = 0
           feedparsed.entries.slice(0..10).reverse.each do |entry|
-            if !feed[:old].include?(entry.url)
-              botlog "Printing new RSS entry \"#{entry.title}\""
+            if !feed[:old].include?(entry.url) && (feed[:max].nil? || i < feed[:max])
+              botlog "Printing new RSS entry \"#{entry.title}\" \"#{entry.url}\" =====OLD====>\"#{feed[:old]}\""
               printnew(entry, feed[:name], feed[:chans])
+              i += 1
             end
-          end 
+          end
+        else
+          feed[:old] = []
         end 
-        mostrecent10url = feedparsed.entries.slice(0..10).map{|x| x.url}
-        #botlog "Setting #{feed[:name]}[:old] to \"#{mostrecent10url}\""
-        feed[:old] = mostrecent10url
+        mostrecenturls = feedparsed.entries.map{|x| x.url}
+        #botlog "Setting #{feed[:name]}[:old] to \"#{mostrecenturls}\""
+        feed[:old] = feed[:old].concat(mostrecenturls).uniq.last(200)
       end
     end
     

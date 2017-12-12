@@ -80,7 +80,7 @@ module Plugins
     def quote(m, a)
   
       if m.channel.to_s == "#testing12"
-        mychan = '#newzbin'
+        mychan = '#hdbits'
       else
         mychan = m.channel.to_s
       end

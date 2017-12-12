@@ -9,6 +9,11 @@ module Plugins
     set :react_on, :message
     
     match /^[.!]imdb\s+(.*)$/i, use_prefix: false, method: :imdb
+
+    def initialize(*args)
+      super
+      @@config = bot.botconfig
+    end
     
     
     def self.getImdb(id)
@@ -28,8 +33,7 @@ module Plugins
       end
       
       if i && i.title
-      
-        omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id)) rescue nil
+        omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id) + "&apikey=#{IMDB.class_variable_get(:@@config)[:OMDB_API_KEY]}") rescue nil
         if !omdb || !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
           omdb = nil
         end     
@@ -66,6 +70,7 @@ module Plugins
         
         iscore = i.rating.to_s
         ivotes = i.votes.to_s.gsub(/,/,'')
+        puts "IIIIIIIIII #{iscore}, #{ivotes}"
         ovotes = ''
         oscore = ''
         myvotes = ''

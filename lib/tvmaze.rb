@@ -281,6 +281,7 @@ module Plugins
           if imdblink  
             i = IMDB::getImdb(imdblink)
             if i
+              puts "iiiiiiiiiiiii"
               if c
                 c.imdburl = 'http://www.imdb.com/title/' + imdblink
                 c.imdb_score = i[:score].gsub(/\/.*$/,'')

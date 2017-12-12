@@ -117,7 +117,7 @@ module Plugins
                 mytitle = URLHandlers::TitleBot::getTitle(gallery ? "http://imgur.com/gallery/#{path}" : (album ? "http://imgur.com/a/#{path}" : "http://imgur.com/#{path}")).to_s
               end
               
-              if mytitle && mytitle.length > 0 && mytitle !~ /Imgur: The most awesome images on the Internet/
+              if mytitle && mytitle.length > 0 && mytitle !~ /Imgur: The most awesome images on the Internet/ && mytitle !~ /Imgur: The magic of the Internet/
                 imgurtitle = mytitle
               else
                 imgurtitle = "[Untitled]"

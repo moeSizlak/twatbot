@@ -24,6 +24,9 @@ module Plugins
             output = class_from_string(handler[:class]).instance_method( :parse ).bind( self ).call(link)
             if !output.nil?
               botlog "[URLHandler = #{handler[:class]}] [URL = #{link}]", m
+              if(output =~ /dailymail.co.uk\s*$/ && handler[:class] == "URLHandlers::TitleBot" && m.channel.to_s.downcase =~ /^(#newzbin)$/)
+                output = "#{m.user} is a dirty cunt and pasted a Daily Mail link, shame on him"
+              end
               m.reply output
               break
             end
