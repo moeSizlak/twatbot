@@ -24,9 +24,22 @@ module Plugins
             output = class_from_string(handler[:class]).instance_method( :parse ).bind( self ).call(link)
             if !output.nil?
               botlog "[URLHandler = #{handler[:class]}] [URL = #{link}]", m
+
               if(output =~ /dailymail.co.uk\s*$/ && handler[:class] == "URLHandlers::TitleBot" && m.channel.to_s.downcase =~ /^(#newzbin)$/)
+                dirtyCunt = 1
                 output = "#{m.user} is a dirty cunt and pasted a Daily Mail link, shame on him"
               end
+
+              if m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.channel.to_s.downcase == "#testing12"
+                entries = @config[:DB][:TitleBot]
+                postCount = entries.where(:URL => link).where('"Date" < (NOW() + interval \'-5 seconds\')').count
+                if postCount > 0
+                  firstPost = entries.order(Sequel.asc(:Date)).limit(1).where(:URL => link).first
+                  #output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+"\x03".b+"01"+"\x0f".b+firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"
+                  output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+ "\u200b" + firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"
+                end
+              end
+
               m.reply output
               break
             end
