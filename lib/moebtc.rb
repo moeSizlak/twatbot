@@ -44,11 +44,11 @@ module Plugins
       botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@lastupdate}",m
 
       m.reply "" +
-      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $" + c["price_usd"] + " | " + c["price_btc"] + " BTC" + " | " + 
-      "\x03".b + "04" + "Rank: " + "\x0f".b + c["rank"] + " | " +
-      "\x03".b + "04" + "7d: " + "\x0f".b + (!c["percent_change_7d"].nil? && c["percent_change_7d"][0]=="-" ? '' : '+') + c["percent_change_7d"].to_s + " % | " +
-      "\x03".b + "04" + "24h: " + "\x0f".b + (!c["percent_change_24h"].nil? && c["percent_change_24h"][0]=="-" ? '' : '+') + c["percent_change_24h"].to_s + " % | " +
-      "\x03".b + "04" + "1h: " + "\x0f".b + (!c["percent_change_1h"].nil? && c["percent_change_1h"][0]=="-" ? '' : '+') + c["percent_change_1h"].to_s + " %" +
+      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{c["price_usd"]} | #{c["price_btc"]} BTC | " +
+      "Rank: #{c["rank"]} | " +
+      "(7d) " + "\x0f".b  + (!c["percent_change_7d"].nil?  && c["percent_change_7d"][0]  == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_7d"].to_s  + "%" + "\x0f".b + " | " +
+      "(24h) " + "\x0f".b + (!c["percent_change_24h"].nil? && c["percent_change_24h"][0] == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_24h"].to_s + "%" + "\x0f".b + " | " +
+      "(1h) " + "\x0f".b  + (!c["percent_change_1h"].nil?  && c["percent_change_1h"][0]  == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_1h"].to_s  + "%" + "\x0f".b +
       (m.channel.to_s.downcase == "#testing12" ? " [#{@lastupdate}]" : "")
 
     end
@@ -91,15 +91,12 @@ module Plugins
       g2 = g1.body["last"] rescue "" 
       
 
-
       m.reply "\x03".b + "04" + "GEM:"   + "\x0f".b + " $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
               "\x03".b + "04" + "BS:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
               "\x03".b + "04" + "CB:" + "\x0f".b + " $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
               "\x03".b + "04" + "BCH:"      + "\x0f".b + " $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
               "\x03".b + "04" + "LTC:"      + "\x0f".b + " $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1')) #+ " | " +
-            #  "\x03".b + "04" + "XRP:"      + "\x0f".b + " $" + xrp2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(xrp2.to_s.gsub(/^[^.]*(.*)$/, '\1'))
-    
+              "\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
     
     end
     
