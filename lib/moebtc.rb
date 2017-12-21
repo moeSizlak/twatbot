@@ -5,6 +5,54 @@ module Plugins
     
     match /^\.moe/i, use_prefix: false, method: :moebtc
     match /^\.(btc|motherfucker)\s*$/i, use_prefix: false, method: :getBTCRates
+    #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCoin
+    match /^\.(?!btc)(.{2,})\s*$/im, use_prefix: false, method: :getCoin
+
+    timer 0,  {:method => :updatecoins, :shots => 1}
+    #timer 60, {:method => :updatecoins}  
+
+    def initialize(*args)
+      super
+      @config = bot.botconfig
+      @lastupdate = nil
+    end
+
+    def updatecoins
+      mycoins = Unirest::get("https://api.coinmarketcap.com/v1/ticker/?limit=0") rescue nil
+      if !mycoins.nil? && !mycoins.body.nil?
+        @config[:COINS] = mycoins.body
+        @lastupdate = DateTime.now
+      end
+    end
+
+    def getCoin(m,c)
+      updatecoins if (@lastupdate.nil? || (@lastupdate < (DateTime.now - (4/1440.0))))
+
+      cc = m.bot.botconfig[:COINS].find{|x| x["symbol"].upcase == c.upcase}
+
+      if cc.nil?
+        cc = m.bot.botconfig[:COINS].find{|x| x["name"].upcase == c.upcase}
+      end
+
+      if cc.nil? && c.length >= 3
+        cc = m.bot.botconfig[:COINS].find{|x| x["name"].upcase.include?(c.upcase)}
+      end
+
+      return if cc.nil?
+
+      c = cc
+      botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@lastupdate}",m
+
+      m.reply "" +
+      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $" + c["price_usd"] + " | " + c["price_btc"] + " BTC" + " | " + 
+      "\x03".b + "04" + "Rank: " + "\x0f".b + c["rank"] + " | " +
+      "\x03".b + "04" + "7d: " + "\x0f".b + (!c["percent_change_7d"].nil? && c["percent_change_7d"][0]=="-" ? '' : '+') + c["percent_change_7d"].to_s + " % | " +
+      "\x03".b + "04" + "24h: " + "\x0f".b + (!c["percent_change_24h"].nil? && c["percent_change_24h"][0]=="-" ? '' : '+') + c["percent_change_24h"].to_s + " % | " +
+      "\x03".b + "04" + "1h: " + "\x0f".b + (!c["percent_change_1h"].nil? && c["percent_change_1h"][0]=="-" ? '' : '+') + c["percent_change_1h"].to_s + " %" +
+      (m.channel.to_s.downcase == "#testing12" ? " [#{@lastupdate}]" : "")
+
+    end
+
     
     def moebtc(m)
       botlog "", m
@@ -42,12 +90,7 @@ module Plugins
       g1 = Unirest::get("https://api.gemini.com/v1/pubticker/btcusd") rescue nil
       g2 = g1.body["last"] rescue "" 
       
-      #myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + bsp
-      #myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + cbp
-      #myreply3 = "\x03".b + "04" + "BCH     " + "\x0f".b + " | Buy: $" + mcp
-      #m.reply myreply1
-      #m.reply myreply2
-      #m.reply myreply3
+
 
       m.reply "\x03".b + "04" + "GEM:"   + "\x0f".b + " $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
               "\x03".b + "04" + "BS:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +

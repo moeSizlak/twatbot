@@ -54,6 +54,7 @@ module MyApp
         
         :YOUTUBE_GOOGLE_SERVER_KEY => "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API" ,
         :IMGUR_API_CLIENT_ID => "YOUR IMGUR API CLIENT ID" ,
+        :OMDB_API_KEY => "XXXXXXXXXXXXXXXXX" ,
         
         # Plugins::RottenTomatoes
         :RT_EXCLUDE_CHANS => [] ,
@@ -75,6 +76,9 @@ module MyApp
           {:name => "TorrentFreak", :url => "http://feeds.feedburner.com/Torrentfreak", :chans => ["#test1"], :old => nil},  
           #{:name => "Slashdot", :url => "http://rss.slashdot.org/Slashdot/slashdotMain", :chans => ["#test1"], :old => nil},
         ],
+
+        # Plugins::MoeBTC
+        :COINS => [] ,
           
         # Plugins::QuoteDB
         :QUOTEDB_CHANS => [] ,
@@ -180,6 +184,7 @@ module MyApp
         
         :YOUTUBE_GOOGLE_SERVER_KEY => "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API" ,
         :IMGUR_API_CLIENT_ID => "YOUR IMGUR API CLIENT ID" ,
+        :OMDB_API_KEY => "XXXXXXXXXXXXXXXXX" ,
         
         # Plugins::RottenTomatoes
         :RT_EXCLUDE_CHANS => [] ,
@@ -229,6 +234,9 @@ module MyApp
         :DICKBOT_IRC_PLUGINS => [ 
           #"Plugins:DickBot",
         ],
+
+        # Plugins::MoeBTC
+        :COINS => [] ,
         
         # prob1 is the percentage probability a insult will be thrown at someone who joins.
         # prob1 is the percentage probability that a thrown insult will be of the type Foul-O-Matic,
