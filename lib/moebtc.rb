@@ -1,6 +1,11 @@
 module Plugins  
   class MoeBTC
     include Cinch::Plugin
+
+    @@coins = nil
+    @@coins_lastupdate = nil
+    @@coins_mutex = Mutex.new
+
     set :react_on, :message
     
     match /^\.moe/i, use_prefix: false, method: :moebtc
@@ -8,48 +13,58 @@ module Plugins
     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCoin
     match /^\.(?!btc)(.{2,})\s*$/im, use_prefix: false, method: :getCoin
 
-    timer 0,  {:method => :updatecoins, :shots => 1}
+    #timer 0,  {:method => :updatecoins, :shots => 1}
     #timer 60, {:method => :updatecoins}  
 
     def initialize(*args)
       super
       @config = bot.botconfig
-      @lastupdate = nil
     end
 
     def updatecoins
       mycoins = Unirest::get("https://api.coinmarketcap.com/v1/ticker/?limit=0") rescue nil
       if !mycoins.nil? && !mycoins.body.nil?
-        @config[:COINS] = mycoins.body
-        @lastupdate = DateTime.now
+          @@coins = mycoins.body
+          @@coins_lastupdate = DateTime.now
       end
     end
 
     def getCoin(m,c)
-      updatecoins if (@lastupdate.nil? || (@lastupdate < (DateTime.now - (4/1440.0))))
+      cc = nil
+      @@coins_mutex.synchronize do
+        updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (4/1440.0))))
 
-      cc = m.bot.botconfig[:COINS].find{|x| x["symbol"].upcase == c.upcase}
+        cc = @@coins.find{|x| x["symbol"].upcase == c.upcase}
 
-      if cc.nil?
-        cc = m.bot.botconfig[:COINS].find{|x| x["name"].upcase == c.upcase}
-      end
+        if cc.nil?
+          cc = @@coins.find{|x| x["name"].upcase == c.upcase}
+        end
 
-      if cc.nil? && c.length >= 3
-        cc = m.bot.botconfig[:COINS].find{|x| x["name"].upcase.include?(c.upcase)}
+        if cc.nil? && c.length >= 3
+          cc = @@coins.find{|x| x["name"].upcase.include?(c.upcase)}
+        end
+
       end
 
       return if cc.nil?
 
       c = cc
-      botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@lastupdate}",m
+      botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@coins_lastupdate}",m
+
+      p = ""
+      if m.user.to_s.downcase =~ /pinch/i
+         p = sprintf("%.8f", (c["price_btc"].to_f  / @@coins.find{|x| x["symbol"].upcase == "ETH"}["price_btc"].to_f)).sub(/\.?0*$/,'') + " ETH | " rescue ""
+
+      end
+
 
       m.reply "" +
-      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{c["price_usd"]} | #{c["price_btc"]} BTC | " +
+      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{c["price_usd"]} | #{c["price_btc"]} BTC | " + p +
       "Rank: #{c["rank"]} | " +
       "(7d) " + "\x0f".b  + (!c["percent_change_7d"].nil?  && c["percent_change_7d"][0]  == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_7d"].to_s  + "%" + "\x0f".b + " | " +
       "(24h) " + "\x0f".b + (!c["percent_change_24h"].nil? && c["percent_change_24h"][0] == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_24h"].to_s + "%" + "\x0f".b + " | " +
       "(1h) " + "\x0f".b  + (!c["percent_change_1h"].nil?  && c["percent_change_1h"][0]  == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_1h"].to_s  + "%" + "\x0f".b +
-      (m.channel.to_s.downcase == "#testing12" ? " [#{@lastupdate}]" : "")
+      (m.channel.to_s.downcase == "#testing12" ? " [#{@@coins_lastupdate}]" : "")
 
     end
 

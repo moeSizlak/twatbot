@@ -258,6 +258,7 @@ module Plugins
           
           c = @IMDBCacheEntry[showID]
           if c
+            puts 'FOUND IMDBCacheEntry'
             myreply <<
             " | " + 
             "\x03".b + color_text + c.imdburl + "\x0f".b +
@@ -273,15 +274,17 @@ module Plugins
           imdbrating = nil
           imdblink = show.body.dig("externals", "imdb")
           tvdblink = show.body.dig("externals", "thetvdb")
+          puts "imdblink=#{imdblink}\ntvdblink=#{tvdblink}"
 
           if imdblink.nil? && !tvdblink.nil?
             imdblink = TVDB.new(m.bot.botconfig[:TVDB_API_KEY], m.bot.botconfig[:TVDB_API_USERNAME], m.bot.botconfig[:TVDB_API_USERKEY], tvdblink.to_s).show["imdbId"] rescue nil
+            puts "imdblink(from tvdb)=#{imdblink}"
           end
           
           if imdblink  
             i = IMDB::getImdb(imdblink)
             if i
-              puts "iiiiiiiiiiiii"
+              puts "FOUND imdb data"
               if c
                 c.imdburl = 'http://www.imdb.com/title/' + imdblink
                 c.imdb_score = i[:score].gsub(/\/.*$/,'')

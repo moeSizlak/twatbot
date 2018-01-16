@@ -33,12 +33,13 @@ module Plugins
       end
       
       if i && i.title
+        puts "Successful IMDB lookup"
         omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id) + "&apikey=#{IMDB.class_variable_get(:@@config)[:OMDB_API_KEY]}") rescue nil
         if !omdb || !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
           omdb = nil
         end     
         
-        puts "===>" + omdb.nil?.to_s + "\n"
+        puts "OMDB lookup by ImdbId successful ===>" + (!(omdb.nil?)).to_s + "\n"
              
         tomato = nil
         if omdb && omdb.body.key?('tomatoURL') && omdb.body["tomatoURL"] =~ /^http/
@@ -49,14 +50,17 @@ module Plugins
         end
       
         myrating = i.mpaa_rating.to_s
-        if myrating =~ /Rated\s+(\S+)/i
-          myrating = "[" + $1 + "]"
+        if myrating && myrating.length > 0
+          myrating = "[" + myrating + "]"
           else
           myrating = ""
         end
         if omdb && (!myrating || !myrating =~ /^\[/) && omdb.body.key?('Rated')
           myrating = "[" + omdb.body["Rated"] + "]"
+          puts "Falling back to OMDB MPAA Rating"
         end
+
+        puts "MPAA Rating: #{myrating}"
         
         mygenres = i.genres
         if(!mygenres.nil? && mygenres.length > 0)
@@ -66,6 +70,7 @@ module Plugins
         end
         if omdb && (!mygenres || !mygenres =~ /^\[/) && omdb.body.key?('Genre')
           mygenres = "[" + omdb.body["Genre"] + "]"
+          puts "Falling back to OMDB Genres"
         end
         
         iscore = i.rating.to_s
@@ -84,21 +89,26 @@ module Plugins
         if ivotes && ivotes =~ /^\d+$/
           if ovotes && ovotes =~ /^\d+$/
             if ovotes.to_i > ivotes.to_i
+              puts "Using OMDB score/votes"
               myvotes = ovotes
               myscore = oscore
             else
+              puts "Using IMDB score/votes"
               myvotes = ivotes
               myscore = iscore
             end
           else
+            puts "Using IMDB score/votes"
             myvotes = ivotes
             myscore = iscore
           end
         else
           if ovotes && ovotes =~ /^\d+$/
+            puts "Using OMDB score/votes"
             myvotes = ovotes
             myscore = oscore
           else
+            puts "Score/votes could not be obtained"
             myvotes = 0
             myscore = 0.0
           end
@@ -107,8 +117,10 @@ module Plugins
         myscore = myscore.to_s + "/10"
         
         if omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /unknown/i
+          puts "Using OMDB plot"
           myplot = omdb.body["Plot"]
         else
+          puts "Using IMDB plot"
           myplot = i.plot
           if myplot.nil?
             myplot = ""
