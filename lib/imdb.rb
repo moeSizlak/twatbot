@@ -75,7 +75,7 @@ module Plugins
         
         iscore = i.rating.to_s
         ivotes = i.votes.to_s.gsub(/,/,'')
-        puts "IIIIIIIIII #{iscore}, #{ivotes}"
+        puts "IMDB DATA: #{iscore}, #{ivotes}"
         ovotes = ''
         oscore = ''
         myvotes = ''
@@ -116,11 +116,11 @@ module Plugins
         myvotes = myvotes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
         myscore = myscore.to_s + "/10"
         
-        if omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /unknown/i
-          puts "Using OMDB plot"
+        if omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /^\s*(unknown|N[\\\/A])/i
+          puts "Using OMDB plot" # \"#{omdb.body["Plot"]}\", vs imdb \"#{i.plot}\""
           myplot = omdb.body["Plot"]
         else
-          puts "Using IMDB plot"
+          puts "Using IMDB plot" # \"#{omdb.body["Plot"]}\", vs imdb \"#{i.plot}\""
           myplot = i.plot
           if myplot.nil?
             myplot = ""

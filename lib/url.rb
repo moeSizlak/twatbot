@@ -31,7 +31,7 @@ module Plugins
 
               if m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.channel.to_s.downcase == "#testing12"
                 entries = @config[:DB][:TitleBot]
-                postCount = entries.where(:URL => link).where('"Date" < (NOW() + interval \'-5 seconds\')').count
+                postCount = entries.where(:URL => link).where('"Date" < (NOW() + interval \'-35 seconds\')').count
                 if postCount > 0
                   firstPost = entries.order(Sequel.asc(:Date)).limit(1).where(:URL => link).first
                   #output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+"\x03".b+"01"+"\x0f".b+firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"

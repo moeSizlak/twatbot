@@ -72,7 +72,9 @@ module URLHandlers
           color_rating = "07"
           color_url = "03"
           
-          myreply = "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
+          #myreply = "\x02".b + "You" + "\x03".b + "04" + "Tube" + "\x0f".b + ": " +
+          myreply =  "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
+          #(title.nil? ? "UNKOWN_TITLE" : title) +
           "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b +
           "\x03".b + color_rating +
           (duration.nil? ? ""    : (" (" + duration    + ")")) +    

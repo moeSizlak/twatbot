@@ -30,6 +30,10 @@ module Plugins
     end
 
     def getCoin(m,c)
+      if m.bot.botconfig[:MOEBTC_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:MOEBTC_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+        return
+      end
+      
       cc = nil
       @@coins_mutex.synchronize do
         updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (4/1440.0))))
@@ -70,6 +74,10 @@ module Plugins
 
     
     def moebtc(m)
+      if m.bot.botconfig[:MOEBTC_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:MOEBTC_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+        return
+      end
+
       botlog "", m
     
       x = rand
@@ -81,6 +89,10 @@ module Plugins
     
     
     def getBTCRates(m)
+      if m.bot.botconfig[:MOEBTC_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:MOEBTC_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+        return
+      end
+
       bs = Unirest::get("https://www.bitstamp.net/api/v2/ticker/btcusd/") rescue nil
       bsp = bs.body["last"] rescue ""      
       
