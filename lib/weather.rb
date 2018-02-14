@@ -102,7 +102,7 @@ module Plugins
         newloc = nil
       end
 
-      puts "Using Lat/Long of #{lat}/#{lng}"
+      puts "Using Lat/Long of #{lat}/#{lng}, fad3=#{fad3}, fad2=#{fad2}, fad1=#{fad1}, fad=#{fad}"
         
       @@apicalls_mutex.synchronize do
         if !check_api_rate_limit(3)
@@ -191,7 +191,7 @@ module Plugins
         
         display_location = location
         country = 'XX'
-        
+=begin       
         if !fad1.nil? && fad1.length > 0
           display_location = fad1.dup
           display_location << ", #{fad2}" if !fad2.nil? && fad2.length > 0
@@ -199,12 +199,26 @@ module Plugins
           mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
           puts "mycunt=#{mycunt}\nmyloc=#{display_location}"
           country = 'US' if mycunt == "US"
+        elsif !fad2.nil? && fad2.length > 0
+          display_location = fad2.dup
+          display_location << ", #{fad3}" if !fad3.nil? && fad3.length > 0
+          mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+          puts "mycunt=#{mycunt}\nmyloc=#{display_location}"
+          country = 'US' if mycunt == "US"
+=end
+=begin
+        if !fad.nil? && fad.length > 0
+          display_location = fad.dup
+          mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+          puts "mycunt=#{mycunt}\nmyloc=#{display_location}"
+          country = 'US' if mycunt == "US"
+=end
+        if weather.body["current_observation"].key?("display_location") && weather.body["current_observation"]["display_location"].key?("full")
+          display_location = weather.body["current_observation"]["display_location"]["full"]
+          country = 'US' if weather.body["current_observation"]["display_location"]["country"] == 'US'
         elsif weather.body["current_observation"].key?("observation_location") && weather.body["current_observation"]["observation_location"].key?("full")
           display_location = weather.body["current_observation"]["observation_location"]["full"]    
           country = 'US' if weather.body["current_observation"]["observation_location"]["country"] == 'US'
-        elsif weather.body["current_observation"].key?("display_location") && weather.body["current_observation"]["display_location"].key?("full")
-          display_location = weather.body["current_observation"]["display_location"]["full"]
-          country = 'US' if weather.body["current_observation"]["display_location"]["country"] == 'US'
         end
         
         color_pipe = "01"     
@@ -217,6 +231,7 @@ module Plugins
         if forecast
           f = forecast.body["forecast"]["simpleforecast"]["forecastday"]
         end
+        puts "County=\"#{country}\""
            
         myreply = "Weather: "
         myreply << "\x03".b + color_name + "#{display_location}"
@@ -245,7 +260,7 @@ module Plugins
                   
         m.user.notice myreply
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["temperature_string"].gsub(/^\s*(-?\d+(?:\.\d+)?)\s*F\s*\(\s*(-?\d+(?:\.\d+)?)\s*C.*$/, '\2C/\1F')}, #{w["weather"]}"
+          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["temperature_string"].gsub(/^\s*(-?\d+(?:\.\d+)?)\s*F\s*\(\s*(-?\d+(?:\.\d+)?)\s*C.*$/, '\1F/\2C')}, #{w["weather"]}"
           m.reply myreply
         #end
 
