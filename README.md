@@ -16,11 +16,11 @@ twatbot includes the following plugins:
 * election - get info about elections
 * URL Database - Save all URL's to a database, and optionally save a cached copy of images
 * URL Listener - monitors IRC for certains types of URL's and prints info about them:
-..* YouTube
-..* Imgur
-..* Dumpert
-..* !mdb
-..* HTML Titles
+ * YouTube
+ * Imgur
+ * Dumpert
+ * !mdb
+ * HTML Titles
 
 
 ## Getting Started
