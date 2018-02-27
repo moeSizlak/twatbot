@@ -13,6 +13,7 @@ module Plugins
 
     set :react_on, :message
     
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^!w($|\s+.*$)/, use_prefix: false, method: :get_weather
     
     def initialize(*args)
@@ -22,6 +23,12 @@ module Plugins
       @WeatherLocationCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:weather_locations_cache]))
       @WeatherLocationCacheEntry.unrestrict_primary_key
 
+    end
+
+    def help(m)
+      m.user.notice  "\x02".b + "\x03".b + "04" + "WEATHER:\n" + "\x0f".b +
+      "\x02".b + "  !w <location>" + "\x0f".b + " - Get weather for location. Uses Google geocoding & Weather Underground." +
+      "\x02".b + "  !w" + "\x0f".b + " - Get weather (using the last location you queried weather for)."
     end
     
     def check_api_rate_limit(x=1)
@@ -41,10 +48,11 @@ module Plugins
     
     def get_weather(m, location)
       botlog "", m
-      mylocation = location.dup.strip
+      location.strip!
+      mylocation = location.dup
       weather = nil
       forecast = nil
-      pws = '0'
+      pws = '1'
 
       c = @WeatherLocationCacheEntry[m.bot.irc.network.name.to_s.downcase, m.user.to_s.downcase]
       if location.length == 0        
@@ -224,7 +232,7 @@ module Plugins
         myreply << "\x03".b + color_name + "#{display_location}"
         myreply << " [#{w["station_id"]}]" if w["station_id"]
         myreply << "\x0f".b
-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Temp" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["temperature_string"].gsub(/^\s*(-?\d+(?:\.\d+)?)\s*F\s*\(\s*(-?\d+(?:\.\d+)?)\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}, #{w["weather"]}" + "\x0f".b) if w["temperature_string"] && w["weather"]
+        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Temp" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}, #{w["weather"]}" + "\x0f".b) if w["temperature_string"] && w["weather"]
         myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Wind" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["wind_string"]}" + "\x0f".b) if w["wind_string"]
         #myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Weather" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["weather"]}" + "\x0f".b) if w["weather"]
         myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Precip today" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["precip_today_string"]}" + "\x0f".b) if w["precip_today_string"]
@@ -247,7 +255,7 @@ module Plugins
                   
         m.user.notice myreply
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["temperature_string"].gsub(/^\s*(-?\d+(?:\.\d+)?)\s*F\s*\(\s*(-?\d+(?:\.\d+)?)\s*C.*$/, '\1F/\2C')}, #{w["weather"]}"
+          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}, #{w["weather"]}"
           m.reply myreply
         #end
 

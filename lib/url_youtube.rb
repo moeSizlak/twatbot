@@ -5,6 +5,12 @@ require 'ruby-duration'
 
 module URLHandlers
   module Youtube
+
+    def help
+      return "\x02".b + "  <Youtube URL>" + "\x0f".b + " - Get title and info about Youtube video."
+    end
+
+
     def parse(url)      
       if(url =~ /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*/i)
         id = $1

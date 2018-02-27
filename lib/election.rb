@@ -9,7 +9,13 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^!(?:election|trump|clinton|cunt|president|hillary|donald|don|thedonald|the donald|donny)/i, use_prefix: false, method: :get_result
+
+    def help(m)
+      m.user.notice "\x02".b + "\x03".b + "04" + "Election:\n" + "\x0f".b + 
+      "\x02".b + "  !election" + "\x0f".b + " - Get current election results.\n"
+    end
         
     def get_chart(m)
       botlog "", m

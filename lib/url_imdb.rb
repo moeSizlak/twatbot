@@ -2,6 +2,10 @@ require 'imdb'
 
 module URLHandlers  
   module IMDB
+    def help
+      return "\x02".b + "  <IMDB URL>" + "\x0f".b + " - Get title and info about IMDB movie or TV show."
+    end
+
     def parse(url)
       if(url =~ /https?:\/\/[^\/]*imdb.com.*\/title\/\D*(\d+)/i)
         id = $1

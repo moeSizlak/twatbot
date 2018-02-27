@@ -4,6 +4,12 @@ require_relative 'url_title.rb'
 
 module URLHandlers
   module Imgur
+
+    def help
+      return "\x02".b + "  <Imgur URL>" + "\x0f".b + " - Get title and info about Imgur image/gallery."
+    end
+
+
     def parse(url)  
       if url =~ /https?:\/\/(?:[^\/.]+\.)*imgur.com(\/.+)$/ 
         path = $1

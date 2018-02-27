@@ -6,6 +6,12 @@ require 'tempfile'
 
 module URLHandlers  
   module TitleBot
+
+    def help
+      return "\x02".b + "  <URL of HTML webpage>" + "\x0f".b + " - Get HTML title of webpage."
+    end
+
+
     def parse(url)
       title = getTitleAndLocation(url);
       if !title.nil? && !title[:title].nil?
@@ -33,11 +39,11 @@ module URLHandlers
         easy.on_body do |chunk, easy|
           recvd << chunk
           
-          recvd =~ Regexp.new('<title[^>]*>\s*((?:(?!</title>).){0,300})\s*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,300})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
-            title_found.gsub!(/[\s\r\n]+/m, ' ')
+            title_found.gsub!(/[[:space:]]+/m, ' ')
             easy.cleanup rescue nil
             File.unlink(tmpcookiefile) rescue nil
             return Cinch::Helpers.sanitize title_found
@@ -74,11 +80,11 @@ module URLHandlers
           myurl = easy.effective_url
           recvd << chunk
           
-          recvd =~ Regexp.new('<title[^>]*>\s*((?:(?!</title>).){0,300})\s*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,300})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
-            title_found.gsub!(/[\s\r\n]+/m, ' ')
+            title_found.gsub!(/[[:space:]]+/m, ' ')
             easy.cleanup rescue nil
             File.unlink(tmpcookiefile) rescue nil
             return {:title => Cinch::Helpers.sanitize(title_found), :effective_url => myurl }

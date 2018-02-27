@@ -8,6 +8,7 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^[.!]imdb\s+(.*)$/i, use_prefix: false, method: :imdb
 
     def initialize(*args)
@@ -15,6 +16,14 @@ module Plugins
       @@config = bot.botconfig
     end
     
+    def help(m)
+      if m.bot.botconfig[:IMDB_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase)
+        return
+      end
+      
+      m.user.notice "\x02".b + "\x03".b + "04" + "IMDB:\n" + "\x0f".b + 
+      "\x02".b + "  !imdb <movie_name>" + "\x0f".b + " - Get IMDB info about a movie (and RottenTomatoes as well).\n"
+    end
     
     def self.getImdb(id)
       id.gsub!(/\s+$/, "")

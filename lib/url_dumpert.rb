@@ -6,6 +6,11 @@ require_relative 'url_title.rb'
 
 module URLHandlers  
   module Dumpert
+
+    def help
+      return "\x02".b + "  <Dumpert URL>" + "\x0f".b + " - Get title, info, and English translation of Dumpert video."
+    end
+
     def parse(url)
       if(url =~ /(https?:\/\/([^\/\.]*\.)*dumpert\.nl\S+)/i)      
         title = getTitle(url)

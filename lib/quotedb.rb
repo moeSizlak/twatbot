@@ -9,6 +9,7 @@ module Plugins
     #timer 0,  {:method => :randquote, :shots => 1}
     timer 43200, {:method => :randquote}
     
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^!ratequote\s+(\S.*)$/, use_prefix: false, method: :ratequote
     match /^!addquote\s+(\S.*)$/, use_prefix: false, method: :addquote
     match /^!(?:find|search)?quote\s+(\S.*)$/, use_prefix: false, method: :quote
@@ -18,6 +19,18 @@ module Plugins
       @config = bot.botconfig
       @lastquotes = Hash.new
     end
+
+    def help(m)
+      if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase)
+        return
+      end 
+
+      m.user.notice "\x02".b + "\x03".b + "04" + "QUOTES:\n" + "\x0f".b + 
+      "\x02".b + "  !addquote <text>" + "\x0f".b + " - Add a quote\n" +  
+      "\x02".b + "  !quote <text or id#>" + "\x0f".b + " - Find a quote.  Use same command multiple times to cycle through search matches.\n" +
+      "\x02".b + "  !ratequote <id#> <0-10>" + "\x0f".b + " - Rate a quote."
+    end
+
     
     def randquote
       return if @config[:QUOTEDB_ENABLE_RANDQUOTE] == 0
@@ -144,6 +157,11 @@ module Plugins
     def addquote(m, a)
     
       if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+        return
+      end
+
+      if m.user.to_s =~ /twatboxt|dickboxt|#{Regexp.escape(@config[:BOT].nick.to_s)}|#{Regexp.escape(@config[:DICKBOT].nick.to_s)}/im
+        m.reply "Nah."
         return
       end
       

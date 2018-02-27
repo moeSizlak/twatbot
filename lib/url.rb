@@ -6,6 +6,7 @@ module Plugins
     set :react_on, :channel
     
     listen_to :channel, method: :url_listen
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     
     def initialize(*args)
       super
@@ -15,7 +16,21 @@ module Plugins
         self.class.send(:include, class_from_string(x[:class]))
       end   
     end
+
+
+    def help(m)
+      msg = "\x02".b + "\x03".b + "04" + "URL's:" + "\x0f".b
+
+      @handlers.each do |handler|
+        if !handler[:excludeChans].map(&:downcase).include?(m.channel.to_s.downcase)
+          msg << "\n" + class_from_string(handler[:class]).instance_method( :help ).bind( self ).call()
+        end
+      end
+
+      m.user.notice msg
+    end
     
+
     def url_listen(m)
       URI.extract(m.message, ["http", "https"]) do |link|
         @handlers.each do |handler|

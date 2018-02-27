@@ -8,6 +8,7 @@ module Plugins
 
     set :react_on, :message
     
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^\.moe/i, use_prefix: false, method: :moebtc
     match /^\.(btc|motherfucker)\s*$/i, use_prefix: false, method: :getBTCRates
     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCoin
@@ -19,6 +20,16 @@ module Plugins
     def initialize(*args)
       super
       @config = bot.botconfig
+    end
+
+    def help(m)
+      if m.bot.botconfig[:MOEBTC_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase)
+        return
+      end
+
+      m.user.notice "\x02".b + "\x03".b + "04" + "CRYPTO COINS:\n" + "\x0f".b + 
+      "\x02".b + "  .btc" + "\x0f".b + " - Get current prices of BTC on Coinbase, BitStamp, and Gemini.  Also show LTC & ETH price.\n" +  
+      "\x02".b + "  .<[partial] coin_name or coin_abbreviation>" + "\x0f".b + " - Get info about a cryptocurrency from coinmarketcap\n"
     end
 
     def updatecoins

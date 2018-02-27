@@ -75,6 +75,7 @@ module Plugins
     include Cinch::Plugin
     set :react_on, :message
     
+    match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^@(\d*)\s*(\S.*)$/, use_prefix: false, method: :tvmaze
 
 
@@ -82,6 +83,17 @@ module Plugins
       super
       @IMDBCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:imdb_cache_entries]))
       @IMDBCacheEntry.unrestrict_primary_key
+    end
+
+    def help(m)
+      if m.bot.botconfig[:TVMAZE_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase)
+        return
+      end
+
+      m.user.notice "\x02".b + "\x03".b + "04" + "TV:\n" + "\x0f".b + 
+      "\x02".b + "  @<show_name>" + "\x0f".b + " - Get info about show\n" +  
+      "\x02".b + "  @2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
+      "\x02".b + "  @3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n"
     end
     
     def tvmaze(m, hitno, id)
@@ -224,6 +236,12 @@ module Plugins
             myreply <<
             " | " + 
             "\x03".b + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f".b
+          end
+
+          if show.body.fetch("language", nil) && show.body.fetch("language", "").to_s.length > 0 && show.body.fetch("language", "").to_s !~ /English/i
+            myreply <<
+            " | " + 
+            "\x03".b + color_text + show.body.fetch("language", "").to_s + "\x0f".b
           end
             
           if show.body.fetch("url", nil)
