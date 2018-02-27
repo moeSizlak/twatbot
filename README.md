@@ -7,7 +7,7 @@ This is an IRC bot using Ruby and the cinch gem.  It is modular and includes sev
 
 twatbot includes the following plugins:
 
-* tvmaze - get info about TV shows from tvmaze and imdb
+* tvmaze - get info about TV shows from tvmaze and !mdb
 * !mdb - get info about movies from !mdb and rotten tomatos (this depends on a modified version of the !mdb gem)
 * weather - get weather from weather underground, uses Google geocoding to resolve locations
 * rss - monitors RSS feeds and prints new entries to irc
