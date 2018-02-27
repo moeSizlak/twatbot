@@ -19,7 +19,7 @@ twatbot includes the following plugins:
 ..* YouTube
 ..* Imgur
 ..* Dumpert
-..* Imdb
+..* !mdb
 ..* HTML Titles
 
 
