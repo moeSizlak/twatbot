@@ -27,7 +27,7 @@ module Plugins
 
     def help(m)
       m.user.notice  "\x02".b + "\x03".b + "04" + "WEATHER:\n" + "\x0f".b +
-      "\x02".b + "  !w <location>" + "\x0f".b + " - Get weather for location. Uses Google geocoding & Weather Underground." +
+      "\x02".b + "  !w <location>" + "\x0f".b + " - Get weather for location. Uses Google geocoding & Weather Underground.\n" +
       "\x02".b + "  !w" + "\x0f".b + " - Get weather (using the last location you queried weather for)."
     end
     
@@ -223,11 +223,34 @@ module Plugins
         color_text = "07"
         
         w = weather.body["current_observation"]
+
+        #if forecast
+        #  f = forecast.body["forecast"]["simpleforecast"]["forecastday"]
+        #end
         if forecast
-          f = forecast.body["forecast"]["simpleforecast"]["forecastday"]
+          f = [forecast.body["forecast"]["txt_forecast"]["forecastday"][0]] + forecast.body["forecast"]["txt_forecast"]["forecastday"][1..9].select{|x| x.has_key?('title') && x['title'] !~ /Night/i}
         end
+
         puts "County=\"#{country}\""
-           
+ 
+        myreply = ""
+        #myreply = "Conditions for: "
+        myreply << "\x03".b + color_name 
+        myreply << "#{display_location}"
+        myreply << " [#{w["station_id"]}]" if w["station_id"]
+        myreply << "\x0f".b
+        myreply << (": " + "\x02".b + "#{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature_string"] && w["weather"]
+        if forecast
+
+          fw = 'fcttext'
+          fw = 'fcttext_metric' if country != 'US'
+            
+          myreply << " " + "\x03".b + color_name + "#{f[0]["title"]}" + "\x0f".b + ": #{f[0][fw]}"
+          myreply << " " + "\x03".b + color_name + "#{f[1]["title"]}" + "\x0f".b + ": #{f[1][fw]}"
+        end
+
+
+=begin        
         myreply = "Weather: "
         myreply << "\x03".b + color_name + "#{display_location}"
         myreply << " [#{w["station_id"]}]" if w["station_id"]
@@ -252,10 +275,12 @@ module Plugins
             myreply << (" | " + "\x0f".b + "\x03".b + color_title + ((i == 0) ? "Today" : ((i==1) ? "Tomorrow" : "#{f[i]["date"]["monthname_short"]} #{f[i]["date"]["day"]}")) + "\x0f".b + ":" +"\x03".b + color_text + " High: #{f[i]["high"][unitA]}#{unitAx}, Low: #{f[i]["low"][unitA]}#{unitAx}, #{f[i]["conditions"]}, #{f[i]["pop"]}% chance of precip" + "\x0f".b) if w["weather"]
           end
         end
-                  
+=end
+
+
         m.user.notice myreply
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}, #{w["weather"]}"
+          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}"
           m.reply myreply
         #end
 
