@@ -49,6 +49,7 @@ module Plugins
     def get_weather(m, location)
       botlog "", m
       location.strip!
+      location = "amsterdam" if location =~ /^\s*ams\s*$/i  # Placate Daghdha....
       mylocation = location.dup
       weather = nil
       forecast = nil
