@@ -144,9 +144,9 @@ module URLHandlers
             myreply = "\x03".b + color_yt + "[Imgur] " + "\x0f".b
             
             if g_title
-              mytitle = g_title.strip.gsub!(/[[:space:]]+/m, ' ')
+              mytitle = g_title.strip.gsub(/[[:space:]]+/m, ' ')
             elsif title
-              mytitle = title.strip.gsub!(/[[:space:]]+/m, ' ')
+              mytitle = title.strip.gsub(/[[:space:]]+/m, ' ')
             else
               mytitle = getTitle(gallery ? "http://imgur.com/gallery/#{path}" : (album ? "http://imgur.com/a/#{path}" : "http://imgur.com/#{path}")).to_s
             end
