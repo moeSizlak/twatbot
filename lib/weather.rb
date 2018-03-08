@@ -228,7 +228,8 @@ module Plugins
         #  f = forecast.body["forecast"]["simpleforecast"]["forecastday"]
         #end
         if forecast
-          f = [forecast.body["forecast"]["txt_forecast"]["forecastday"][0]] + forecast.body["forecast"]["txt_forecast"]["forecastday"][1..9].select{|x| x.has_key?('title') && x['title'] !~ /Night/i}
+          #f = [forecast.body["forecast"]["txt_forecast"]["forecastday"][0]] + forecast.body["forecast"]["txt_forecast"]["forecastday"][1..9].select{|x| x.has_key?('title') && x['title'] !~ /Night/i}
+        f = forecast.body["forecast"]["txt_forecast"]["forecastday"]
         end
 
         puts "County=\"#{country}\""
@@ -245,8 +246,14 @@ module Plugins
           fw = 'fcttext'
           fw = 'fcttext_metric' if country != 'US'
             
-          myreply << " " + "\x03".b + color_name + "#{f[0]["title"]}" + "\x0f".b + ": #{f[0][fw]}"
-          myreply << " " + "\x03".b + color_name + "#{f[1]["title"]}" + "\x0f".b + ": #{f[1][fw]}"
+          i = 0
+          #i = 1 if f[1]["title"] =~ /night/i
+          myreply << ", " + "\x03".b + color_name + "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+          i += 1
+          myreply << " " + "\x03".b + color_name + "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+          if (f[0]["title"] + f[1]["title"]) =~ /night/i
+            f = myreply << " " + "\x03".b + color_name + "#{f[2]["title"]}" + "\x0f".b + ": #{f[2][fw]}"
+          end
         end
 
 
@@ -278,11 +285,12 @@ module Plugins
 =end
 
 
-        m.user.notice myreply
+        
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-          myreply =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}"
-          m.reply myreply
+          myreply2 =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}"
+          m.reply myreply2
         #end
+        m.user.notice myreply
 
              
       end      
