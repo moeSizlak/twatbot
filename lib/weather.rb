@@ -2,6 +2,7 @@ require 'cgi'
 require 'unirest'
 require 'time'
 require 'thread'
+require 'csv'
 
 module Plugins
   class Weather
@@ -22,6 +23,8 @@ module Plugins
 
       @WeatherLocationCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:weather_locations_cache]))
       @WeatherLocationCacheEntry.unrestrict_primary_key
+
+      @airports = CSV.read(File.dirname(__FILE__) + "/airports_large.txt")
 
     end
 
@@ -49,7 +52,7 @@ module Plugins
     def get_weather(m, location)
       botlog "", m
       location.strip!
-      location = "amsterdam" if location =~ /^\s*ams\s*$/i  # Placate Daghdha....
+      #location = "amsterdam" if location =~ /^\s*ams\s*$/i  # Placate Daghdha....
       mylocation = location.dup
       weather = nil
       forecast = nil
@@ -82,6 +85,13 @@ module Plugins
         newloc = nil
       end
 =end
+
+
+      my_airport = @airports.find{|x| x[9].upcase == mylocation.upcase rescue nil}
+      my_airport = @airports.find{|x| x[0].upcase == mylocation.upcase rescue nil} if !my_airport
+      mylocation = my_airport[2] if my_airport
+
+
       puts "Using URL1 = https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
       newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
       lat = nil

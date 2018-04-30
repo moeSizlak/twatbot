@@ -76,7 +76,7 @@ module Plugins
     set :react_on, :message
     
     match /^!(?:help|commands)/, use_prefix: false, method: :help
-    match /^@(\d*)\s*(\S.*)$/, use_prefix: false, method: :tvmaze
+    match /^(?:!yyz|@)(\d*)\s*(\S.*)$/, use_prefix: false, method: :tvmaze
 
 
     def initialize(*args)
@@ -93,7 +93,10 @@ module Plugins
       m.user.notice "\x02".b + "\x03".b + "04" + "TV:\n" + "\x0f".b + 
       "\x02".b + "  @<show_name>" + "\x0f".b + " - Get info about show\n" +  
       "\x02".b + "  @2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
-      "\x02".b + "  @3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n"
+      "\x02".b + "  @3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n" 
+      #"\x02".b + "  !tv <show_name>" + "\x0f".b + " - Get info about show\n" +  
+      #"\x02".b + "  !tv2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
+      #"\x02".b + "  !tv3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n"
     end
     
     def tvmaze(m, hitno, id)
@@ -110,6 +113,10 @@ module Plugins
       id.gsub!(/\s+/, " ")
       id.gsub!(/[^ -~]/, "")
       id.gsub!(/^\s*saul\s*$/i, "better call saul")
+
+      if hitno == 0 && id && id.length > 0 && m.channel.users.keys.map{|x| x.nick}.include?(id.split(/\W+|,|:|;/)[0])
+        return
+      end
       
       search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id))
       showID = nil
@@ -236,6 +243,11 @@ module Plugins
             myreply <<
             " | " + 
             "\x03".b + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f".b
+            
+          elsif show.body.fetch("type", nil) && show.body.fetch("type", "").to_s.length > 0
+            myreply <<
+            " | " + 
+            "\x03".b + color_text + show.body.fetch("type", "").to_s + "\x0f".b
           end
 
           if show.body.fetch("language", nil) && show.body.fetch("language", "").to_s.length > 0 && show.body.fetch("language", "").to_s !~ /English/i

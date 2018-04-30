@@ -39,7 +39,7 @@ module URLHandlers
         easy.on_body do |chunk, easy|
           recvd << chunk
           
-          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,300})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,512})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
@@ -79,8 +79,10 @@ module URLHandlers
         easy.on_body do |chunk, easy|
           myurl = easy.effective_url
           recvd << chunk
+
+          #puts chunk
           
-          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,300})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,512})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
