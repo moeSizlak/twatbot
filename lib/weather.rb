@@ -86,6 +86,7 @@ module Plugins
       end
 =end
 
+      puts "mylocation=#{mylocation}"
 
       my_airport = @airports.find{|x| x[9].upcase == mylocation.upcase rescue nil}
       my_airport = @airports.find{|x| x[0].upcase == mylocation.upcase rescue nil} if !my_airport
@@ -173,6 +174,8 @@ module Plugins
           url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/forecast/pws:#{pws}/q/#{lat},#{lng}.json"
         end
 
+        puts "Using URL4 = #{url}"
+
         forecast = Unirest::get(url)
         @@apicalls_day.unshift(Time.now.to_i)
         @@apicalls_minute.unshift(Time.now.to_i)        
@@ -185,6 +188,10 @@ module Plugins
       else
         forecast = nil
       end
+
+      puts "\n\n"
+      puts forecast.body
+      puts "\n\n"
       
       if weather.body.key?("current_observation")
         
@@ -243,7 +250,7 @@ module Plugins
         f = forecast.body["forecast"]["txt_forecast"]["forecastday"]
         end
 
-        puts "County=\"#{country}\""
+        puts "Country=\"#{country}\""
  
         myreply = ""
         #myreply = "Conditions for: "
@@ -253,6 +260,7 @@ module Plugins
         myreply << "\x0f".b
         myreply << (": " + "\x02".b + "#{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature_string"] && w["weather"]
         if forecast
+          puts f
 
           fw = 'fcttext'
           fw = 'fcttext_metric' if country != 'US'

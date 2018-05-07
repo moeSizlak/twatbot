@@ -58,7 +58,9 @@ module Plugins
         if(speak[:rate] > 0)
           prng = Random.new  
           next_timer = -60.0*Math.log(1.0-prng.rand).to_f/(1.0/speak[:rate].to_f)
-          Timer next_timer, {:shots => 1} { speak_timer(speak) }
+          Timer next_timer, {:shots => 1} do
+            speak_timer(speak)
+          end
           botlog "Setting first speak timer for #{speak[:chan]} to #{next_timer} seconds."
         end
       end    
@@ -67,7 +69,9 @@ module Plugins
     def speak_timer(speak)
       prng = Random.new
       next_timer = -60.0*Math.log(1.0-prng.rand).to_f/(1.0/speak[:rate].to_f)
-      Timer next_timer, {:shots => 1} { speak_timer(speak) }
+      Timer next_timer, {:shots => 1} do 
+        speak_timer(speak)
+      end
       speak[:speaks_available] += 1 if speak[:speaks_available] < speak[:max_speaks]
       #botlog "Setting next speak timer for #{speak[:chan]} to #{next_timer} seconds, there are #{speak[:speaks_available]} speaks_available."
     end

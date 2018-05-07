@@ -60,6 +60,9 @@ else
   require File.absolute_path(ARGV[0])
 end
 
+Sequel::Database.extension :auto_literal_strings
+Sequel.split_symbols = true
+
 STDOUT.sync = true
 Dir[File.dirname(__FILE__) + '/lib/*.rb'].each {|file| require file }
 
@@ -87,7 +90,9 @@ config.values.each_with_index do |server_config, i|
       on :kick do |m|
         if User(m.params[1]) == bot.nick
           botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
-          Timer 300, {:shots => 1} { bot.join(m.channel.name, m.channel.key) }
+          Timer 300, {:shots => 1} do
+            bot.join(m.channel.name, m.channel.key)
+          end
         end
       end  
 
@@ -132,7 +137,9 @@ config.values.each_with_index do |server_config, i|
         on :kick do |m|
           if User(m.params[1]) ==  bot.nick
             botlog "#{m.params[1]}: auto_rejoin(#{m.channel.name}, #{m.channel.key})", m
-            Timer 300, {:shots => 1} {  bot.join(m.channel.name, m.channel.key) }
+            Timer 300, {:shots => 1} do
+              bot.join(m.channel.name, m.channel.key)
+            end
           end
         end
 
