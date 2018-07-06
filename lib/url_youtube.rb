@@ -15,7 +15,7 @@ module URLHandlers
       if(url =~ /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*/i)
         id = $1
         search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status")
-
+        #puts "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status"
         if search.body && search.body.key?("items") && search.body["items"].size > 0
           if search.body["items"][0].key?("snippet") 
             if search.body["items"][0]["snippet"].key?("publishedAt")
@@ -32,6 +32,10 @@ module URLHandlers
             if search.body["items"][0]["snippet"].key?("description")
               description = search.body["items"][0]["snippet"]["description"]
             end      
+
+            if search.body["items"][0]["snippet"].key?("channelTitle")
+              author = search.body["items"][0]["snippet"]["channelTitle"]
+            end
           end
           
           if search.body["items"][0].key?("contentDetails") 
@@ -84,11 +88,12 @@ module URLHandlers
           "\x03".b + color_name + (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f".b +
           "\x03".b + color_rating +
           (duration.nil? ? ""    : (" (" + duration    + ")")) +    
-          (publishedAt.nil? ? "" : (" [" + publishedAt + "]")) +
-          " ["         + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
-          " views] [+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + 
-          "/-"         + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "]" +
-          "\x0f".b
+          (publishedAt.nil? ? "" : (" [" + (author.nil? ? "" : (author + " @ ")) + publishedAt + "]")) +
+          " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [" + "\x0f".b + 
+          "\x03".b + "03"         + "+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse    + "\x0f".b +
+          "\x03".b + color_rating + "/" + "\x0f".b +
+          "\x03".b + "04"         + "-" + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f".b +
+          "\x03".b + color_rating +"]" + "\x0f".b
           
           return myreply
         end      

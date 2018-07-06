@@ -189,9 +189,9 @@ module Plugins
         forecast = nil
       end
 
-      puts "\n\n"
-      puts forecast.body
-      puts "\n\n"
+      #puts "\n\n"
+      #puts forecast.body
+      #puts "\n\n"
       
       if weather.body.key?("current_observation")
         
@@ -260,7 +260,7 @@ module Plugins
         myreply << "\x0f".b
         myreply << (": " + "\x02".b + "#{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature_string"] && w["weather"]
         if forecast
-          puts f
+          #puts f
 
           fw = 'fcttext'
           fw = 'fcttext_metric' if country != 'US'
@@ -310,6 +310,8 @@ module Plugins
           m.reply myreply2
         #end
         m.user.notice myreply
+
+        puts myreply.gsub(/[^ -~]/,'')
 
              
       end      

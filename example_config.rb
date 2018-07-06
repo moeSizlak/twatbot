@@ -28,6 +28,7 @@ module MyApp
           "Plugins::Weather",
           "Plugins::Election",
           "Plugins::RottenTomatoes",
+          "Plugins::CloudVision",
         ],
       
         :IRC_RUN_AFTER_CONNECT => [
@@ -55,6 +56,9 @@ module MyApp
         :YOUTUBE_GOOGLE_SERVER_KEY => "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API" ,
         :IMGUR_API_CLIENT_ID => "YOUR IMGUR API CLIENT ID" ,
         :OMDB_API_KEY => "XXXXXXXXXXXXXXXXX" ,
+
+        :CLOUD_VISION_CHANS  => [] ,
+        :CLOUD_VISION_APIKEY => "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         
         # Plugins::RottenTomatoes
         :RT_EXCLUDE_CHANS => [] ,
@@ -89,6 +93,12 @@ module MyApp
         :URLDB_CHANS => [] ,
         :URLDB_EXCLUDE_USERS => [] ,
         :URLDB_IMAGEDIR => "",  # set this to a real path and images will be saved in it ,
+
+        :URLDB_DATA => [
+          {:chan => "#test", :exclude_users => [], :imagedir => "/var/www/test.com/public_html/images/urldb", :table => :TitleBot}
+        ] ,
+
+
         
         # Plugins::Weather
         :WUNDERGROUND_API_KEY => 'YOUR_API_KEY_HERE' ,

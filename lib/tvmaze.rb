@@ -117,6 +117,17 @@ module Plugins
       if hitno == 0 && id && id.length > 0 && m.channel.users.keys.map{|x| x.nick}.include?(id.split(/\W+|,|:|;/)[0])
         return
       end
+
+      if id =~ /^nextgame$/i
+        m.reply "Fuck soccer."
+        return
+      end
+
+      if id =~ /^lastgame$/i
+        m.reply "Not soon enough."
+        return
+      end
+
       
       search = Unirest::get("http://api.tvmaze.com/search/shows?q=" + CGI.escape(id))
       showID = nil

@@ -44,8 +44,11 @@ module Plugins
                 output = "#{m.user} is a dirty cunt and pasted a Daily Mail link, shame on him"
               end
 
-              if m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.channel.to_s.downcase == "#testing12"
-                entries = @config[:DB][:TitleBot]
+              #if m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.channel.to_s.downcase == "#testing12"
+              if m.bot.botconfig[:URLDB_DATA].map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase)
+                #entries = @config[:DB][:TitleBot]
+                entries = @config[:DB][m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:table]]
+
                 postCount = entries.where(:URL => link).where('"Date" < (NOW() + interval \'-35 seconds\')').count
                 #puts "pc=#{postCount}\n"
                 if postCount > 0

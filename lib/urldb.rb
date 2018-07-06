@@ -15,7 +15,8 @@ module Plugins
     listen_to :channel, method: :urldb_listen
     
     def urldb_listen(m)
-      if !m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:URLDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+      #if !m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:URLDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+      if !m.bot.botconfig[:URLDB_DATA].map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase) || m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:exclude_users].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end
       
@@ -156,8 +157,11 @@ module Plugins
         
         imagefile = nil
 
-        if Dir.exists?(m.bot.botconfig[:URLDB_IMAGEDIR])
-          imagedir = m.bot.botconfig[:URLDB_IMAGEDIR]
+        #if Dir.exists?(m.bot.botconfig[:URLDB_IMAGEDIR])
+        if !m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir].nil? && Dir.exists?(m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir])
+          #imagedir = m.bot.botconfig[:URLDB_IMAGEDIR]
+          imagedir = m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir]
+
           imagedir = imagedir + '/' unless imagedir =~ /\/$/
         
           recvd = ""
@@ -235,8 +239,13 @@ module Plugins
         
         begin
           mytitle = '' if mytitle.nil?
+
+          if imagefile.nil? && imgurlink && imgurlink.length > 0
+            imagefile = imgurlink
+          end
           
-          entries = m.bot.botconfig[:DB][:TitleBot]
+          #entries = m.bot.botconfig[:DB][:TitleBot]
+          entries = m.bot.botconfig[:DB][m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:table]]
           entries.insert(:Date => Sequel.function(:now), :Nick => m.user.to_s, :URL => url, :Title => mytitle.force_encoding('utf-8'), :ImageFile => imagefile)
             
           rescue Sequel::Error => e
