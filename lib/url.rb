@@ -44,6 +44,10 @@ module Plugins
                 output = "#{m.user} is a dirty cunt and pasted a Daily Mail link, shame on him"
               end
 
+              if(output =~ /login/i && handler[:class] == "URLHandlers::TitleBot" && m.channel.to_s.downcase =~ /^(#jokers)$/)
+                return
+              end
+
               #if m.bot.botconfig[:URLDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.channel.to_s.downcase == "#testing12"
               if m.bot.botconfig[:URLDB_DATA].map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase)
                 #entries = @config[:DB][:TitleBot]

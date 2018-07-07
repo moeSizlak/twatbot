@@ -1,4 +1,5 @@
 require 'uri'
+require 'base64'
 
 module Plugins  
   class CloudVision
@@ -27,7 +28,7 @@ module Plugins
 
 
     def cv_listen(m, skipcheck=0)
-      if skipcheck==0 && !@config[:CLOUD_VISION_CHANS].map(&:downcase).include?(m.channel.to_s.downcase)
+      if (skipcheck==0 && (!@config[:CLOUD_VISION_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.message =~ /^!analyze\s+/))
         return
       end 
 
@@ -158,7 +159,7 @@ module Plugins
       
             easy.on_body do |chunk, easy|
             recvd << chunk             
-            :abort if recvd.length > 1024
+            :abort if recvd.length > 50000000
           end
           easy.perform
           rescue
@@ -195,12 +196,35 @@ module Plugins
 
             x = x.body["responses"][0]
 
+            
+
+            if x.key?("error") && x["error"].key?("code") && (x["error"]["code"] == 13 || x["error"]["code"] == 7 || (x["error"].key?("message") && x["error"]["message"] =~ /Please download the content and pass it/i))
+              puts "ERROR #{x["error"]["code"]}!!!: FALLING BACK TO BASE64 IMAGE SENDING\n"
+              dat = {"requests":[{"image":{"content":Base64.encode64(recvd)},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"},{"type":"SAFE_SEARCH_DETECTION"},{"type":"TEXT_DETECTION"}]}]}
+              recvd = nil
+              x = Unirest.post("https://vision.googleapis.com/v1/images:annotate?key=#{@config[:CLOUD_VISION_APIKEY]}", headers:{ "Content-Type" => "application/json" }, parameters: dat.to_json )
+              if x && x.body && x.body.key?("responses") && x.body["responses"].length == 1
+                x = x.body["responses"][0]
+                if x.key?("error") && x["error"].key?("message")
+                  myreply << x["error"]["message"]
+                  m.reply myreply
+                  return
+                end
+              end
+            else
+              if x.key?("error") && x["error"].key?("message")
+                myreply << x["error"]["message"]
+                m.reply myreply
+                return
+              end
+            end
+
             if x.key?("safeSearchAnnotation")
-              myreply << "\x03".b + "04" + "[ADULT] "    + "\x0f".b if x["safeSearchAnnotation"].key?("adult")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["adult"])
-              myreply << "\x03".b + "04" + "[RACY] "     + "\x0f".b if x["safeSearchAnnotation"].key?("racy")     && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["racy"])
-              myreply << "\x03".b + "04" + "[SPOOF] "    + "\x0f".b if x["safeSearchAnnotation"].key?("spoof")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["spoof"])
-              myreply << "\x03".b + "04" + "[MEDICAL] "  + "\x0f".b if x["safeSearchAnnotation"].key?("medical")  && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["medical"])
-              myreply << "\x03".b + "04" + "[VIOLENCE] " + "\x0f".b if x["safeSearchAnnotation"].key?("violence") && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["violence"])         
+              myreply << "\x03".b + "07" + "[ADULT] "    + "\x0f".b if x["safeSearchAnnotation"].key?("adult")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["adult"])
+              myreply << "\x03".b + "07" + "[RACY] "     + "\x0f".b if x["safeSearchAnnotation"].key?("racy")     && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["racy"])
+              myreply << "\x03".b + "07" + "[SPOOF] "    + "\x0f".b if x["safeSearchAnnotation"].key?("spoof")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["spoof"])
+              myreply << "\x03".b + "07" + "[MEDICAL] "  + "\x0f".b if x["safeSearchAnnotation"].key?("medical")  && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["medical"])
+              myreply << "\x03".b + "07" + "[VIOLENCE] " + "\x0f".b if x["safeSearchAnnotation"].key?("violence") && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["violence"])         
             end
 
             if x.key?("webDetection") && x["webDetection"].key?("bestGuessLabels")
