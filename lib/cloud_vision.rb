@@ -8,7 +8,7 @@ module Plugins
     
     listen_to :channel, method: :cv_listen
     match /^!(?:help|commands)/, use_prefix: false, method: :help
-    match /^!analyze\s+(\S.*)$/, use_prefix: false, method: :cv_analyze
+    match /^!analy[zs]e\s+(\S.*)$/, use_prefix: false, method: :cv_analyze
     
     def initialize(*args)
       super
@@ -31,6 +31,8 @@ module Plugins
       if (skipcheck==0 && (!@config[:CLOUD_VISION_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.message =~ /^!analyze\s+/))
         return
       end 
+
+      banned_labels = ['human hair color']
 
       URI.extract(m.message, ["http", "https"]) do |url|
 
@@ -183,12 +185,22 @@ module Plugins
         
 
         if imagefile == 1
-          dat = {"requests":[{"image":{"source":{"imageUri":tempurl}},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"},{"type":"SAFE_SEARCH_DETECTION"},{"type":"TEXT_DETECTION"}]}]}
+          if skipcheck == 1
+            dat = {"requests":[{"image":{"source":{"imageUri":tempurl}},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"},{"type":"SAFE_SEARCH_DETECTION"},{"type":"TEXT_DETECTION"}]}]}
+          else
+            dat = {"requests":[{"image":{"source":{"imageUri":tempurl}},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"}]}]}
+          end
+
           x = Unirest.post("https://vision.googleapis.com/v1/images:annotate?key=#{@config[:CLOUD_VISION_APIKEY]}", headers:{ "Content-Type" => "application/json" }, parameters: dat.to_json )
 
 
 
           if x && x.body && x.body.key?("responses") && x.body["responses"].length == 1
+            myreply_simple = ""
+            myreply_simple << "\x03".b + "03" 
+            myreply_simple << "[IMAGE] "
+            myreply_simple << "\x0f".b
+
             myreply = ""
             myreply << "\x03".b + "04" 
             myreply << "[ANALYSIS] "
@@ -198,9 +210,13 @@ module Plugins
 
             
 
-            if x.key?("error") && x["error"].key?("code") && (x["error"]["code"] == 13 || x["error"]["code"] == 7 || (x["error"].key?("message") && x["error"]["message"] =~ /Please download the content and pass it/i))
+            if x.key?("error") && x["error"].key?("code") && (x["error"]["code"] == 13 || x["error"]["code"] == 7 || (x["error"].key?("message") && x["error"]["message"] =~ /download the content/i))
               puts "ERROR #{x["error"]["code"]}!!!: FALLING BACK TO BASE64 IMAGE SENDING\n"
-              dat = {"requests":[{"image":{"content":Base64.encode64(recvd)},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"},{"type":"SAFE_SEARCH_DETECTION"},{"type":"TEXT_DETECTION"}]}]}
+              if skipcheck == 1
+                dat = {"requests":[{"image":{"content":Base64.encode64(recvd)},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"},{"type":"SAFE_SEARCH_DETECTION"},{"type":"TEXT_DETECTION"}]}]}
+              else
+                dat = {"requests":[{"image":{"content":Base64.encode64(recvd)},"features":[{"type":"LABEL_DETECTION"},{"type":"WEB_DETECTION"}]}]}
+              end
               recvd = nil
               x = Unirest.post("https://vision.googleapis.com/v1/images:annotate?key=#{@config[:CLOUD_VISION_APIKEY]}", headers:{ "Content-Type" => "application/json" }, parameters: dat.to_json )
               if x && x.body && x.body.key?("responses") && x.body["responses"].length == 1
@@ -229,29 +245,40 @@ module Plugins
 
             if x.key?("webDetection") && x["webDetection"].key?("bestGuessLabels")
               myreply << "\"" + "\x02".b + x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + "\x0f".b + "\" "
+              myreply_simple << x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + " "
             end
 
             yyz = []
+            yyz_simple = []
 
             if x.key?("webDetection") && x["webDetection"].key?("webEntities")
-              yyz += x["webDetection"]["webEntities"].select{|z| z.key?("description") && z["description"].length > 0}[0..5].map{|z| z["description"]} #.join(" ") + " "
+              yyz += x["webDetection"]["webEntities"].select{|z| z.key?("description") && z["description"].length > 0 && !banned_labels.include?(z["description"])}[0..5].map{|z| z["description"]} #.join(" ") + " "
             end
 
             if x.key?("labelAnnotations")
-              yyz += x["labelAnnotations"].select{|z| z.key?("description") && z["description"].length > 0 && z["score"] > 0.85}[0..5].map{|z| z["description"]} #.join(" ") + " "
+              yyz += x["labelAnnotations"].select{|z| z.key?("description") && z["description"].length > 0 && z["score"] > 0.85 && !banned_labels.include?(z["description"])}[0..5].map{|z| z["description"]} #.join(" ") + " "
+              yyz_simple += x["labelAnnotations"].select{|z| z.key?("description") && z["description"].length > 0 && z["score"] > 0.85 && !banned_labels.include?(z["description"])}[0..5].map{|z| z["description"]} #.join(" ") + " "
             end
 
             yyz = yyz.uniq{ |elem| elem.downcase }
-            myreply << yyz.join(", ") + " "
+            myreply << "(" + yyz.join(", ") + ")"
+
+            yyz_simple = yyz_simple.uniq{ |elem| elem.downcase }
+            myreply_simple << "(" + yyz_simple.join(", ") + ")"
 
             if x.key?("fullTextAnnotation") && x["fullTextAnnotation"].key?("text")
-              myreply << "TEXT=\"" + x["fullTextAnnotation"]["text"][0..100].gsub(/[[:space:]\r\n]+/, ' ') + "\" "
+              #myreply << "TEXT=\"" + x["fullTextAnnotation"]["text"][0..100].gsub(/[[:space:]\r\n]+/, ' ') + "\" "
+              ##myreply << ", " + "\x1d".b + "\"" + x["fullTextAnnotation"]["text"][0..150].gsub(/[[:space:]\r\n]+/, ' ') + "\" " + "\x0f".b
             end
 
             
 
+            if skipcheck == 0
+              m.reply myreply_simple
+            else
+              m.reply myreply
+            end
 
-            m.reply myreply
           end
         end
 

@@ -254,7 +254,7 @@ module Plugins
  
         myreply = ""
         #myreply = "Conditions for: "
-        myreply << "\x03".b + color_name 
+        myreply <<  "\x03".b + color_name 
         myreply << "#{display_location}"
         myreply << " [#{w["station_id"]}]" if w["station_id"]
         myreply << "\x0f".b
@@ -267,11 +267,16 @@ module Plugins
             
           i = 0
           #i = 1 if f[1]["title"] =~ /night/i
-          myreply << ", " + "\x03".b + color_name + "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+          myreply << ", " +  "\x03".b + color_name + 
+            "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+
           i += 1
-          myreply << " " + "\x03".b + color_name + "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+          myreply << " " + "\x03".b + color_name + 
+            "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+
           if (f[0]["title"] + f[1]["title"]) =~ /night/i
-            f = myreply << " " + "\x03".b + color_name + "#{f[2]["title"]}" + "\x0f".b + ": #{f[2][fw]}"
+            f = myreply << " " + "\x03".b + color_name + 
+              "#{f[2]["title"]}" + "\x0f".b + ": #{f[2][fw]}"
           end
         end
 
@@ -306,7 +311,8 @@ module Plugins
 
         
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-          myreply2 =  "\x03".b + color_name + "#{display_location}" + "\x0f".b + ": #{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}"
+          myreply2 =  "\x03".b + color_name + 
+            "#{display_location}" + "\x0f".b + ": #{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}"
           m.reply myreply2
         #end
         m.user.notice myreply

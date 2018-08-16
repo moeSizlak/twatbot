@@ -298,7 +298,7 @@ module Plugins
           end
           
           c = @IMDBCacheEntry[showID]
-          if c
+          if c && !c.imdburl.nil?
             puts 'FOUND IMDBCacheEntry'
             myreply <<
             " | " + 
@@ -322,32 +322,48 @@ module Plugins
             puts "imdblink(from tvdb)=#{imdblink}"
           end
           
-          if imdblink  
-            i = IMDB::getImdb(imdblink)
-            if i
-              puts "FOUND imdb data"
+          #if imdblink  
+            if imdblink  
+              i = IMDB::getImdb(imdblink)
+            end
+
+            ne = nextep.body["season"].to_s + "x" + sprintf("%02d", nextep.body["number"].to_s) rescue nil
+            #if i
+            #  puts "FOUND imdb data"
               if c
-                c.imdburl = 'http://www.imdb.com/title/' + imdblink
-                c.imdb_score = i[:score].gsub(/\/.*$/,'')
-                c.imdb_votes = i[:votes].gsub(/,/,'')
                 c.name = show.body["name"]
+                c.status = show.body.fetch("status", nil)
+                c.next_episode = airstamp_next_utc
+                c.next_episode_number = ne
+                c.tv_maze_last_update = Sequel::CURRENT_TIMESTAMP
+
+                if imdblink
+                  c.imdburl = 'http://www.imdb.com/title/' + imdblink
+                  if i
+                    c.imdb_score = i[:score].gsub(/\/.*$/,'')
+                    c.imdb_votes = i[:votes].gsub(/,/,'')
+                  end
+                end
+                
                 c.save
               else
-                c = @IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => 'http://www.imdb.com/title/' + imdblink, :imdb_score => i[:score].gsub(/\/.*$/,''), :imdb_votes => i[:votes].gsub(/,/,''), :name => show.body["name"])
+                c = @IMDBCacheEntry.create(:tv_maze_id => showID, :imdburl => (imdblink.nil? ? nil : 'http://www.imdb.com/title/' + imdblink), :imdb_score => (i.nil? ? '0' : i[:score].gsub(/\/.*$/,'')), :imdb_votes => (i.nil? ? 0 : i[:votes].gsub(/,/,'')), :name => show.body["name"], :status =>show.body.fetch("status", nil), :next_episode => airstamp_next_utc, :tv_maze_last_update => Sequel::CURRENT_TIMESTAMP, :next_episode_number => ne)
                 
-                myreply <<
-                " | " + 
-                "\x03".b + color_text + c.imdburl + "\x0f".b +
-                
-                " | " + 
-                "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+                if imdblink && i
+                  myreply <<
+                  " | " + 
+                  "\x03".b + color_text + c.imdburl + "\x0f".b +
+                  
+                  " | " + 
+                  "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+                end
                 
                 c = nil
               end
-            end
-          end  
+            #end
+          #end  
           
-          if !c
+          if !c || c.imdburl.nil?
             myreply << countdown
             m.reply myreply
           end
