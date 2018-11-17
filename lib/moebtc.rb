@@ -10,9 +10,9 @@ module Plugins
     
     match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^\.moe/i, use_prefix: false, method: :moebtc
-    match /^\.(btc|motherfucker)\s*$/i, use_prefix: false, method: :getBTCRates
+    match /^\.(btcx|motherfucker)\s*$/i, use_prefix: false, method: :getBTCRates
     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCoin
-    match /^\.(?!btc)(.{2,})\s*$/im, use_prefix: false, method: :getCoin
+    match /^\.(?!btcx)(.{2,})\s*$/im, use_prefix: false, method: :getCoin
 
     #timer 0,  {:method => :updatecoins, :shots => 1}
     #timer 60, {:method => :updatecoins}  
@@ -129,12 +129,12 @@ module Plugins
       g2 = g1.body["last"] rescue "" 
       
 
-      m.reply "\x03".b + "04" + "GEM:"   + "\x0f".b + " $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "BS:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "CB:" + "\x0f".b + " $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "BCH:"      + "\x0f".b + " $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "LTC:"      + "\x0f".b + " $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
+      m.reply "\x03".b + "04" + "Gemini:"   + "\x0f".b + " $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x03".b + "04" + "BitStamp:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x03".b + "04" + "Coinbase:" + "\x0f".b + " $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) # + " | " +
+              #"\x03".b + "04" + "BCH:"      + "\x0f".b + " $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              #"\x03".b + "04" + "LTC:"      + "\x0f".b + " $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              #"\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
     
     end
     

@@ -32,6 +32,8 @@ module Plugins
     
 
     def url_listen(m)
+      return if m.message =~ /https?:\/\/williampitcock.com/
+
       URI.extract(m.message, ["http", "https"]) do |link|
         @handlers.each do |handler|
           if !handler[:excludeChans].map(&:downcase).include?(m.channel.to_s.downcase) && !handler[:excludeNicks].map(&:downcase).include?(m.user.to_s.downcase)

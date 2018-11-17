@@ -13,7 +13,7 @@ module Plugins
     
     #match /^!(?:help|commands)/, use_prefix: false, method: :help
     #match /^!insult\s+(\S+)/, use_prefix: false, method: :insult
-    match /^!insult\s+(\S+)/, use_prefix: false, method: :insult2
+    match /^!insult\s+(\S+)/, use_prefix: false, method: :insult4
     match /^!latest/, use_prefix: false, method: :insult3
     match /^!list/, use_prefix: false, method: :insult3
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
@@ -172,7 +172,15 @@ module Plugins
       
       return nil
     end
-    
+
+    def get_insult_api
+      i = search = Unirest::get("https://insult.mattbas.org/api/insult.json")
+      i = i.body.dig("insult") rescue nil
+      return i
+    end
+
+
+
     def insult(m, a)  
       insult = get_ig_insult()
       if !insult.nil? && insult.length > 0
@@ -180,7 +188,14 @@ module Plugins
         m.reply "#{a}: #{insult}".gsub(/Draylor/i, "Gaylord")
       end
     end
+
  
+    def insult2(m, a)
+      insult = get_fom_insult()
+      botlog "[insult: #{insult}]", m
+      m.reply "#{a}: #{insult}".gsub(/Draylor/i, "Gaylord")
+    end
+
 
     def insult3(m)
       e = 25
@@ -199,6 +214,18 @@ module Plugins
       m.reply insult.gsub(/Draylor/i, "Gaylord")
 
     end
+    
+
+    def insult4(m, a)
+      insult = get_insult_api()
+      if !insult.nil? && insult.length > 0
+        botlog "[insult4: #{insult}]", m
+        m.reply "#{a}: #{insult}".gsub(/Draylor/i, "Gaylord")
+      end
+    end
+
+
+
     
     def join_insult(m)    
       if !@config[:DICKBOT_JOIN_INSULTS].map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase) || m.bot.nick.downcase == m.user.to_s.downcase
@@ -220,7 +247,7 @@ module Plugins
         if randnum <= e[:prob2]
           insult = "stfu #{m.user} you fucking #{get_fom_insult}"
         else
-          insult = "#{m.user}: #{get_ig_insult()}"
+          insult = "#{m.user}: #{get_insult_api()}"
         end
         
         if !insult.nil? && insult !~ /^#{m.user}:\s*$/
@@ -231,11 +258,7 @@ module Plugins
 
     end
     
-    def insult2(m, a)
-      insult = get_fom_insult()
-      botlog "[insult: #{insult}]", m
-      m.reply "#{a}: #{insult}".gsub(/Draylor/i, "Gaylord")
-    end
+    
     
     def action_insult(m)
       insult = "stfu #{m.user} you fucking #{get_fom_insult}"

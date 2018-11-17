@@ -126,13 +126,14 @@ module Plugins
       a.gsub!(/\s\s/, ' ') while a =~ /\s\s/
       words = a.split(" ")
       
-      quotes = @config[:DB][:quotes].where(:channel => mychan)
+      quotes = @config[:DB][:quotes].where(Sequel.ilike(:channel, mychan))
       words.each do |word|
         quotes = quotes.where(Sequel.ilike(:quote, '%'+quotes.escape_like(word)+'%'))
       end     
       
       if a =~ /^\d+$/
-        quotes = quotes.or(:id => a)
+        #quotes = quotes.or{Sequel.&({id: a}, {channel: mychan})}
+        quotes = quotes.or{Sequel.&({id: a}, Sequel.ilike(:channel, mychan))}
       end
       
       rc = quotes.count
