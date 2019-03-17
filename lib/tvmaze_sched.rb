@@ -246,19 +246,19 @@ module Plugins
     def sched_today
       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)      
       today     = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now + 0).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 1).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
-      return  "\x02".b + "\x03".b + "11" + "Today: "     + "\x0f".b +  today.map    {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + sprintf("%02d", a[:episode].to_s) rescue nil}"}.join(" | ")
+      return  "\x02".b + "\x03".b + "11" + "Today: "     + "\x0f".b +  today.map    {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
     def sched_tomorrow
       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)
       tomorrow  = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now + 1).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 2).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
-      return "\x02".b + "\x03".b + "09" + "Tomorrow: "  + "\x0f".b +  tomorrow.map {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + sprintf("%02d", a[:episode].to_s) rescue nil}"}.join(" | ")
+      return "\x02".b + "\x03".b + "09" + "Tomorrow: "  + "\x0f".b +  tomorrow.map {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
     def sched_yesterday
       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)
       yesterday = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now - 1).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 0).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
-      return "\x02".b + "\x03".b + "04" + "Yesterday: " + "\x0f".b +  yesterday.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + sprintf("%02d", a[:episode].to_s) rescue nil}"}.join(" | ")
+      return "\x02".b + "\x03".b + "04" + "Yesterday: " + "\x0f".b +  yesterday.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
     def nall(m)  
@@ -305,9 +305,9 @@ module Plugins
       puts t.count.to_s
 
       if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
-        m.reply "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + sprintf("%02d", a[:episode].to_s) rescue nil}"}.join(" | ")
+        m.reply "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
       else
-        m.user.notice "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + sprintf("%02d", a[:episode].to_s) rescue nil}"}.join(" | ")
+        m.user.notice "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
       end
     end
 

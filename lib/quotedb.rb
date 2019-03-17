@@ -12,7 +12,7 @@ module Plugins
     match /^!(?:help|commands)/, use_prefix: false, method: :help
     match /^!ratequote\s+(\S.*)$/, use_prefix: false, method: :ratequote
     match /^!addquote\s+(\S.*)$/, use_prefix: false, method: :addquote
-    match /^!(?:find|search)?quote\s+(\S.*)$/, use_prefix: false, method: :quote
+    match /^!(?:find|search)?quote(\s.*$|$)/, use_prefix: false, method: :quote
     
     def initialize(*args)
       super
@@ -48,7 +48,8 @@ module Plugins
         end          
       end    
     end
-    
+
+
     def ratequote(m, a)    
       if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
@@ -95,7 +96,7 @@ module Plugins
       if m.channel.to_s == "#testing12"
         mychan = '#hdbits'
       else
-        mychan = m.channel.to_s
+        mychan = m.channel.to_s.downcase
       end
       
       if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(mychan.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
@@ -104,7 +105,25 @@ module Plugins
       
       botlog "", m
       a.strip!
-      return unless a.length > 0
+      #return unless a.length > 0
+      if(!a || a.length == 0 || a =~ /^\s+$/)
+        quotes = @config[:DB][:quotes].where(:channel => mychan)
+        if quotes.count > 0
+          scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)}        
+          prng = Random.new
+          myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
+          m.reply "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
+        
+
+          #Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
+        else
+          botlog "WTF!!!! No quotes available for quote."
+        end
+
+
+        return
+      end
+
       
       #lqkey = mychan + "::" + m.user.to_s;
       lqkey = mychan + "::" + a;

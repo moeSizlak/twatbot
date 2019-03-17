@@ -48,6 +48,10 @@ module Plugins
         return false
       end    
     end
+
+    def f_to_c(f)
+      (f - 32) * (5.0/9.0)
+    end
     
     def get_weather(m, location)
       botlog "", m
@@ -57,6 +61,18 @@ module Plugins
       weather = nil
       forecast = nil
       pws = '1'
+=begin
+      if m.user.nick == "moeSizlak"
+        myreply = ""
+        #myreply = "Conditions for: "
+        myreply <<  "\x03".b + "04" 
+        myreply << "Buffalo, NY"
+           myreply << "\x0f".b
+        myreply << ": Mayhem, 20F/-7C"
+        m.reply myreply
+        return
+      end
+=end
 
       c = @WeatherLocationCacheEntry[m.bot.irc.network.name.to_s.downcase, m.user.to_s.downcase]
       if location.length == 0        
@@ -76,15 +92,6 @@ module Plugins
           @WeatherLocationCacheEntry.create(:network => m.bot.irc.network.name.to_s.downcase, :nick => m.user.to_s.downcase, :location => mylocation) 
         end
       end
-
-=begin
-      newloc = Unirest::get("http://autocomplete.wunderground.com/aq?query=#{CGI.escape(mylocation).gsub('+','%20')}")
-      if newloc && newloc.body && newloc.body.key?("RESULTS") && newloc.body["RESULTS"][0] && newloc.body["RESULTS"][0]["l"]
-        newloc = newloc.body["RESULTS"][0]["l"]
-      else
-        newloc = nil
-      end
-=end
 
       puts "mylocation=#{mylocation}"
 
@@ -123,17 +130,20 @@ module Plugins
           end
 
           if newloc.nil?
-            url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/conditions/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
+            errormsg = "Failed to get lat/long."
+            botlog errormsg, m
+            m.reply errormsg
+            return
           else
-            #url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/conditions/pws:#{pws}#{newloc}.json"
-            url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/conditions/pws:#{pws}/q/#{lat},#{lng}.json"
+            url = "https://api.darksky.net/forecast/#{@config[:DARK_SKY_SECRET_KEY]}/#{lat},#{lng}"
           end
 
           puts "Using URL2 = #{url}"
           weather = Unirest::get(url)
           @@apicalls_day.unshift(Time.now.to_i)
-          @@apicalls_minute.unshift(Time.now.to_i)          
-          
+          @@apicalls_minute.unshift(Time.now.to_i)   
+          break       
+=begin          
           if weather.body && weather.body.key?("response")
           
             if weather.body["response"].key?("error")
@@ -156,10 +166,11 @@ module Plugins
               break
             end           
           end
+=end
         end
 
       
-    
+=begin    
         if !check_api_rate_limit(1)
           errormsg = "ERROR: WeatherUnderground API rate limiting in effect, please wait 1 minute and try your request again. (API calls in last minute = #{@@apicalls_minute.size}, last day = #{@@apicalls_day.size}) [Error: API_LIMIT_C]"
           botlog errormsg, m
@@ -168,7 +179,12 @@ module Plugins
         end
 
         if newloc.nil?
-          url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/forecast/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
+          errormsg = "Failed to get lat/long...?"
+          botlog errormsg, m
+          m.reply errormsg
+          return
+
+          #url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/forecast/pws:#{pws}/q/#{CGI.escape(mylocation).gsub('+','%20')}.json"
         else
           #url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/forecast/pws:#{pws}#{newloc}.json"
           url = "http://api.wunderground.com/api/#{CGI.escape(@config[:WUNDERGROUND_API_KEY]).gsub('+','%20')}/forecast/pws:#{pws}/q/#{lat},#{lng}.json"
@@ -178,12 +194,12 @@ module Plugins
 
         forecast = Unirest::get(url)
         @@apicalls_day.unshift(Time.now.to_i)
-        @@apicalls_minute.unshift(Time.now.to_i)        
+        @@apicalls_minute.unshift(Time.now.to_i) 
+=end       
       end
       
-      if forecast.body && forecast.body.key?("response") && !forecast.body["response"].key?("error") && !forecast.body["response"].key?("results") &&
-      forecast.body.key?("forecast") && forecast.body["forecast"].key?("simpleforecast") && forecast.body["forecast"]["simpleforecast"].key?("forecastday") &&
-      forecast.body["forecast"]["simpleforecast"]["forecastday"].size >= 3
+      if weather.body && weather.body.key?("daily") && weather.body["daily"].key?("summary") && weather.body["daily"].key?("data") && weather.body["daily"]["data"].size >= 3
+        forecast = weather
         #puts "OK"
       else
         forecast = nil
@@ -193,18 +209,18 @@ module Plugins
       #puts forecast.body
       #puts "\n\n"
       
-      if weather.body.key?("current_observation")
+      if weather.body.key?("currently")
         
         display_location = location
         country = 'XX'
 
-        olat = weather.body["current_observation"]["observation_location"]["latitude"] rescue nil
-        olng = weather.body["current_observation"]["observation_location"]["longitude"] rescue nil
+        #olat = weather.body["current_observation"]["observation_location"]["latitude"] rescue nil
+        #olng = weather.body["current_observation"]["observation_location"]["longitude"] rescue nil
         fad = nil
 
-        if olat && olng && olat.length > 0 && olng.length > 0
-          puts "Using URL3 = https://maps.googleapis.com/maps/api/geocode/json?latlng=#{olat},#{olng}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
-          newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{olat},#{olng}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+        #if olat && olng && olat.length > 0 && olng.length > 0
+        #  puts "Using URL3 = https://maps.googleapis.com/maps/api/geocode/json?latlng=#{olat},#{olng}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
+        #  newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{olat},#{olng}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
 
           if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
             # Remove all of the following address components unconditionally
@@ -217,21 +233,21 @@ module Plugins
             sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
             fad = ac.collect{|x| x[sl]}.join(", ")
           end
-        end
+        #end
 
-        puts "FAD=\"#{fad}, OLAT=#{olat}, OLNG=#{olng}\""
+        #puts "FAD=\"#{fad}, OLAT=#{olat}, OLNG=#{olng}\""
 
         if !fad.nil? && fad.length > 0
           display_location = fad.dup
           mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
           puts "mycunt=#{mycunt}\nmyloc=#{display_location}"
           country = 'US' if mycunt == "US"
-        elsif weather.body["current_observation"].key?("display_location") && weather.body["current_observation"]["display_location"].key?("full")
-          display_location = weather.body["current_observation"]["display_location"]["full"]
-          country = 'US' if weather.body["current_observation"]["display_location"]["country"] == 'US'
-        elsif weather.body["current_observation"].key?("observation_location") && weather.body["current_observation"]["observation_location"].key?("full")
-          display_location = weather.body["current_observation"]["observation_location"]["full"]    
-          country = 'US' if weather.body["current_observation"]["observation_location"]["country"] == 'US'
+        #elsif weather.body["current_observation"].key?("display_location") && weather.body["current_observation"]["display_location"].key?("full")
+        #  display_location = weather.body["current_observation"]["display_location"]["full"]
+        #  country = 'US' if weather.body["current_observation"]["display_location"]["country"] == 'US'
+        #elsif weather.body["current_observation"].key?("observation_location") && weather.body["current_observation"]["observation_location"].key?("full")
+        #  display_location = weather.body["current_observation"]["observation_location"]["full"]    
+        #  country = 'US' if weather.body["current_observation"]["observation_location"]["country"] == 'US'
         end
         
         color_pipe = "01"     
@@ -240,14 +256,22 @@ module Plugins
         color_colons = "12"
         color_text = "07"
         
-        w = weather.body["current_observation"]
+        w = weather.body["currently"]
+        extended_summary = nil
 
         #if forecast
         #  f = forecast.body["forecast"]["simpleforecast"]["forecastday"]
         #end
         if forecast
           #f = [forecast.body["forecast"]["txt_forecast"]["forecastday"][0]] + forecast.body["forecast"]["txt_forecast"]["forecastday"][1..9].select{|x| x.has_key?('title') && x['title'] !~ /Night/i}
-        f = forecast.body["forecast"]["txt_forecast"]["forecastday"]
+          f = forecast.body["daily"]
+          if forecast.body["daily"].key?("summary")
+            extended_summary = forecast.body["daily"]["summary"]
+            
+            extended_summary.gsub!(/(\S+)\u00b0F/) {|f| f_to_c(f.to_f).round.to_s + "\u00b0C" } if country != 'US'
+
+          end
+
         end
 
         puts "Country=\"#{country}\""
@@ -256,12 +280,15 @@ module Plugins
         #myreply = "Conditions for: "
         myreply <<  "\x03".b + color_name 
         myreply << "#{display_location}"
-        myreply << " [#{w["station_id"]}]" if w["station_id"]
+        #myreply << " [#{w["station_id"]}]" if w["station_id"]
         myreply << "\x0f".b
-        myreply << (": " + "\x02".b + "#{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature_string"] && w["weather"]
-        if forecast
-          #puts f
+        puts "cccc=#{w["temperature"]}"
+        myreply << (": " + "\x02".b + "#{w["summary"]}, #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature"]
 
+        if forecast
+          myreply << ", " + extended_summary if extended_summary
+          #puts f
+=begin
           fw = 'fcttext'
           fw = 'fcttext_metric' if country != 'US'
             
@@ -278,6 +305,7 @@ module Plugins
             f = myreply << " " + "\x03".b + color_name + 
               "#{f[2]["title"]}" + "\x0f".b + ": #{f[2][fw]}"
           end
+=end
         end
 
 
@@ -311,11 +339,12 @@ module Plugins
 
         
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-          myreply2 =  "\x03".b + color_name + 
-            "#{display_location}" + "\x0f".b + ": #{w["weather"]}, #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, '\1F/\2C')}"
-          m.reply myreply2
+        #  myreply2 =  "\x03".b + color_name + 
+        #    "#{display_location}" + "\x0f".b + ": #{w["summary"]},  #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}"
+        #  m.reply myreply2
         #end
-        m.user.notice myreply
+        #m.user.notice myreply
+        m.reply myreply
 
         puts myreply.gsub(/[^ -~]/,'')
 

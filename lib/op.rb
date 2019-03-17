@@ -48,26 +48,51 @@ module Plugins
 
     def kickass(m)
       puts "KILLING SPAMBOT: '#{m.channel}', '#{m.user}'"
-      Channel(m.channel).kick(m.user, ["fuck off and die", "shitbird", "cunt", "faggot", "i hope you get inoperable bowel cancer", "gtfo tbh"].sample)
+      Channel(m.channel).kick(m.user, ["no it fucking hasn't", "sigh......", "rm -rf /", "fuck off and die", "shitbird", "cunt", "faggot", "i hope you get inoperable bowel cancer", "gtfo tbh", "suck the dick of life", "eat shit and die", "cunting shit nugget", "bloody wanker", "shitlord", "fuckface", "Cunty McCuntington", "Shitty McShitface", "Faggy McFagface", "FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU"].sample)
     end
 
     def test123(m)
-      puts m.user.data
+      puts "#{m.bot.nick}: #{m.user.data}"
+      #m.reply "ok=#{Cinch::Mask.from('*!buckeye@happy.cow.org').match(m.channel.users.keys.find|x| x.to_s=='eefer'})}"
+      #m.reply "ok=#{m.channel.users.keys.find{|x| x.to_s== "moeSizlak"}.mask}"
+
     end
 
     def on_join(m)
+
+      Timer 65, {:shots => 1} do
+        if m.bot.name == "dickbot"
+          sleep 5
+        else
+          sleep 10
+        end
+
+        if m.channel.to_s.downcase == '##tv' && !m.channel.opped?(m.user.nick) && !m.channel.voiced?(m.user.nick)
+          m.channel.voice(m.user.nick) 
+          puts "Voicing #{m.user.name}."
+        end
+
+      end
+
       return unless @auto_ops.map{|x| x[:chan].downcase}.include?(m.channel.to_s.downcase)
-      return unless matches?(m.user.mask)
-      return unless !m.channel.opped?(m.user)
-      puts "OPCHECK (m.bot.name) (#{m.channel}) (#{m.user}) =>#{m.channel.opped?(m.user)}"
+      return unless matches?(m.channel.to_s, m.user.mask)
+
+      if m.bot.name == "dickbot"
+        sleep 120
+      else
+        sleep 30
+      end
+
+      return unless !m.channel.opped?(m.user.nick)
+      puts "OPCHECK (#{m.bot.name}) (#{m.channel}) (#{m.user}) =>#{m.channel.opped?(m.user.nick)}"
       Channel(m.channel).op(m.user)
-      puts "OPCHECK (m.bot.name) (#{m.channel}) (#{m.user}) =>#{m.channel.opped?(m.user)}"
+
     end
 
 
-    def matches?(user)
+    def matches?(chan, user)
       @auto_ops.each do |a|
-        next unless a[:mask].match(user)
+        next unless a[:chan].downcase == chan.downcase && a[:mask].match(user)
         return true
       end
 

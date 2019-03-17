@@ -145,6 +145,7 @@ module Plugins
       id.gsub!(/\s+/, " ")
       id.gsub!(/[^ -~]/, "")
       id.gsub!(/^\s*saul\s*$/i, "better call saul")
+      id.gsub!(/^\s*thrones\s*$/i, "game of thrones")
 
       if hitno == 0 && id && id.length > 0 && m.channel.users.keys.map{|x| x.nick}.include?(id.split(/\W+|,|:|;/)[0])
         return

@@ -59,6 +59,11 @@ module MyApp
 
         :CLOUD_VISION_CHANS  => [] ,
         :CLOUD_VISION_APIKEY => "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+
+        # Plugins::CloudVision
+      :GOOGLE_SEARCH_EXCLUSE_CHANS  => [],
+      :GOOGLE_SEARCH_ENGINE_ID => "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      :GOOGLE_SEARCH_APIKEY => "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         
         # Plugins::RottenTomatoes
         :RT_EXCLUDE_CHANS => [] ,
