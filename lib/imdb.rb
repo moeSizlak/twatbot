@@ -52,6 +52,7 @@ module Plugins
              
         tomato = nil
         if omdb && omdb.body.key?('tomatoURL') && omdb.body["tomatoURL"] =~ /^http/
+          puts "Trying RT link #{omdb.body["tomatoURL"]}"
           begin
             tomato = RottenTomatoes::getRottenTomatoString(RottenTomatoes::scrapeRottenTomatoURL(omdb.body["tomatoURL"]))
           rescue

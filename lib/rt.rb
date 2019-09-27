@@ -1,6 +1,8 @@
 require 'nokogiri'
 require 'open-uri'
 require 'cgi'
+require 'json'
+
 
 module Plugins
   class RottenTomatoes
@@ -23,39 +25,46 @@ module Plugins
       end
       tomatoTitle = movie.css('title')[0].text.gsub(/(\s*-\s*)?\s*Rotten Tomatoes\s*$/,'')
       tomatoSynopsis = movie.css('div.movie_synopsis  > text()').text.strip
-      tomatoMeter = movie.css('div#all-critics-numbers div.critic-score.meter a#tomato_meter_link span.meter-value').text
+      #tomatoMeter = movie.css('div#all-critics-numbers div.critic-score.meter a#tomato_meter_link span.meter-value').text
+      tomatoMeter = movie.css('#tomato_meter_link > span.mop-ratings-wrap__percentage').text.strip rescue nil
       
       tomatoAvgCriticRating = ""
+      tomatoReviewCount = 0
       tomatoFreshCount = 0
       tomatoRottenCount = 0
       
-      movie.css('div#all-critics-numbers div#scoreStats div').select {|x| x.text =~ /Average Rating:\s*([\d\.]+\/\d+)/m && tomatoAvgCriticRating = $1}
-      
-      begin
-        tomatoFreshCount = movie.css('div#all-critics-numbers div#scoreStats div').select {|x| x.text =~ /Fresh/ && x.text !~ /Rotten/}[0].text.gsub(/^[^\d]*(\d+).*$/m,'\1')
-      rescue
-        tomatoFreshCount = 0
+      score_data = ""
+      movie.css('script').select{|x| x.text =~ /root\.RottenTomatoes\.context\.scoreInfo\s*=\s*(\{[^;]*);/m  && score_data = JSON.parse($1)} rescue nil
+      #puts "score_data = \"#{score_data}\""
+
+      if score_data 
+        #puts "BBBB\n"
+        tomatoMeter = score_data["tomatometerAllCritics"]["score"].to_s + '%' rescue '0%'
+        tomatoAvgCriticRating = score_data["tomatometerAllCritics"]["avgScore"].to_s + '/10' rescue '0/10'
+        tomatoReviewCount = score_data["tomatometerAllCritics"]["numberOfReviews"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+        tomatoFreshCount = score_data["tomatometerAllCritics"]["freshCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+        tomatoRottenCount = score_data["tomatometerAllCritics"]["rottenCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+
+        if score_data.key?("audienceVerified") && score_data["audienceVerified"].key?("ratingCount")  && score_data["audienceVerified"]["ratingCount"] > 0
+          a = "audienceVerified"
+        else
+          a = "audienceAll"
+        end
+
+        tomatoAudienceMeter = score_data[a]["score"].to_s + '%' rescue '0%'
+        tomatoAvgAudienceRating = score_data[a]["averageRating"].to_s + '/5' rescue '0/5'
+        tomatoAudienceVotes = score_data[a]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+        #puts "BBBB\n"
       end
-      
-      begin
-        tomatoRottenCount = movie.css('div#all-critics-numbers div#scoreStats div').select {|x| x.text =~ /Rotten/ && x.text !~ /Fresh/}[0].text.gsub(/^[^\d]*(\d+).*$/m,'\1')
-      rescue
-        tomatoRottenCount = 0
-      end  
-      
-      tomatoAudienceMeter = movie.css('div.audience-score.meter div.meter-value span').text
-      
-      tomatoAvgAudienceRating = ""
-      tomatoAudienceVotes = 0
-      
-      movie.css('div.audience-info div').select {|x| x.text =~ /Average Rating:\s*([\d\.]+\/\d+)/m && tomatoAvgAudienceRating = $1}
-      movie.css('div.audience-info div').select {|x| x.text =~ /User Ratings:\s*(\d[\d,]+)/m && tomatoAudienceVotes = $1}
-      
-      return { 
+
+      #puts "DDDDD\n"
+
+      outy = { 
         :tomatoURL => tomatoURL, 
         :tomatoTitle => tomatoTitle, 
         :tomatoSynopsis => tomatoSynopsis, 
         :tomatoMeter => tomatoMeter,
+        :tomatoReviewCount => tomatoReviewCount,
         :tomatoAvgCriticRating => tomatoAvgCriticRating, 
         :tomatoFreshCount => tomatoFreshCount, 
         :tomatoRottenCount => tomatoRottenCount,
@@ -63,6 +72,11 @@ module Plugins
         :tomatoAvgAudienceRating => tomatoAvgAudienceRating, 
         :tomatoAudienceVotes => tomatoAudienceVotes
       } 
+
+      #puts "CCCC\nCCCCCCC\n"
+      puts outy
+
+      return outy
       
     end
     

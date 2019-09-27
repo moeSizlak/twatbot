@@ -224,7 +224,8 @@ module Plugins
                 end
 
                 g.each do |show|
-                  bot.botconfig[:DB][:episodes].where(:show_id => show[:show_id]).where{airstamp >= show[:next_ep]}.exclude(:ep_id => show[:eps]).delete
+                  #bot.botconfig[:DB][:episodes].where(:show_id => show[:show_id]).where{airstamp >= show[:next_ep]}.exclude(:ep_id => show[:eps]).delete
+                  bot.botconfig[:DB][:episodes].where(:show_id => show[:show_id]).where{airstamp >= Sequel::CURRENT_TIMESTAMP}.exclude(:ep_id => show[:eps]).delete
                 end
 
                 @config[:DB][:bot_config].update(:last_tv_sched_update => Sequel::CURRENT_TIMESTAMP)

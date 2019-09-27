@@ -24,6 +24,9 @@ module Plugins
       @WeatherLocationCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:weather_locations_cache]))
       @WeatherLocationCacheEntry.unrestrict_primary_key
 
+      @LocationCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:location_cache]))
+      @LocationCacheEntry.unrestrict_primary_key
+
       @airports = CSV.read(File.dirname(__FILE__) + "/airports_large.txt")
 
     end
@@ -100,16 +103,50 @@ module Plugins
       mylocation = my_airport[2] if my_airport
 
 
-      puts "Using URL1 = https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
-      newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
       lat = nil
       lng = nil
-      if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("geometry") && newloc.body["results"][0]["geometry"].key?("location") && newloc.body["results"][0]["geometry"]["location"].key?("lat") && newloc.body["results"][0]["geometry"]["location"].key?("lng")
-        lat  = newloc.body["results"][0]["geometry"]["location"]["lat"].to_s
-        lng  = newloc.body["results"][0]["geometry"]["location"]["lng"].to_s
+      fad = nil
+
+      c = @LocationCacheEntry[mylocation]     
+      if c
+        lat = c.lat
+        lng = c.long
+        fad = c.display_name
+        mycunt = c.country
+        newloc = 1
+
+        bot.botconfig[:DB][:location_cache].returning(:counter).where(:location => mylocation).update(:counter => Sequel.expr(1) + :counter)
+
+        puts "Found cached lat/long of \"#{c.lat}\", \"#{c.long}\""
       else
-        newloc = nil
+        puts "Using URL1 = https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
+        newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+        
+        if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("geometry") && newloc.body["results"][0]["geometry"].key?("location") && newloc.body["results"][0]["geometry"]["location"].key?("lat") && newloc.body["results"][0]["geometry"]["location"].key?("lng")
+          lat  = newloc.body["results"][0]["geometry"]["location"]["lat"].to_s
+          lng  = newloc.body["results"][0]["geometry"]["location"]["lng"].to_s
+
+          if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
+            # Remove all of the following address components unconditionally
+            ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
+            
+            # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
+            ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
+
+            sl = "long_name"
+            sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
+            fad = ac.collect{|x| x[sl]}.join(", ")
+          end
+          mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+
+
+          @LocationCacheEntry.create(:location => mylocation, :lat => lat, :long => lng, :display_name => fad, :country => mycunt, :counter => 1)
+        else
+          newloc = nil
+        end
       end
+
+      
 
       puts "Using Lat/Long of #{lat}/#{lng}" #, fad3=#{fad3}, fad2=#{fad2}, fad1=#{fad1}, fad=#{fad}"
         
@@ -216,30 +253,30 @@ module Plugins
 
         #olat = weather.body["current_observation"]["observation_location"]["latitude"] rescue nil
         #olng = weather.body["current_observation"]["observation_location"]["longitude"] rescue nil
-        fad = nil
+        #fad = nil
 
         #if olat && olng && olat.length > 0 && olng.length > 0
         #  puts "Using URL3 = https://maps.googleapis.com/maps/api/geocode/json?latlng=#{olat},#{olng}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
         #  newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?latlng=#{olat},#{olng}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
 
-          if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
-            # Remove all of the following address components unconditionally
-            ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
-            
-            # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
-            ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
-
-            sl = "long_name"
-            sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
-            fad = ac.collect{|x| x[sl]}.join(", ")
-          end
+        ##  if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
+        ##    # Remove all of the following address components unconditionally
+        ##    ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
+        ##    
+        ##    # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
+        ##    ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
+        ##
+        ##    sl = "long_name"
+        ##    sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
+        ##    fad = ac.collect{|x| x[sl]}.join(", ")
+        ##  end
         #end
 
         #puts "FAD=\"#{fad}, OLAT=#{olat}, OLNG=#{olng}\""
 
         if !fad.nil? && fad.length > 0
           display_location = fad.dup
-          mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+          #mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
           puts "mycunt=#{mycunt}\nmyloc=#{display_location}"
           country = 'US' if mycunt == "US"
         #elsif weather.body["current_observation"].key?("display_location") && weather.body["current_observation"]["display_location"].key?("full")
