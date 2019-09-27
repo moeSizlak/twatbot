@@ -29,6 +29,7 @@ module URLHandlers
       recvd = String.new
       t = Tempfile.new(['url_cookies', '.dat'])
       tmpcookiefile = t.path
+      t.write("#HttpOnly_.dumpert.nl\tTRUE\t/\tFALSE\t0\tcpc\t10") if(url =~ /https?:\/\/[^\s\/]*dumpert.nl/)
       t.close
       
       begin
