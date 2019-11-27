@@ -70,6 +70,8 @@ class TVDB
 end
 
 
+
+
 module Plugins
   class TvMaze
     include Cinch::Plugin
