@@ -14,7 +14,7 @@ module URLHandlers
     def parse(url)      
       if(url =~ /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*/i)
         id = $1
-        search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status")
+        search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics")
         #puts "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status"
         if search.body && search.body.key?("items") && search.body["items"].size > 0
           if search.body["items"][0].key?("snippet") 
@@ -101,6 +101,9 @@ module URLHandlers
           "\x03".b + color_rating +"]" + "\x0f".b
           
           return myreply
+      	else
+      		#puts search.code 
+      		#puts search.raw_body
         end      
       end
       return nil
