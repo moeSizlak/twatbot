@@ -56,6 +56,7 @@ module MyApp
         :YOUTUBE_GOOGLE_SERVER_KEY => "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API" ,
         :IMGUR_API_CLIENT_ID => "YOUR IMGUR API CLIENT ID" ,
         :OMDB_API_KEY => "XXXXXXXXXXXXXXXXX" ,
+        :COINMARKETCAP_API_KEY => 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
 
         :CLOUD_VISION_CHANS  => [] ,
         :CLOUD_VISION_APIKEY => "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
@@ -88,6 +89,9 @@ module MyApp
 
         # Plugins::MoeBTC
         :COINS => [] ,
+
+        :CORONA_EXCLUDE_CHANS => [],
+        :CORONA_EXCLUDE_USERS => [],
           
         # Plugins::QuoteDB
         :QUOTEDB_CHANS => [] ,
@@ -184,6 +188,7 @@ module MyApp
           "Plugins::Weather",
           "Plugins::Election",
           "Plugins::RottenTomatoes",
+          "Plugins::CoronaVirus",
         ],
       
         :TWATBOT_SQL => 'postgres://user:pass@localhost/twatbot?encoding=utf8' ,
@@ -200,6 +205,7 @@ module MyApp
         :YOUTUBE_GOOGLE_SERVER_KEY => "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API" ,
         :IMGUR_API_CLIENT_ID => "YOUR IMGUR API CLIENT ID" ,
         :OMDB_API_KEY => "XXXXXXXXXXXXXXXXX" ,
+        :COINMARKETCAP_API_KEY => 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         
         # Plugins::RottenTomatoes
         :RT_EXCLUDE_CHANS => [] ,
@@ -252,6 +258,9 @@ module MyApp
 
         # Plugins::MoeBTC
         :COINS => [] ,
+
+        :CORONA_EXCLUDE_CHANS => [],
+        :CORONA_EXCLUDE_USERS => [],
         
         # prob1 is the percentage probability a insult will be thrown at someone who joins.
         # prob1 is the percentage probability that a thrown insult will be of the type Foul-O-Matic,

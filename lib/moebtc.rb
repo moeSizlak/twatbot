@@ -33,9 +33,11 @@ module Plugins
     end
 
     def updatecoins
-      mycoins = Unirest::get("https://api.coinmarketcap.com/v1/ticker/?limit=0") rescue nil
-      if !mycoins.nil? && !mycoins.body.nil?
-          @@coins = mycoins.body
+      #mycoins = Unirest::get("https://api.coinmarketcap.com/v1/ticker/?limit=0") rescue nil
+      mycoins = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=600&convert=USD", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
+
+      if !mycoins.nil? && !mycoins.body.nil? && !mycoins.body["data"].nil?
+          @@coins = mycoins.body["data"]
           @@coins_lastupdate = DateTime.now
       end
     end
@@ -46,8 +48,9 @@ module Plugins
       end
       
       cc = nil
+      bb = nil
       @@coins_mutex.synchronize do
-        updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (4/1440.0))))
+        updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (15/1440.0))))
 
         cc = @@coins.find{|x| x["symbol"].upcase == c.upcase}
 
@@ -59,26 +62,30 @@ module Plugins
           cc = @@coins.find{|x| x["name"].upcase.include?(c.upcase)}
         end
 
+        bb = @@coins.find{|x| x["symbol"].upcase == 'BTC'}
+
       end
 
-      return if cc.nil?
+      return if cc.nil? || bb.nil?
 
+
+      b = bb
       c = cc
       botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@coins_lastupdate}",m
 
       p = ""
       if m.user.to_s.downcase =~ /pinch/i
-         p = sprintf("%.8f", (c["price_btc"].to_f  / @@coins.find{|x| x["symbol"].upcase == "ETH"}["price_btc"].to_f)).sub(/\.?0*$/,'') + " ETH | " rescue ""
+         p = sprintf("%.8f", (c["quote"]["USD"]["price"].to_f  / @@coins.find{|x| x["symbol"].upcase == "ETH"}["quote"]["USD"]["price"].to_f)).sub(/\.?0*$/,'') + " ETH | " #rescue ""
 
       end
 
 
       m.reply "" +
-      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{c["price_usd"]} | #{c["price_btc"]} BTC | " + p +
-      "Rank: #{c["rank"]} | " +
-      "(7d) " + "\x0f".b  + (!c["percent_change_7d"].nil?  && c["percent_change_7d"][0]  == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_7d"].to_s  + "%" + "\x0f".b + " | " +
-      "(24h) " + "\x0f".b + (!c["percent_change_24h"].nil? && c["percent_change_24h"][0] == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_24h"].to_s + "%" + "\x0f".b + " | " +
-      "(1h) " + "\x0f".b  + (!c["percent_change_1h"].nil?  && c["percent_change_1h"][0]  == "-" ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["percent_change_1h"].to_s  + "%" + "\x0f".b +
+      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
+      "Rank: #{c["cmc_rank"]} | " +
+      "(7d) " + "\x0f".b  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%" + "\x0f".b + " | " +
+      "(24h) " + "\x0f".b + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%" + "\x0f".b + " | " +
+      "(1h) " + "\x0f".b  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%" + "\x0f".b +
       (m.channel.to_s.downcase == "#testing12" ? " [#{@@coins_lastupdate}]" : "")
 
     end
