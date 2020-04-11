@@ -591,6 +591,7 @@ module Plugins
       puts "A5 => '#{speak[:messagesNicks]}'"
 =end
 #      puts "GGGG '#{speak}', '#{@speaks}', '#{m.channel.to_s}'"
+puts "zzzzzzzz=>'#{@config}'"
       response = replace_nicks(response, @replace_nicks - seeds - [m.user.to_s], m.user.to_s, speak[:messagesNicks] - [m.user.to_s])
       botlog "JJJ=>"+response, m
       m.reply response.gsub(/Draylor/i, "Gaylord")

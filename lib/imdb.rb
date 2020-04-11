@@ -65,7 +65,7 @@ module Plugins
           else
           myrating = ""
         end
-        if omdb && (!myrating || !myrating =~ /^\[/) && omdb.body.key?('Rated')
+        if omdb && (!myrating || myrating !~ /^\[/) && omdb.body.key?('Rated')
           myrating = "[" + omdb.body["Rated"] + "]"
           puts "Falling back to OMDB MPAA Rating"
         end
@@ -78,7 +78,7 @@ module Plugins
           else
           mygenres = ""
         end
-        if omdb && (!mygenres || !mygenres =~ /^\[/) && omdb.body.key?('Genre')
+        if omdb && (!mygenres || mygenres !~ /^\[/) && omdb.body.key?('Genre')
           mygenres = "[" + omdb.body["Genre"] + "]"
           puts "Falling back to OMDB Genres"
         end

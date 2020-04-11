@@ -228,6 +228,10 @@ module Plugins
                   bot.botconfig[:DB][:episodes].where(:show_id => show[:show_id]).where{airstamp >= Sequel::CURRENT_TIMESTAMP}.exclude(:ep_id => show[:eps]).delete
                 end
 
+                bot.botconfig[:DB][:episodes].where{airstamp >= Sequel::CURRENT_TIMESTAMP}.exclude(:show_id => g.map{|x| x[:show_id]}).delete
+
+
+
                 @config[:DB][:bot_config].update(:last_tv_sched_update => Sequel::CURRENT_TIMESTAMP)
               end
             end

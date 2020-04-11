@@ -1,4 +1,5 @@
 require 'feedjira'
+require 'open-uri'
 
 module Plugins
   class RSSFeed
@@ -16,8 +17,10 @@ module Plugins
     
     def updatefeed
       @feeds.each do |feed|      
-        feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])    
-        
+        #feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])    
+        feedparsed = Feedjira.parse(URI.open(feed[:url]).read)
+
+
         if !feed[:old].nil?
           i = 0
           feedparsed.entries.slice(0..10).reverse.each do |entry|

@@ -61,6 +61,7 @@ else
 end
 
 Sequel::Database.extension :auto_literal_strings
+Sequel::Database.extension :date_arithmetic
 Sequel.split_symbols = true
 
 STDOUT.sync = true

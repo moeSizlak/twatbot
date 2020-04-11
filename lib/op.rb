@@ -20,6 +20,7 @@ module Plugins
     match /(\u0041|\u13aa|\u0391|\u0410)(\u0054|\u03a4|\u0422|\u13a2){2}(\u2c9a|\u039d|\u004e)(\u003a|\u02f8|\u16ec|\ufe55|\uff1a|\u2806)|(\u13aa|\u0391|\u0410)(\u03a4|\u0422|\u13a2){2}(\u2c9a|\u039d)/, use_prefix: false, method: :kickass, react_on: :message
     match /^(?=.*[^ -~\r\n])[^[:space:]]{3}[[:space:]][^[:space:]]{5}[[:space:]][^[:space:]]{4}[[:space:]][^[:space:]]{7}[[:space:]][^[:space:]]{3}[[:space:]][^[:space:]]{5}/, use_prefix: false, method: :kickass, react_on: :message
     match /.*https?:\/\/williampitcock\.com/, use_prefix: false, method: :kickass, react_on: :message
+    match /^THIS CHANNEL.*COVID/, use_prefix: false, method: :kickass, react_on: :message
 
 
     match lambda {|m| /^#{m.bot.botconfig[:OP_PASSWORD]}\s+op\s+(#[^\s]+)\s*$/im}, use_prefix: false, method: :op
