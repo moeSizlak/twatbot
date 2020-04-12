@@ -41,7 +41,7 @@ module Plugins
     
     def printnew(entry, feedname, chans, color, us)
       chans.each do |chan|
-        Channel(chan).send "\x02".b + "[#{feedname}]" + "\x0f".b + (color.nil? ? "" : "\x03".b + color) + " #{entry.title} - #{us.nil? ? entry.url : us.call(entry.url)}" + (color.nil? ? "" : "\x0f".b)
+        Channel(chan).send "\x02[#{feedname}]\x0f" + (color.nil? ? "" : "\x03" + color) + " #{entry.title} - #{us.nil? ? entry.url : us.call(entry.url)}" + (color.nil? ? "" : "\x0f")
       end
     end
     

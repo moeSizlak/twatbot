@@ -92,8 +92,8 @@ module Plugins
       end
       
       myreply = {}
-      myreply[:title] = "\x03".b + color_name + tomato[:tomatoTitle] + "\x0f".b
-      myreply[:rating] = "\x03".b + color_rating
+      myreply[:title] = "\x03" + color_name + tomato[:tomatoTitle] + "\x0f"
+      myreply[:rating] = "\x03" + color_rating
       
       if tomato[:tomatoMeter] && tomato[:tomatoMeter] != ""
         myreply[:rating] << "[TomatoMeter: #{tomato[:tomatoMeter]} (+#{tomato[:tomatoFreshCount]}/-#{tomato[:tomatoRottenCount]}) Critics: #{tomato[:tomatoAvgCriticRating]}]"
@@ -104,8 +104,8 @@ module Plugins
         myreply[:rating] << "[TomatoAudience: #{tomato[:tomatoAudienceMeter]} liked it, #{tomato[:tomatoAvgAudienceRating]} with #{tomato[:tomatoAudienceVotes]} votes]"
       end
       
-      myreply[:rating] << "\x0f".b
-      myreply[:url] = "\x03".b + color_url + tomato[:tomatoURL] + "\x0f".b
+      myreply[:rating] << "\x0f"
+      myreply[:url] = "\x03" + color_url + tomato[:tomatoURL] + "\x0f"
       myreply[:synopsis] = (tomato[:tomatoSynopsis] ? (tomato[:tomatoSynopsis])[0..245] : "")
       
       return myreply

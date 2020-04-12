@@ -26,7 +26,7 @@ module Plugins
     match /^!(?:help|commands)/, use_prefix: false, method: :help
     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCorona
     match /^\.corona(\s*|\s+[\S\s]+\S\s*)$/im, use_prefix: false, method: :getCorona_new
-    match /^\.corona2(\s*|\s+[\S\s]+\S\s*)$/im, use_prefix: false, method: :getCorona_new
+    match /^\.corona2(\s*|\s+[\S\s]+\S\s*)$/im, use_prefix: false, method: :getCorona
     #match /^\.coronatest$/im, use_prefix: false, method: :updatecorona_new
 
     #timer 0,  {:method => :updatecorona, :shots => 1}
@@ -52,8 +52,8 @@ module Plugins
         return
       end
 
-      m.user.notice "\x02".b + "\x03".b + "04" + "CORONAVIRUS:\n" + "\x0f".b + 
-      "\x02".b + "  .corona <[partial] country name>" + "\x0f".b + " - Get stats on coronavirus infections (optionally, in a specific country)\n"
+      m.user.notice "\x02\x0304CORONAVIRUS:\n\x0f"+ 
+      "\x02  .corona <[partial] country name>\x0f - Get stats on coronavirus infections (optionally, in a specific country)\n"
     end
 
     def updatecorona
@@ -102,7 +102,7 @@ module Plugins
           }
 
         end
-        puts @@corona_countries.keys.to_s
+        #puts @@corona_countries.keys.to_s
         @@corona_new_lastupdate = DateTime.now
       end
 
@@ -160,17 +160,40 @@ module Plugins
         if c.nil? || c.length == 0
           w = @@corona_countries["World"]
           #puts w.to_s
-          #m.reply "\x03".b + "04" + "ZOMG CORONA!!!" + "\x0f".b + "  Confirmed: " + "\x02".b + "\x03".b + "07" + "#{w['cases']} (#{w['new_cases']})" + "\x0f".b + ", deaths: " + "\x02".b + "\x03".b + "04" + "#{w['deaths']} (#{w['new_deaths']})" + "\x0f".b + ", recovered: " + "\x02".b + "\x03".b + "09" + "#{w['recovered']}" + "\x0f".b + ". Active cases: " + "\x02".b + "\x03".b + "07" + "#{w['active']}" + "\x0f".b + " (" + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %" + "\x0f".b + " in serious condition.) Mortality: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + "\x0f".b + ", case fatality rate: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" + "\x0f".b + " " #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
-          
+          #m.reply "\x0304ZOMG CORONA!!!\x0f  Confirmed: \x02\x0307#{w['cases']} (#{w['new_cases']})\x0f, deaths: \x02\x0304#{w['deaths']} (#{w['new_deaths']})\x0f, recovered: \x02\x0309#{w['recovered']}\x0f. Active cases: \x02\x0307#{w['active']}\x0f (\x02\x0304#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %\x0f in serious condition.) Mortality: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %\x0f, case fatality rate: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %\x0f " #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+        
           m.reply "" + 
-                                     "\x02".b + "ZOMG CORONA!!!" + "\x0f".b + 
-          ", Confirmed: "          + "\x02".b + "\x03".b + "07" + "#{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)" + "\x0f".b + 
-          ", deaths: "             + "\x02".b + "\x03".b + "04" + "#{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)" + "\x0f".b + 
-          ", recovered: "          + "\x02".b + "\x03".b + "09" + "#{w['recovered']}" + "\x0f".b + 
-          ", Active cases: "       + "\x02".b + "\x03".b + "07" + "#{w['active']}" + "\x0f".b + " (" + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %" + "\x0f".b + " in serious condition)" +
-          ", Mortality: "          + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + "\x0f".b + 
-          ", case fatality rate: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" + "\x0f".b + 
-          ", Tests: "              + "\x02".b + "\x03".b + "09" + "#{w['tests']} (#{w['tests_per_mil']} /1M)" + "\x0f".b #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+                                     "\x02ZOMG CORONA!!!\x0f" + 
+          ", Confirmed: \x02\x0307#{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)\x0f" +
+          ", deaths: \x02\x0304#{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)\x0f" + 
+          ", recovered: \x02\x0309#{w['recovered']}\x0f" + 
+          ", Active cases: \x02\x0307#{w['active']}\x0f (\x02\x0304#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %\x0f in serious condition)" +
+          ", Mortality: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %\x0f" + 
+          ", case fatality rate: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %\x0f" + 
+          ", Tests: \x02\x0309#{w['tests']} (#{w['tests_per_mil']} /1M)\x0f" #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+
+=begin
+          m.reply "" + 
+                                     "\x02ZOMG CORONA!!!\x0f"+ 
+          ", Confirmed: #{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)" + 
+          ", deaths: #{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)" +
+          ", recovered: #{w['recovered']}" +
+          ", Active cases: #{w['active']} (#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} % in serious condition)" +
+          ", Mortality: #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + 
+          ", case fatality rate: #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" +
+          ", Tests: #{w['tests']} (#{w['tests_per_mil']} /1M)"  #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+=end
+=begin
+          m.reply "" + 
+                                     "\x02ZOMG CORONA!!!\x0f"+ 
+          ", \x0307Confirmed:\x0f #{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)" + 
+          ", \x0307deaths:\x0f #{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)" +
+          ", \x0307recovered:\x0f #{w['recovered']}" +
+          ", \x0307Active cases:\x0f #{w['active']} (#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} % in serious condition)" +
+          ", \x0307Mortality:\x0f #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + 
+          ", \x0307case fatality rate:\x0f #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" +
+          ", \x0307Tests:\x0f #{w['tests']} (#{w['tests_per_mil']} /1M)"  #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+=end
           return
         else
         
@@ -189,7 +212,7 @@ module Plugins
 
             if !cc.nil?
               m.reply "" +
-              "\x02".b + "#{cc[0]}:" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+              "\x02#{cc[0]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
 
               (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona_new_lastupdate}]" : "")
             end
@@ -262,7 +285,6 @@ module Plugins
             c = @CountryCacheEntry[mycunt]
             if c
               puts "Found WOM (world-o-meter) code of '#{c.wom_code}'."
-              #cc = @@corona_new.find{|x| (x["attributes"]["Country_Region"] || "").upcase == c.wom_code.upcase}
               cc = @@corona_countries.select{|k,v| k.upcase == c.wom_code.upcase}.first
               if cc.nil?
                 errormsg = "Failed. (#{c.name} => #{c.wom_code.upcase})"
@@ -283,15 +305,15 @@ module Plugins
           puts "cc=#{cc}"
 
           m.reply "" + 
-                                     "\x02".b + "#{cc[0]}" + "\x0f".b + 
-          ": Global rank: "        + "\x02".b + "\x03".b + "04" + "##{@@corona_countries.select{|k,v| v['cases'].gsub(/\D/,'').to_f > cc[1]['cases'].gsub(/\D/,'').to_f}.count} of #{@@corona_countries.count - 1}" + "\x0f".b + 
-          ", Confirmed: "          + "\x02".b + "\x03".b + "07" + "#{cc[1]['cases']} (#{cc[1]['new_cases']}) (#{cc[1]['cases_per_mil']} /1M)" + "\x0f".b + 
-          ", deaths: "             + "\x02".b + "\x03".b + "04" + "#{cc[1]['deaths']} (#{cc[1]['new_deaths']}) (#{cc[1]['deaths_per_mil']} /1M)" + "\x0f".b + 
-          ", recovered: "          + "\x02".b + "\x03".b + "09" + "#{cc[1]['recovered']}" + "\x0f".b + 
-          ", Active cases: "       + "\x02".b + "\x03".b + "07" + "#{cc[1]['active']}" + "\x0f".b + " (" + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * cc[1]['serious'].gsub(/\D/,'').to_f/cc[1]['active'].gsub(/\D/,'').to_f)} %" + "\x0f".b + " in serious condition)" +
-          ", Mortality: "          + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/cc[1]['cases'].gsub(/\D/,'').to_f)} %" + "\x0f".b + 
-          ", case fatality rate: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/(cc[1]['recovered'].gsub(/\D/,'').to_f + cc[1]['deaths'].gsub(/\D/,'').to_f))} %" + "\x0f".b + 
-          ", Tests: "              + "\x02".b + "\x03".b + "09" + "#{cc[1]['tests']} (#{cc[1]['tests_per_mil']} /1M)" + "\x0f".b + #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+                                     "\x02#{cc[0]}\x0f"+ 
+          ": Global rank: \x02\x0304##{@@corona_countries.select{|k,v| v['cases'].gsub(/\D/,'').to_f > cc[1]['cases'].gsub(/\D/,'').to_f}.count} of #{@@corona_countries.count - 1}\x0f"+ 
+          ", Confirmed: \x02\x0307#{cc[1]['cases']} (#{cc[1]['new_cases']}) (#{cc[1]['cases_per_mil']} /1M)\x0f"+ 
+          ", deaths: \x02\x0304#{cc[1]['deaths']} (#{cc[1]['new_deaths']}) (#{cc[1]['deaths_per_mil']} /1M)\x0f"+ 
+          ", recovered: \x02\x0309#{cc[1]['recovered']}\x0f"+ 
+          ", Active cases: \x02\x0307#{cc[1]['active']}\x0f (\x02\x0304#{'%.2f' % (100 * cc[1]['serious'].gsub(/\D/,'').to_f/cc[1]['active'].gsub(/\D/,'').to_f)} %\x0f in serious condition)" +
+          ", Mortality: \x02\x0304#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/cc[1]['cases'].gsub(/\D/,'').to_f)} %\x0f"+ 
+          ", case fatality rate: \x02\x0304#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/(cc[1]['recovered'].gsub(/\D/,'').to_f + cc[1]['deaths'].gsub(/\D/,'').to_f))} %\x0f"+ 
+          ", Tests: \x02\x0309#{cc[1]['tests']} (#{cc[1]['tests_per_mil']} /1M)\x0f"+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
           
           (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona_new_lastupdate}]" : "")
 
@@ -334,7 +356,7 @@ module Plugins
           recovered = @@corona2.map{|x| x["attributes"]["Recovered"]}.inject(0, :+)
 
           m.reply "" +
-         "\x03".b + "04" + "CORONA!!!" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+         "\x0304CORONA!!!\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
           (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona2_lastupdate}]" : "")
           return
 
@@ -358,7 +380,7 @@ module Plugins
               recovered = @@corona.select{|x| (x["attributes"]["Province_State"] || "").upcase == cc["attributes"]["Province_State"].upcase}.map{|x| x["attributes"]["Recovered"]}.inject(0, :+)
 
               m.reply "" +
-              "\x03".b + "04" + "#{cc["attributes"]["Province_State"]}:" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+              "\x0304#{cc["attributes"]["Province_State"]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
 
               (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona_lastupdate}]" : "")
             end
@@ -459,7 +481,7 @@ module Plugins
 
 
           m.reply "" +
-          "\x03".b + "04" + "#{cc["attributes"]["Country_Region"]}:" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+          "\x0304#{cc["attributes"]["Country_Region"]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
 
           (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona2_lastupdate}]" : "")
 

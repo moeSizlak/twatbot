@@ -50,13 +50,13 @@ module Plugins
       #  return
       #end
 
-      m.user.notice "\x02".b + "\x03".b + "04" + "TV SCHEDULE:\n" + "\x0f".b + 
-      "\x02".b + "  !all" + "\x0f".b + " - Show yesterday, today, and tomorrow's TV schedule\n" +
-      "\x02".b + "  !today" + "\x0f".b + " - Show today's TV schedule\n" +
-      "\x02".b + "  !tomorrow" + "\x0f".b + " - Show tomorrow's TV schedule\n" +
-      "\x02".b + "  !yesterday" + "\x0f".b + " - Show yesterday's TV schedule\n" +
-      "\x02".b + "  !sunday, !sun, !monday, !mon, etc...." + "\x0f".b + " - Show TV schedule for next <day>\n" +
-      "\x02".b + "  !premiers<optional max# of premiers, default 15> <optional show name or network search term>" + "\x0f".b + " - Show season premier dates\n" 
+      m.user.notice "\x02\x0304TV SCHEDULE:\n\x0f" + 
+      "\x02  !all\x0f - Show yesterday, today, and tomorrow's TV schedule\n" +
+      "\x02  !today\x0f - Show today's TV schedule\n" +
+      "\x02  !tomorrow\x0f - Show tomorrow's TV schedule\n" +
+      "\x02  !yesterday\x0f - Show yesterday's TV schedule\n" +
+      "\x02  !sunday, !sun, !monday, !mon, etc....\x0f - Show TV schedule for next <day>\n" +
+      "\x02  !premiers<optional max# of premiers, default 15> <optional show name or network search term>\x0f - Show season premier dates\n" 
     end
 
     def date_of_next(day)
@@ -251,19 +251,19 @@ module Plugins
     def sched_today
       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)      
       today     = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now + 0).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 1).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
-      return  "\x02".b + "\x03".b + "11" + "Today: "     + "\x0f".b +  today.map    {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+      return  "\x02\x0311Today: \x0f" +  today.map    {|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
     def sched_tomorrow
       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)
       tomorrow  = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now + 1).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 2).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
-      return "\x02".b + "\x03".b + "09" + "Tomorrow: "  + "\x0f".b +  tomorrow.map {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+      return "\x02\x0309Tomorrow: \x0f" +  tomorrow.map {|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
     def sched_yesterday
       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)
       yesterday = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now - 1).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 0).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
-      return "\x02".b + "\x03".b + "04" + "Yesterday: " + "\x0f".b +  yesterday.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+      return "\x02\x0304Yesterday: \x0f" +  yesterday.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
     def nall(m)  
@@ -310,9 +310,9 @@ module Plugins
       puts t.count.to_s
 
       if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
-        m.reply "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+        m.reply "\x02\x0304" + d.strftime('%A, %B %-d') + ": \x0f" +  t.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
       else
-        m.user.notice "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+        m.user.notice "\x02\x0304" + d.strftime('%A, %B %-d') + ": \x0f" +  t.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
       end
     end
 
@@ -349,15 +349,15 @@ module Plugins
         end
 
         if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
-          m.user.send "\x02".b + "\x03".b + "04" + "SEASON PREMIERS: #{text}" + "\x0f".b +  "\n" + prems.map{|a| "\x02".b + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f".b + " - " + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - Season #{a[:season]}"}.join("\n")
+          m.user.send "\x02\x0304SEASON PREMIERS: #{text}\x0f\n" + prems.map{|a| "\x02" + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f - \x1f#{a[:name]}\x0f - Season #{a[:season]}"}.join("\n")
         else
-          m.user.notice "\x02".b + "\x03".b + "04" + "SEASON PREMIERS: #{text}" + "\x0f".b +  "\n" + prems.map{|a| "\x02".b + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f".b + " - " + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - Season #{a[:season]}"}.join("\n")
+          m.user.notice "\x02\x0304SEASON PREMIERS: #{text}\x0f\n" + prems.map{|a| "\x02" + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f - \x1f#{a[:name]}\x0f - Season #{a[:season]}"}.join("\n")
         end
       else
         if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
-          m.user.send "\x02".b + "\x03".b + "04" + "Nothing found." + "\x0f".b
+          m.user.send "\x02\x0304Nothing found.\x0f"
         else
-          m.user.notice "\x02".b + "\x03".b + "04" + "Nothing found." + "\x0f".b
+          m.user.notice "\x02\x0304Nothing found.\x0f"
         end
       end
     end

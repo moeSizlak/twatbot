@@ -3,7 +3,7 @@ require 'imdb'
 module URLHandlers  
   module IMDB
     def help
-      return "\x02".b + "  <IMDB URL>" + "\x0f".b + " - Get title and info about IMDB movie or TV show."
+      return "\x02  <IMDB URL>\x0f - Get title and info about IMDB movie or TV show."
     end
 
     def parse(url)
@@ -44,9 +44,9 @@ module URLHandlers
           color_url = "03"
           
           myreply =
-          "\x03".b + color_name + i.title + " (" + i.year.to_s + ")" + "\x0f".b + 
-          "\x03".b + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
-          myrating + mygenres + "\x0f".b + 
+          "\x03" + color_name + i.title + " (" + i.year.to_s + ")\x0f" + 
+          "\x03" + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
+          myrating + mygenres + "\x0f" + 
           (i.plot)[0..255]
           
           return myreply

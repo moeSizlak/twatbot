@@ -13,8 +13,8 @@ module Plugins
     match /^!(?:election|trump|clinton|cunt|president|hillary|donald|don|thedonald|the donald|donny)/i, use_prefix: false, method: :get_result
 
     def help(m)
-      m.user.notice "\x02".b + "\x03".b + "04" + "Election:\n" + "\x0f".b + 
-      "\x02".b + "  !election" + "\x0f".b + " - Get current election results.\n"
+      m.user.notice "\x02\x0304Election:\n\x0f" + 
+      "\x02  !election\x0f - Get current election results.\n"
     end
         
     def get_chart(m)
@@ -59,11 +59,11 @@ module Plugins
           color_text = "07"
              
           myreply = ""
-          myreply << "\x03".b + color_name + "2016 Election" + "\x0f".b
-          myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + clinton.to_s + "\x0f".b
-          myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + trump.to_s   + "\x0f".b
-          myreply << " | " + "\x03".b + "Other"   + "\x0f".b + ": " +"\x03".b + color_text + other.to_s   + "\x0f".b
-          myreply << " | " + "\x03".b + "Days Left"   + "\x0f".b + ": " +"\x03".b + color_text + "#{daysLeft.to_i}"   + "\x0f".b
+          myreply << "\x03" + color_name + "2016 Election\x0f"
+          myreply << " | \x03Hillary\x0f: \x03" + color_text + clinton.to_s + "\x0f"
+          myreply << " | \x03Trump\x0f: \x03" + color_text + trump.to_s   + "\x0f"
+          myreply << " | \x03Other\x0f: \x03" + color_text + other.to_s   + "\x0f"
+          myreply << " | \x03Days Left\x0f: \x03" + color_text + "#{daysLeft.to_i}\x0f"
 
           m.reply myreply
           
@@ -107,11 +107,11 @@ module Plugins
           color_text = "07"
 
           myreply = ""
-          myreply << "\x03".b + color_name + "CNN 2016 Election (UNK % Reporting)" + "\x0f".b
-          myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_clinton} EV (#{pv_clinton} popular votes [#{clinton["pctDecimal"]}%])" + "\x0f".b
-          myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_trump} EV (#{pv_trump} popular votes [#{trump["pctDecimal"]}%])" + "\x0f".b
+          myreply << "\x03" + color_name + "CNN 2016 Election (UNK % Reporting)\x0f"
+          myreply << " | \x03Hillary\x0f: \x03" + color_text + "#{ev_clinton} EV (#{pv_clinton} popular votes [#{clinton["pctDecimal"]}%])\x0f"
+          myreply << " | \x03Trump\x0f: \x03" + color_text + "#{ev_trump} EV (#{pv_trump} popular votes [#{trump["pctDecimal"]}%])\x0f"
           if pivit_trump != ''
-            myreply << " | " + "\x03".b + "CNN Trump Odds" + "\x0f".b + ": " +"\x03".b + color_text + pivit_trump + "\x0f".b
+            myreply << " | \x03CNN Trump Odds\x0f: \x03" + color_text + pivit_trump + "\x0f"
           end
 
 
@@ -146,12 +146,12 @@ module Plugins
       color_text = "07"
          
       myreply = ""
-      myreply << "\x03".b + color_name + "Politico 2016 Election (#{results.last[0][6]}% Reporting)" + "\x0f".b
-      myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_clinton} EV (#{pv_clinton.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_clinton.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])" + "\x0f".b
-      myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_trump} EV (#{pv_trump.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_trump.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])" + "\x0f".b
-      myreply << " | " + "\x03".b + "Other"   + "\x0f".b + ": " +"\x03".b + color_text + "0 EV (#{(pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * (pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])" + "\x0f".b
+      myreply << "\x03" + color_name + "Politico 2016 Election (#{results.last[0][6]}% Reporting)\x0f"
+      myreply << " | \x03Hillary\x0f: \x03" + color_text + "#{ev_clinton} EV (#{pv_clinton.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_clinton.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])\x0f"
+      myreply << " | \x03Trump\x0f: \x03" + color_text + "#{ev_trump} EV (#{pv_trump.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_trump.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])\x0f"
+      myreply << " | \x03Other\x0f: \x03" + color_text + "0 EV (#{(pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * (pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])\x0f"
       if pivit_trump != ''
-        myreply << " | " + "\x03".b + "CNN Trump Odds" + "\x0f".b + ": " +"\x03".b + color_text + pivit_trump + "\x0f".b
+        myreply << " | \x03CNN Trump Odds\x0f: \x03" + color_text + pivit_trump + "\x0f"
       end
       
       

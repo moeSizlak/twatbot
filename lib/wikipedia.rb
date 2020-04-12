@@ -18,8 +18,8 @@ module Plugins
     
 
     def help(m)
-      m.user.notice  "\x02".b + "\x03".b + "04" + "WIKIPEDIA:\n" + "\x0f".b +
-      "\x02".b + "  !wiki <search_terms>" + "\x0f".b + " - Perform Wikipedia search and return 1st hit.\n"
+      m.user.notice  "\x02\x0304WIKIPEDIA:\n\x0f" +
+      "\x02  !wiki <search_terms>\x0f - Perform Wikipedia search and return 1st hit.\n"
     end
     
     def get_wikipedia(m, q)
@@ -42,7 +42,7 @@ module Plugins
 
         if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0       
           myreply = ""
-          myreply << "\x03".b + "04" + "[WIKIPEDIA]" + "\x0f".b
+          myreply << "\x0304[WIKIPEDIA]\x0f"
           myreply << ": #{y.body["extract"][0..436]}"
           m.reply myreply
         else

@@ -7,7 +7,7 @@ module URLHandlers
   module Youtube
 
     def help
-      return "\x02".b + "  <Youtube URL>" + "\x0f".b + " - Get title and info about Youtube video."
+      return "\x02  <Youtube URL>\x0f - Get title and info about Youtube video."
     end
 
 
@@ -82,23 +82,23 @@ module URLHandlers
           color_rating = "07"
           color_url = "03"
           
-          #myreply = "\x02".b + "You" + "\x03".b + "04" + "Tube" + "\x0f".b + ": " +
-          myreply =  "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
+          #myreply = "\x02You\x0304Tube\x0f: " +
+          myreply =  "\x03" + color_yt + "[YouTube] \x0f" + 
           
           #(title.nil? ? "UNKOWN_TITLE" : title) +
           
-          "\x03".b + color_name + 
+          "\x03" + color_name + 
           (title.nil? ? "UNKOWN_TITLE" : title) + 
-          "\x0f".b +
+          "\x0f" +
 
-          "\x03".b + color_rating +
+          "\x03" + color_rating +
           (duration.nil? ? ""    : (" (" + duration    + ")")) +    
           (publishedAt.nil? ? "" : (" [" + (author.nil? ? "" : (author + " @ ")) + publishedAt + "]")) +
-          " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [" + "\x0f".b + 
-          "\x03".b + "03"         + "+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse    + "\x0f".b +
-          "\x03".b + color_rating + "/" + "\x0f".b +
-          "\x03".b + "04"         + "-" + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f".b +
-          "\x03".b + color_rating +"]" + "\x0f".b
+          " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [\x0f" + 
+          "\x0303+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse    + "\x0f" +
+          "\x03" + color_rating + "/\x0f" +
+          "\x0304-" + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f" +
+          "\x03" + color_rating +"]\x0f"
           
           return myreply
       	else

@@ -27,9 +27,9 @@ module Plugins
         return
       end
 
-      m.user.notice "\x02".b + "\x03".b + "04" + "CRYPTO COINS:\n" + "\x0f".b + 
-      "\x02".b + "  .btc" + "\x0f".b + " - Get current prices of BTC on Coinbase, BitStamp, and Gemini.  Also show LTC & ETH price.\n" +  
-      "\x02".b + "  .<[partial] coin_name or coin_abbreviation>" + "\x0f".b + " - Get info about a cryptocurrency from coinmarketcap\n"
+      m.user.notice "\x02\x0304CRYPTO COINS:\n\x0f" + 
+      "\x02  .btc\x0f - Get current prices of BTC on Coinbase, BitStamp, and Gemini.  Also show LTC & ETH price.\n" +  
+      "\x02  .<[partial] coin_name or coin_abbreviation>\x0f - Get info about a cryptocurrency from coinmarketcap\n"
     end
 
     def updatecoins
@@ -81,11 +81,11 @@ module Plugins
 
 
       m.reply "" +
-      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
+      "\x0304#{c["name"]} (#{c["symbol"]}):\x0f $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
       "Rank: #{c["cmc_rank"]} | " +
-      "(7d) " + "\x0f".b  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%" + "\x0f".b + " | " +
-      "(24h) " + "\x0f".b + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%" + "\x0f".b + " | " +
-      "(1h) " + "\x0f".b  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%" + "\x0f".b +
+      "(7d) \x0f"  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%\x0f | " +
+      "(24h) \x0f" + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%\x0f | " +
+      "(1h) \x0f"  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%\x0f" +
       (m.channel.to_s.downcase == "#testing12" ? " [#{@@coins_lastupdate}]" : "")
 
     end
@@ -99,8 +99,8 @@ module Plugins
       botlog "", m
     
       x = rand
-      myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
-      myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
+      myreply1 = "\x0304Bitstamp\x0f | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
+      myreply2 = "\x0304Coinbase\x0f | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
       m.reply myreply1
       m.reply myreply2
     end
@@ -136,12 +136,12 @@ module Plugins
       g2 = g1.body["last"] rescue "" 
       
 
-      m.reply "\x03".b + "04" + "Gemini:"   + "\x0f".b + " $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "BitStamp:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              "\x03".b + "04" + "Coinbase:" + "\x0f".b + " $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) # + " | " +
-              #"\x03".b + "04" + "BCH:"      + "\x0f".b + " $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              #"\x03".b + "04" + "LTC:"      + "\x0f".b + " $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
-              #"\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
+      m.reply "\x0304Gemini:\x0f $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x0304BitStamp:\x0f $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              "\x0304Coinbase:\x0f $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) # + " | " +
+              #"\x0304BCH:\x0f $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              #"\x0304LTC:\x0f $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+              #"\x0304ETH:\x0f $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
     
     end
     

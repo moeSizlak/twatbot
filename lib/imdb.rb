@@ -21,8 +21,8 @@ module Plugins
         return
       end
       
-      m.user.notice "\x02".b + "\x03".b + "04" + "IMDB:\n" + "\x0f".b + 
-      "\x02".b + "  !imdb <movie_name>" + "\x0f".b + " - Get IMDB info about a movie (and RottenTomatoes as well).\n"
+      m.user.notice "\x02\x0304IMDB:\n\x0f" + 
+      "\x02  !imdb <movie_name>\x0f - Get IMDB info about a movie (and RottenTomatoes as well).\n"
     end
     
     def self.getImdb(id)
@@ -158,20 +158,20 @@ module Plugins
       
       myreply = {}
       
-      myreply[:title] = "\x03".b + color_name + i[:title]
+      myreply[:title] = "\x03" + color_name + i[:title]
       if !i[:title].include?("(#{i[:year]})")
         myreply[:title] << " (" + i[:year].to_s + ")" 
       end
-      myreply[:title] << "\x0f".b
+      myreply[:title] << "\x0f"
       
-      myreply[:rating] = "\x03".b + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes]"
+      myreply[:rating] = "\x03" + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes]"
       
       if(i.key?(:tomato) && i[:tomato])
-        myreply[:rating] << "\x0f".b + " " + i[:tomato][:rating] + "\x03".b + color_rating
+        myreply[:rating] << "\x0f " + i[:tomato][:rating] + "\x03" + color_rating
       end
       
-      myreply[:rating] << " #{i[:mpaa_rating]} #{i[:genres]}" + "\x0f".b
-      myreply[:url] = "\x03".b + color_url + i[:url] + "\x0f".b
+      myreply[:rating] << " #{i[:mpaa_rating]} #{i[:genres]}\x0f"
+      myreply[:url] = "\x03" + color_url + i[:url] + "\x0f"
       myreply[:synopsis] = (i[:plot] ? (i[:plot])[0..255] : "")
       
       return myreply    

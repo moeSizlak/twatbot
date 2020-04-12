@@ -19,7 +19,7 @@ module Plugins
 
 
     def help(m)
-      msg = "\x02".b + "\x03".b + "04" + "URL's:" + "\x0f".b
+      msg = "\x02\x0304URL's:\x0f"
 
       @handlers.each do |handler|
         if !handler[:excludeChans].map(&:downcase).include?(m.channel.to_s.downcase)
@@ -59,7 +59,7 @@ module Plugins
                 #puts "pc=#{postCount}\n"
                 if postCount > 0
                   firstPost = entries.order(Sequel.asc(:Date)).limit(1).where(:URL => link).first
-                  #output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+"\x03".b+"01"+"\x0f".b+firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"
+                  #output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+"\x0301\x0f"+firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"
                   output << "  (Posted #{postCount>1 ? postCount.to_s + ' times' : 'once'} before, #{postCount>1 ? 'originally ' : ''}by #{firstPost[:Nick][0]+ "\u200b" + firstPost[:Nick][1..-1]} on #{firstPost[:Date].to_date})"
                 end
               end

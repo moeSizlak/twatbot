@@ -25,10 +25,10 @@ module Plugins
         return
       end 
 
-      m.user.notice "\x02".b + "\x03".b + "04" + "QUOTES:\n" + "\x0f".b + 
-      "\x02".b + "  !addquote <text>" + "\x0f".b + " - Add a quote\n" +  
-      "\x02".b + "  !quote <text or id#>" + "\x0f".b + " - Find a quote.  Use same command multiple times to cycle through search matches.\n" +
-      "\x02".b + "  !ratequote <id#> <0-10>" + "\x0f".b + " - Rate a quote."
+      m.user.notice "\x02\x0304QUOTES:\n\x0f" + 
+      "\x02  !addquote <text>\x0f - Add a quote\n" +  
+      "\x02  !quote <text or id#>\x0f - Find a quote.  Use same command multiple times to cycle through search matches.\n" +
+      "\x02  !ratequote <id#> <0-10>\x0f - Rate a quote."
     end
 
     
@@ -42,7 +42,7 @@ module Plugins
           prng = Random.new
           myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
 
-          Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
+          Channel(chan).send "\x0304[RANDOM_QUOTE] \x0f\x0303[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{myquote[:quote]}"
         else
           botlog "WTF!!!! No quotes available for timed interval randquote in chan #{chan}, but there should be."
         end          
@@ -112,10 +112,10 @@ module Plugins
           scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)}        
           prng = Random.new
           myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
-          m.reply "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
+          m.reply "\x0303[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{myquote[:quote]}"
         
 
-          #Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
+          #Channel(chan).send "\x0304[RANDOM_QUOTE] \x0f\x0303[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{myquote[:quote]}"
         else
           botlog "WTF!!!! No quotes available for quote."
         end
@@ -161,7 +161,7 @@ module Plugins
         scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)} 
         result = quotes.order(Sequel.desc(:timestamp)).limit(1, @lastquotes[lqkey][:offset]).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first   
         if result
-          m.reply "\x03".b + "04" + "[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] " + "\x0f".b + "\x03".b + "03" + "[#{result[:id]} / #{result[:score].to_f.round(2)} (#{result[:count]} votes) / #{result[:nick]} @ #{Time.at(result[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result[:quote]}"
+          m.reply "\x0304[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] \x0f\x0303[#{result[:id]} / #{result[:score].to_f.round(2)} (#{result[:count]} votes) / #{result[:nick]} @ #{Time.at(result[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{result[:quote]}"
         else
           m.reply "No additional matches."
           @lastquotes[lqkey][:offset] = -1

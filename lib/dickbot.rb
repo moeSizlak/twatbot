@@ -35,10 +35,10 @@ module Plugins
     end
 
     def help(m)
-      m.user.notice "\x02".b + "\x03".b + "04" + "DICKBOT:\n" + "\x0f".b + 
-      "\x02".b + "  !insult <name>" + "\x0f".b + " - Insult someone\n" +  
-      "\x02".b + "  <address the bot>" + "\x0f".b + " - Make the bot ramble incoherently using your words as a seed\n" +
-      "\x02".b + "  <perform a /me action on the bot>" + "\x0f".b + " - Bot will insult you."
+      m.user.notice "\x02\x0304DICKBOT:\n\x0f" + 
+      "\x02  !insult <name>\x0f - Insult someone\n" +  
+      "\x02  <address the bot>\x0f - Make the bot ramble incoherently using your words as a seed\n" +
+      "\x02  <perform a /me action on the bot>\x0f - Bot will insult you."
     end
     
     def initialize_nicks

@@ -8,7 +8,7 @@ module URLHandlers
   module WikipediaURL
 
     def help
-      return "\x02".b + "  <Wikipedia ARTICLE URL>" + "\x0f".b + " - Get summary of Wikipedia article"
+      return "\x02  <Wikipedia ARTICLE URL>\x0f - Get summary of Wikipedia article"
     end
 
     def parse(url)
@@ -21,7 +21,7 @@ module URLHandlers
 
         if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0
           myreply = ""
-          myreply << "\x03".b + "04" + "[WIKIPEDIA]" + "\x0f".b
+          myreply << "\x0304[WIKIPEDIA]\x0f"
           myreply << ": #{y.body["extract"][0..436]}"
           return myreply
         else

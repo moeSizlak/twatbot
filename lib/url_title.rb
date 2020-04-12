@@ -8,7 +8,7 @@ module URLHandlers
   module TitleBot
 
     def help
-      return "\x02".b + "  <URL of HTML webpage>" + "\x0f".b + " - Get HTML title of webpage."
+      return "\x02  <URL of HTML webpage>\x0f - Get HTML title of webpage."
     end
 
 

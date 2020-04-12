@@ -17,9 +17,9 @@ module Plugins
 
 
     def help(m)
-      m.user.notice "\x02".b + "\x03".b + "04" + "CloudVision:\n" + "\x0f".b + 
-      "\x02".b + "  <any image URL>" + "\x0f".b + " - Get Google Cloud Vision image analysis.\n" +
-      "\x02".b + "  !analyze <urls>" + "\x0f".b + " - Get Google Cloud Vision image analysis.\n"
+      m.user.notice "\x02\x0304CloudVision:\n\x0f" + 
+      "\x02  <any image URL>\x0f - Get Google Cloud Vision image analysis.\n" +
+      "\x02  !analyze <urls>\x0f - Get Google Cloud Vision image analysis.\n"
     end
     
     def cv_analyze(m)
@@ -197,14 +197,14 @@ module Plugins
 
           if x && x.body && x.body.key?("responses") && x.body["responses"].length == 1
             myreply_simple = ""
-            myreply_simple << "\x03".b + "03" 
+            myreply_simple << "\x0303" 
             myreply_simple << "[IMAGE] "
-            myreply_simple << "\x0f".b
+            myreply_simple << "\x0f"
 
             myreply = ""
-            myreply << "\x03".b + "04" 
+            myreply << "\x0304" 
             myreply << "[ANALYSIS] "
-            myreply << "\x0f".b
+            myreply << "\x0f"
 
             x = x.body["responses"][0]
 
@@ -236,15 +236,15 @@ module Plugins
             end
 
             if x.key?("safeSearchAnnotation")
-              myreply << "\x03".b + "07" + "[ADULT] "    + "\x0f".b if x["safeSearchAnnotation"].key?("adult")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["adult"])
-              myreply << "\x03".b + "07" + "[RACY] "     + "\x0f".b if x["safeSearchAnnotation"].key?("racy")     && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["racy"])
-              myreply << "\x03".b + "07" + "[SPOOF] "    + "\x0f".b if x["safeSearchAnnotation"].key?("spoof")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["spoof"])
-              myreply << "\x03".b + "07" + "[MEDICAL] "  + "\x0f".b if x["safeSearchAnnotation"].key?("medical")  && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["medical"])
-              myreply << "\x03".b + "07" + "[VIOLENCE] " + "\x0f".b if x["safeSearchAnnotation"].key?("violence") && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["violence"])         
+              myreply << "\x0307[ADULT] \x0f" if x["safeSearchAnnotation"].key?("adult")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["adult"])
+              myreply << "\x0307[RACY] \x0f" if x["safeSearchAnnotation"].key?("racy")     && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["racy"])
+              myreply << "\x0307[SPOOF] \x0f" if x["safeSearchAnnotation"].key?("spoof")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["spoof"])
+              myreply << "\x0307[MEDICAL] \x0f" if x["safeSearchAnnotation"].key?("medical")  && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["medical"])
+              myreply << "\x0307[VIOLENCE] \x0f" if x["safeSearchAnnotation"].key?("violence") && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["violence"])         
             end
 
             if x.key?("webDetection") && x["webDetection"].key?("bestGuessLabels")
-              myreply << "\"" + "\x02".b + x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + "\x0f".b + "\" "
+              myreply << "\"\x02" + x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + "\x0f\" "
               myreply_simple << x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + " "
             end
 
@@ -268,7 +268,7 @@ module Plugins
 
             if x.key?("fullTextAnnotation") && x["fullTextAnnotation"].key?("text")
               #myreply << "TEXT=\"" + x["fullTextAnnotation"]["text"][0..100].gsub(/[[:space:]\r\n]+/, ' ') + "\" "
-              ##myreply << ", " + "\x1d".b + "\"" + x["fullTextAnnotation"]["text"][0..150].gsub(/[[:space:]\r\n]+/, ' ') + "\" " + "\x0f".b
+              ##myreply << ", \x1d\"" + x["fullTextAnnotation"]["text"][0..150].gsub(/[[:space:]\r\n]+/, ' ') + "\" \x0f"
             end
 
             

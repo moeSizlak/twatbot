@@ -8,7 +8,7 @@ module URLHandlers
   module Dumpert
 
     def help
-      return "\x02".b + "  <Dumpert URL>" + "\x0f".b + " - Get title, info, and English translation of Dumpert video."
+      return "\x02  <Dumpert URL>\x0f - Get title, info, and English translation of Dumpert video."
     end
 
     def parse(url)
@@ -28,7 +28,7 @@ module URLHandlers
             #if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
             if !search.nil? && search.length > 0
               title = title + 
-              "\x03".b + "04" + "  [" + search + "]" + "\x0f".b
+              "\x0304  [" + search + "]\x0f"
               
               return title
             end

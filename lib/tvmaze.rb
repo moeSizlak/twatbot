@@ -122,13 +122,13 @@ module Plugins
         return
       end
 
-      m.user.notice "\x02".b + "\x03".b + "04" + "TV:\n" + "\x0f".b + 
-      "\x02".b + "  @<show_name>" + "\x0f".b + " - Get info about show\n" +  
-      "\x02".b + "  @2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
-      "\x02".b + "  @3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n" 
-      #"\x02".b + "  !tv <show_name>" + "\x0f".b + " - Get info about show\n" +  
-      #"\x02".b + "  !tv2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
-      #"\x02".b + "  !tv3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n"
+      m.user.notice "\x02\x0304TV:\n\x0f" + 
+      "\x02  @<show_name>\x0f - Get info about show\n" +  
+      "\x02  @2 <show_name>\x0f - Get info about show, using 2nd search hit\n" +
+      "\x02  @3 <show_name>\x0f - Get info about show, using 3rd search hit, etc, etc...\n" 
+      #"\x02  !tv <show_name>\x0f - Get info about show\n" +  
+      #"\x02  !tv2 <show_name>\x0f - Get info about show, using 2nd search hit\n" +
+      #"\x02  !tv3 <show_name>\x0f - Get info about show, using 3rd search hit, etc, etc...\n"
     end
     
     def tvmaze(m, hitno, id)
@@ -247,18 +247,18 @@ module Plugins
             airstamp_last_local = DateTime.parse(airstamp_last_utc_time.getlocal(tz.period_for_utc(airstamp_last_utc_time).utc_total_offset).to_s)
           end
           
-          myreply = "\x03".b + color_name + show.body["name"].to_s + "\x0f".b +          
-          " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +          
-          " | " + "\x0f".b + "\x03".b + color_title + "Prev" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b 
+          myreply = "\x03" + color_name + show.body["name"].to_s + "\x0f" +          
+          " | \x0f\x03" + color_title + "Next\x0f:\x03" + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f" +          
+          " | \x0f\x03" + color_title + "Prev\x0f:\x03" + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f"
                   
           if(maxEpNumber)
-            myreply << " | " + "\x0f".b + "\x03".b + color_title + "Final" + "\x0f".b +  ":" +"\x03".b + color_text + " " + nextep.body.fetch("season").to_s + "x" + sprintf("%02d", maxEpNumber.to_s) + "\x0f".b          
+            myreply << " | \x0f\x03" + color_title + "Final\x0f:\x03" + color_text + " " + nextep.body.fetch("season").to_s + "x" + sprintf("%02d", maxEpNumber.to_s) + "\x0f"
           end
           
           if show.body.fetch("status", nil)
             myreply <<
             " | " + 
-            "\x03".b + color_text + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f".b
+            "\x03" + color_text + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f"
           end
 
           days = show.body.dig("schedule","days") || []
@@ -274,11 +274,11 @@ module Plugins
           if airstamp_next_local
             myreply <<
             " | " + 
-            "\x03".b + color_text + airstamp_next_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
+            "\x03" + color_text + airstamp_next_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f"
           #elsif airstamp_last_local
           #  myreply <<
           #  " | " + 
-          #  "\x03".b + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
+          #  "\x03" + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f"
           end 
 
 
@@ -286,30 +286,30 @@ module Plugins
           if network && network.length > 0
             myreply << 
             " | " + 
-            "\x03".b + color_text + network + "\x0f".b
+            "\x03" + color_text + network + "\x0f"
           end
           
           if show.body.fetch("genres", nil) && show.body.fetch("genres", Array.new).join(", ").length > 0
             myreply <<
             " | " + 
-            "\x03".b + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f".b
+            "\x03" + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f"
             
           elsif show.body.fetch("type", nil) && show.body.fetch("type", "").to_s.length > 0
             myreply <<
             " | " + 
-            "\x03".b + color_text + show.body.fetch("type", "").to_s + "\x0f".b
+            "\x03" + color_text + show.body.fetch("type", "").to_s + "\x0f"
           end
 
           if show.body.fetch("language", nil) && show.body.fetch("language", "").to_s.length > 0 && show.body.fetch("language", "").to_s !~ /English/i
             myreply <<
             " | " + 
-            "\x03".b + color_text + show.body.fetch("language", "").to_s + "\x0f".b
+            "\x03" + color_text + show.body.fetch("language", "").to_s + "\x0f"
           end
             
           if show.body.fetch("url", nil)
             myreply <<
             " | " + 
-            "\x03".b + color_text + show.body.fetch("url", "UNKNOWN_URL").to_s + "\x0f".b
+            "\x03" + color_text + show.body.fetch("url", "UNKNOWN_URL").to_s + "\x0f"
           end
           
           countdown = ""
@@ -332,7 +332,7 @@ module Plugins
               minutes = ((diff-(days*60*60*24)-(hours*60*60))/60).floor
               seconds = (diff-(days*60*60*24)-(hours*60*60)-(minutes*60)).floor
               
-              countdown = " | " + "\x0f".b + "\x03".b + color_title + "Countdown" + "\x0f".b +  ":" +"\x03".b + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s" + "\x0f".b
+              countdown = " | \x0f\x03" + color_title + "Countdown\x0f:\x03" + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s\x0f"
             end
           end
           
@@ -342,10 +342,10 @@ module Plugins
             puts 'FOUND IMDBCacheEntry'
             myreply <<
             " | " + 
-            "\x03".b + color_text + c.imdburl + "\x0f".b +
+            "\x03" + color_text + c.imdburl + "\x0f" +
             
             " | " + 
-            "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+            "\x03" + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)\x0f"
             
             myreply << countdown
             m.reply myreply
@@ -419,13 +419,13 @@ module Plugins
             if imdblink
               myreply <<
               " | " + 
-              "\x03".b + color_text + c.imdburl + "\x0f".b
+              "\x03" + color_text + c.imdburl + "\x0f"
             end
               
             if i
               myreply <<
               " | " + 
-              "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
+              "\x03" + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)\x0f"
             end
 
 

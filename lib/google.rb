@@ -21,12 +21,12 @@ module Plugins
     
 
     def help(m)
-      m.user.notice  "\x02".b + "\x03".b + "04" + "GOOGLE:\n" + "\x0f".b +
-      "\x02".b + "  !google <search_terms>" + "\x0f".b + " - Perform google search and return 1st hit.\n"
-      "\x02".b + "  !g <search_terms>" + "\x0f".b + "      - Perform google search and return 1st hit.\n"
-      "\x02".b + "  !google2 <search_terms>" + "\x0f".b + " - Perform google search and return 2nd hit.\n"
-      "\x02".b + "  !g2 <search_terms>" + "\x0f".b + "      - Perform google search and return 2nd hit.\n"
-      "\x02".b + "  !g3 <search_terms>" + "\x0f".b + "      - Perform google search and return 3rd hit, etc, etc...\n"
+      m.user.notice  "\x02\x0304GOOGLE:\n\x0f" +
+      "\x02  !google <search_terms>\x0f - Perform google search and return 1st hit.\n"
+      "\x02  !g <search_terms>\x0f      - Perform google search and return 1st hit.\n"
+      "\x02  !google2 <search_terms>\x0f - Perform google search and return 2nd hit.\n"
+      "\x02  !g2 <search_terms>\x0f      - Perform google search and return 2nd hit.\n"
+      "\x02  !g3 <search_terms>\x0f      - Perform google search and return 3rd hit, etc, etc...\n"
     end
     
     def get_google(m, n, q)
@@ -56,13 +56,13 @@ module Plugins
 
        
           zreply = ""
-          zreply << "\x03".b + "12" + "G" + "\x0f".b
-          zreply << "\x03".b + "04" + "o" + "\x0f".b
-          zreply << "\x03".b + "08" + "o" + "\x0f".b
-          zreply << "\x03".b + "12" + "g" + "\x0f".b
-          zreply << "\x03".b + "09" + "l" + "\x0f".b
-          zreply << "\x03".b + "04" + "e" + "\x0f".b
-          zreply << ": " #+ + "\x03".b + "04" + "[DIRECT] " + "\x0f".b
+          zreply << "\x0312G\x0f"
+          zreply << "\x0304o\x0f"
+          zreply << "\x0308o\x0f"
+          zreply << "\x0312g\x0f"
+          zreply << "\x0309l\x0f"
+          zreply << "\x0304e\x0f"
+          zreply << ": " #+ + "\x0304[DIRECT] \x0f"
 
           currency1 = gok.css('#knowledge-currency__tgt-amount').first.content rescue nil
           currency2 = gok.css('#knowledge-currency__tgt-currency').first.content rescue nil
@@ -155,13 +155,13 @@ module Plugins
           snip = search.body["items"][n-1]["snippet"]
 
           myreply = ""
-          myreply << "\x03".b + "12" + "G" + "\x0f".b
-          myreply << "\x03".b + "04" + "o" + "\x0f".b
-          myreply << "\x03".b + "08" + "o" + "\x0f".b
-          myreply << "\x03".b + "12" + "g" + "\x0f".b
-          myreply << "\x03".b + "09" + "l" + "\x0f".b
-          myreply << "\x03".b + "04" + "e" + "\x0f".b
-          myreply << ": [#{n} of #{totalResultsFormatted}] " + "\x03".b + "07" +  "#{link}" + "\x0f".b + " - #{snip.gsub(/[[:space:]\r\n]+/, ' ')}"[0..240]
+          myreply << "\x0312G\x0f"
+          myreply << "\x0304o\x0f"
+          myreply << "\x0308o\x0f"
+          myreply << "\x0312g\x0f"
+          myreply << "\x0309l\x0f"
+          myreply << "\x0304e\x0f"
+          myreply << ": [#{n} of #{totalResultsFormatted}] \x0307#{link}\x0f - #{snip.gsub(/[[:space:]\r\n]+/, ' ')}"[0..240]
           m.reply myreply
         else
           m.reply "ZOMG ERROR!"

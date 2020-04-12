@@ -6,7 +6,7 @@ module URLHandlers
   module Imgur
 
     def help
-      return "\x02".b + "  <Imgur URL>" + "\x0f".b + " - Get title and info about Imgur image/gallery."
+      return "\x02  <Imgur URL>\x0f - Get title and info about Imgur image/gallery."
     end
 
 
@@ -141,7 +141,7 @@ module URLHandlers
             color_rating = "07"
             color_url = "03"
           
-            myreply = "\x03".b + color_yt + "[Imgur] " + "\x0f".b
+            myreply = "\x03" + color_yt + "[Imgur] \x0f"
             
             if g_title
               mytitle = g_title.strip.gsub(/[[:space:]]+/m, ' ')
@@ -160,10 +160,10 @@ module URLHandlers
             myreply += " " 
             
             if search.body["data"].key?("nsfw") && !search.body["data"]["nsfw"].nil? && search.body["data"]["nsfw"] == true
-              myreply += "\x03".b + color_name + "[NSFW] " + "\x0f".b
+              myreply += "\x03" + color_name + "[NSFW] \x0f"
             end
             
-            myreply += "\x03".b + color_rating
+            myreply += "\x03" + color_rating
             
             if search.body["data"].key?("images_count")
               myreply += "[Album"
@@ -205,7 +205,7 @@ module URLHandlers
               myreply += "[Section: #{section}] "
             end
             
-            myreply += "\x0f".b
+            myreply += "\x0f"
             
             return myreply
           

@@ -32,9 +32,9 @@ module Plugins
     end
 
     def help(m)
-      m.user.notice  "\x02".b + "\x03".b + "04" + "WEATHER:\n" + "\x0f".b +
-      "\x02".b + "  !w <location>" + "\x0f".b + " - Get weather for location. Uses Google geocoding & Weather Underground.\n" +
-      "\x02".b + "  !w" + "\x0f".b + " - Get weather (using the last location you queried weather for)."
+      m.user.notice  "\x02\x0304WEATHER:\n\x0f" +
+      "\x02  !w <location>\x0f - Get weather for location. Uses Google geocoding & Weather Underground.\n" +
+      "\x02  !w\x0f - Get weather (using the last location you queried weather for)."
     end
     
     def check_api_rate_limit(x=1)
@@ -68,9 +68,9 @@ module Plugins
       if m.user.nick == "moeSizlak"
         myreply = ""
         #myreply = "Conditions for: "
-        myreply <<  "\x03".b + "04" 
+        myreply <<  "\x0304" 
         myreply << "Buffalo, NY"
-           myreply << "\x0f".b
+           myreply << "\x0f"
         myreply << ": Mayhem, 20F/-7C"
         m.reply myreply
         return
@@ -315,12 +315,12 @@ module Plugins
  
         myreply = ""
         #myreply = "Conditions for: "
-        myreply <<  "\x03".b + color_name 
+        myreply <<  "\x03" + color_name 
         myreply << "#{display_location}"
         #myreply << " [#{w["station_id"]}]" if w["station_id"]
-        myreply << "\x0f".b
+        myreply << "\x0f"
         puts "cccc=#{w["temperature"]}"
-        myreply << (": " + "\x02".b + "#{w["summary"]}, #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature"]
+        myreply << (": \x02#{w["summary"]}, #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}\x0f") if w["temperature"]
 
         if forecast
           myreply << ", " + extended_summary if extended_summary
@@ -331,16 +331,16 @@ module Plugins
             
           i = 0
           #i = 1 if f[1]["title"] =~ /night/i
-          myreply << ", " +  "\x03".b + color_name + 
-            "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+          myreply << ", \x03" + color_name + 
+            "#{f[i]["title"]}\x0f: #{f[i][fw]}"
 
           i += 1
-          myreply << " " + "\x03".b + color_name + 
-            "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
+          myreply << " \x03" + color_name + 
+            "#{f[i]["title"]}\x0f: #{f[i][fw]}"
 
           if (f[0]["title"] + f[1]["title"]) =~ /night/i
-            f = myreply << " " + "\x03".b + color_name + 
-              "#{f[2]["title"]}" + "\x0f".b + ": #{f[2][fw]}"
+            f = myreply << " \x03" + color_name + 
+              "#{f[2]["title"]}\x0f: #{f[2][fw]}"
           end
 =end
         end
@@ -348,13 +348,13 @@ module Plugins
 
 =begin        
         myreply = "Weather: "
-        myreply << "\x03".b + color_name + "#{display_location}"
+        myreply << "\x03" + color_name + "#{display_location}"
         myreply << " [#{w["station_id"]}]" if w["station_id"]
-        myreply << "\x0f".b
-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Temp" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}, #{w["weather"]}" + "\x0f".b) if w["temperature_string"] && w["weather"]
-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Wind" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["wind_string"]}" + "\x0f".b) if w["wind_string"]
-        #myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Weather" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["weather"]}" + "\x0f".b) if w["weather"]
-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Precip today" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["precip_today_string"]}" + "\x0f".b) if w["precip_today_string"]
+        myreply << "\x0f"
+        myreply << (" | \x0f\x03" + color_title + "Temp\x0f:\x03" + color_text + " #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}, #{w["weather"]}\x0f") if w["temperature_string"] && w["weather"]
+        myreply << (" | \x0f\x03" + color_title + "Wind\x0f:\x03" + color_text + " #{w["wind_string"]}\x0f") if w["wind_string"]
+        #myreply << (" | \x0f\x03" + color_title + "Weather\x0f:\x03" + color_text + " #{w["weather"]}\x0f") if w["weather"]
+        myreply << (" | \x0f\x03" + color_title + "Precip today\x0f:\x03" + color_text + " #{w["precip_today_string"]}\x0f") if w["precip_today_string"]
         if forecast
           if country == 'US'
             unitA = 'fahrenheit'
@@ -368,7 +368,7 @@ module Plugins
             unitBx = 'F'
           end
           (0..1).each do |i|
-            myreply << (" | " + "\x0f".b + "\x03".b + color_title + ((i == 0) ? "Today" : ((i==1) ? "Tomorrow" : "#{f[i]["date"]["monthname_short"]} #{f[i]["date"]["day"]}")) + "\x0f".b + ":" +"\x03".b + color_text + " High: #{f[i]["high"][unitA]}#{unitAx}, Low: #{f[i]["low"][unitA]}#{unitAx}, #{f[i]["conditions"]}, #{f[i]["pop"]}% chance of precip" + "\x0f".b) if w["weather"]
+            myreply << (" | \x0f\x03" + color_title + ((i == 0) ? "Today" : ((i==1) ? "Tomorrow" : "#{f[i]["date"]["monthname_short"]} #{f[i]["date"]["day"]}")) + "\x0f:\x03" + color_text + " High: #{f[i]["high"][unitA]}#{unitAx}, Low: #{f[i]["low"][unitA]}#{unitAx}, #{f[i]["conditions"]}, #{f[i]["pop"]}% chance of precip\x0f") if w["weather"]
           end
         end
 =end
@@ -376,8 +376,8 @@ module Plugins
 
         
         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
-        #  myreply2 =  "\x03".b + color_name + 
-        #    "#{display_location}" + "\x0f".b + ": #{w["summary"]},  #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}"
+        #  myreply2 =  "\x03" + color_name + 
+        #    "#{display_location}\x0f: #{w["summary"]},  #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}"
         #  m.reply myreply2
         #end
         #m.user.notice myreply
