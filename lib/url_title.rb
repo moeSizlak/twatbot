@@ -18,7 +18,7 @@ module URLHandlers
         #url =~ /https?:\/\/([^\/]+)/
         title[:effective_url] =~ /https?:\/\/([^\/]+)/
         host = $1
-        return "[ " + title[:title] + " ] - " + host
+        return "[ \x02" + title[:title] + "\x0f ] - " + host
       end
       
       return nil    

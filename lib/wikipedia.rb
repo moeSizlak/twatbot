@@ -40,10 +40,8 @@ module Plugins
 
         y = Unirest::get("https://en.wikipedia.org/api/rest_v1/page/summary/#{x}")
 
-        if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0       
-          myreply = ""
-          myreply << "\x0304[WIKIPEDIA]\x0f"
-          myreply << ": #{y.body["extract"][0..436]}"
+        if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0     
+          myreply = "\x0304[WIKIPEDIA]\x0f: #{(y.body["extract"][0..436]).gsub(/[\r\n]+/," ")}"
           m.reply myreply
         else
           m.reply "ZOMG ERROR!"

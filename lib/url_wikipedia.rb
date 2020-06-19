@@ -20,9 +20,7 @@ module URLHandlers
         y = Unirest::get("https://#{language}wikipedia.org/api/rest_v1/page/summary/#{article}")
 
         if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0
-          myreply = ""
-          myreply << "\x0304[WIKIPEDIA]\x0f"
-          myreply << ": #{y.body["extract"][0..436]}"
+          myreply = "\x0304[WIKIPEDIA]\x0f: #{(y.body["extract"][0..436]).gsub(/[\r\n]+/," ")}"
           return myreply
         else
           return nil #"ZOMG ERROR!"
