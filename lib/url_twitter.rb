@@ -27,7 +27,8 @@ module URLHandlers
       u.host = "mobile.twitter.com"
       doc = Nokogiri::HTML(u.read)
 
-      tweet = doc.css(".main-tweet div.tweet-text").first
+      tweet = doc.css(".main-tweet div.tweet-text").first rescue nil
+      return if tweet.nil?
 
       # highlight hashtags and ats
       tweet.css("a.twitter-hashtag,a.twitter-atreply").each do |a|
@@ -53,7 +54,7 @@ module URLHandlers
         else
           a.replace a.content
         end
-        
+
       end
 
       # remove html tags and line breaks
