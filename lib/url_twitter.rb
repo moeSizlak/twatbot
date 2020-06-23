@@ -66,7 +66,7 @@ module URLHandlers
 
       username = doc.css(".main-tweet .username").first.content.strip
       fullname = doc.css(".main-tweet .fullname").first.content.strip
-      timestamp = doc.css(".main-tweet td.tweet-content .metadata").first.content.strip
+      timestamp = doc.css(".main-tweet td.tweet-content .metadata").first.content.gsub(/[[:space:]]+/m, " ").strip
 
       return "\x0303[Twitter]\x0f (\x0304#{username}\x0f - #{fullname}): #{tweet} | \x0307#{timestamp}\x0f"
     end
