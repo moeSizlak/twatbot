@@ -46,6 +46,14 @@ module URLHandlers
                   duration = Duration.load(duration).format("%h:%M:%S")
                 else
                   duration = Duration.load(duration).format("%tm:%S")
+                  if duration.to_f == 0
+                    duration2 = search.body["items"][0]["snippet"]["liveBroadcastContent"]
+                    if duration2.downcase == 'live'
+                      duration = "LIVE"
+                    elsif duration2.downcase == 'upcoming'
+                      duration = "UPCOMING"
+                    end
+                  end
                 end
               end
             end  

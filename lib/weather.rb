@@ -4,6 +4,7 @@ require 'time'
 require 'thread'
 require 'csv'
 require 'date'
+require 'timezone_finder'
 
 module Plugins
   class Weather
@@ -249,15 +250,15 @@ module Plugins
           myreply3 << "\u{1F325} " if condition == "mostly_cloudy" 
           myreply3 << "\u26C5 " if condition == "partly_cloudy" 
           myreply3 << "\u{1F324} " if condition == "mostly_clear" 
-          myreply3 << "\u263C " if condition == "clear" 
+          myreply3 << "\u2600 " if condition == "clear" 
 
           myreply3 << condition.gsub(/_/, ' ').split.map(&:capitalize).join(' ')
         end
 
-        myreply3 << " \x0307#{w.dig('temp', 'value').round(1)}\x0f\u00B0F/\x0307#{f_to_c(w.dig('temp', 'value')).round(1)}\x0f\u00B0C"
+        myreply3 << " \x0307#{w.dig('temp', 'value').round(0)}\x0f\u00B0F/\x0307#{f_to_c(w.dig('temp', 'value')).round(0)}\x0f\u00B0C"
 
         if !w.dig('feels_like', 'value').nil? && (w.dig('feels_like', 'value') - w.dig('temp', 'value')).abs > 3
-          myreply3 << " | \x02Feels Like:\x0f \x0307#{w.dig('feels_like', 'value').round(1)}\x0f\u00B0F/\x0307#{f_to_c(w.dig('feels_like', 'value')).round(1)}\x0f\u00B0C"
+          myreply3 << " | \x02Feels Like:\x0f \x0307#{w.dig('feels_like', 'value').round(0)}\x0f\u00B0F/\x0307#{f_to_c(w.dig('feels_like', 'value')).round(0)}\x0f\u00B0C"
         end
 
         myreply3 << " | \x02Humidity:\x0f #{w.dig('humidity', 'value').round(0)}%" unless w.dig('humidity', 'value').nil?
@@ -273,16 +274,23 @@ module Plugins
             direction = w.dig('wind_direction', 'value')
             directions = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
             directions2 = ["\u2191","\u2197","\u2192","\u2198","\u2193","\u2199","\u2190","\u2196"]
-            myreply3 << " #{directions2[(((direction+22.5+180)%360)/45).floor]} #{directions[(((direction+11.25)%360)/22.5).floor]} (#{direction}\u00B0)"
+            myreply3 << " #{directions2[(((direction+22.5+180)%360)/45).floor]} #{directions[(((direction+11.25)%360)/22.5).floor]} (#{direction.round(0)}\u00B0)"
           end
         end
 
         myreply3 << " | \x02Baro:\x0f #{w.dig('baro_pressure', 'value').round(2)} #{w.dig('baro_pressure', 'units')}" unless w.dig('baro_pressure', 'value').nil?
-        myreply3 << " | \x02Air Quality:\x0f #{w.dig('epa_health_concern', 'value')}" unless w.dig('epa_health_concern', 'value').nil?
+        c
         myreply3 << " | \x02Solar:\x0f #{w.dig('surface_shortwave_radiation', 'value')} #{w.dig('surface_shortwave_radiation', 'units')}" unless w.dig('surface_shortwave_radiation', 'value').nil?
         myreply3 << " | \x02Pollen:\x0f #{w.dig('pollen_weed', 'value')}/#{w.dig('pollen_tree', 'value')}/#{w.dig('pollen_grass', 'value')}" unless w.dig('pollen_grass', 'value').nil?
         
-        
+        #tf = TimezoneFinder.create
+        #mytz = tf.timezone_at(lng: lng.to_f, lat: lat.to_f)
+        #puts mytz
+        #sunrise = Time.parse(w.dig('sunrise', 'value')).new_offset(mytz) rescue nil
+        #sunset = Time.parse(w.dig('sunset', 'value')).new_offset(mytz) rescue nil
+        #myreply3 << " | \x02Sunrise:\x0f #{sunrise.strftime('%a %F %T %Z')}" unless sunrise.nil?
+        #myreply3 << " | \x02Sunset:\x0f #{sunset.strftime('%a %F %T %Z')}" unless sunset.nil?
+
         
         if weather4.body && weather4.body.count >= 3 && weather4.body[0].dig('temp')
           w = weather4.body
@@ -293,7 +301,7 @@ module Plugins
               mylow  = d.dig("temp").find{|x| x.key?('min') && x.dig('min','value')}
               myhigh = d.dig("temp").find{|x| x.key?('max') && x.dig('max','value')}
               if mylow && myhigh
-                myreply3 << " \x0304#{myhigh.dig('max','value').round(0)}\x0f\u00b0#{myhigh.dig('max','units')}/\x0302#{mylow.dig('min','value').round(0)}\x0f\u00b0#{mylow.dig('min','units')}"
+                myreply3 << " \x0304#{myhigh.dig('max','value').round(0)}\x0f\u00b0#{myhigh.dig('max','units')}/\x0312#{mylow.dig('min','value').round(0)}\x0f\u00b0#{mylow.dig('min','units')}"
               end
             end
           end
