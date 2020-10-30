@@ -1,0 +1,1109 @@
+diff --git a/lib/cloud_vision.rb b/lib/cloud_vision.rb
+index 187445b..a511bf8 100644
+--- a/lib/cloud_vision.rb
++++ b/lib/cloud_vision.rb
+@@ -17,9 +17,9 @@ module Plugins
+ 
+ 
+     def help(m)
+-      m.user.notice "\x02".b + "\x03".b + "04" + "CloudVision:\n" + "\x0f".b + 
+-      "\x02".b + "  <any image URL>" + "\x0f".b + " - Get Google Cloud Vision image analysis.\n" +
+-      "\x02".b + "  !analyze <urls>" + "\x0f".b + " - Get Google Cloud Vision image analysis.\n"
++      m.user.notice "\x02\x0304CloudVision:\n\x0f" + 
++      "\x02  <any image URL>\x0f - Get Google Cloud Vision image analysis.\n" +
++      "\x02  !analyze <urls>\x0f - Get Google Cloud Vision image analysis.\n"
+     end
+     
+     def cv_analyze(m)
+@@ -197,14 +197,14 @@ module Plugins
+ 
+           if x && x.body && x.body.key?("responses") && x.body["responses"].length == 1
+             myreply_simple = ""
+-            myreply_simple << "\x03".b + "03" 
++            myreply_simple << "\x0303" 
+             myreply_simple << "[IMAGE] "
+-            myreply_simple << "\x0f".b
++            myreply_simple << "\x0f"
+ 
+             myreply = ""
+-            myreply << "\x03".b + "04" 
++            myreply << "\x0304" 
+             myreply << "[ANALYSIS] "
+-            myreply << "\x0f".b
++            myreply << "\x0f"
+ 
+             x = x.body["responses"][0]
+ 
+@@ -236,15 +236,15 @@ module Plugins
+             end
+ 
+             if x.key?("safeSearchAnnotation")
+-              myreply << "\x03".b + "07" + "[ADULT] "    + "\x0f".b if x["safeSearchAnnotation"].key?("adult")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["adult"])
+-              myreply << "\x03".b + "07" + "[RACY] "     + "\x0f".b if x["safeSearchAnnotation"].key?("racy")     && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["racy"])
+-              myreply << "\x03".b + "07" + "[SPOOF] "    + "\x0f".b if x["safeSearchAnnotation"].key?("spoof")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["spoof"])
+-              myreply << "\x03".b + "07" + "[MEDICAL] "  + "\x0f".b if x["safeSearchAnnotation"].key?("medical")  && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["medical"])
+-              myreply << "\x03".b + "07" + "[VIOLENCE] " + "\x0f".b if x["safeSearchAnnotation"].key?("violence") && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["violence"])         
++              myreply << "\x0307[ADULT] \x0f" if x["safeSearchAnnotation"].key?("adult")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["adult"])
++              myreply << "\x0307[RACY] \x0f" if x["safeSearchAnnotation"].key?("racy")     && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["racy"])
++              myreply << "\x0307[SPOOF] \x0f" if x["safeSearchAnnotation"].key?("spoof")    && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["spoof"])
++              myreply << "\x0307[MEDICAL] \x0f" if x["safeSearchAnnotation"].key?("medical")  && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["medical"])
++              myreply << "\x0307[VIOLENCE] \x0f" if x["safeSearchAnnotation"].key?("violence") && ['POSSIBLE', 'LIKELY', 'VERY_LIKELY'].include?(x["safeSearchAnnotation"]["violence"])         
+             end
+ 
+             if x.key?("webDetection") && x["webDetection"].key?("bestGuessLabels")
+-              myreply << "\"" + "\x02".b + x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + "\x0f".b + "\" "
++              myreply << "\"\x02" + x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + "\x0f\" "
+               myreply_simple << x["webDetection"]["bestGuessLabels"].select{|z| z.key?("label") && z["label"].length > 0}[0..5].map{|z| z["label"]}.join(", ") + " "
+             end
+ 
+@@ -268,7 +268,7 @@ module Plugins
+ 
+             if x.key?("fullTextAnnotation") && x["fullTextAnnotation"].key?("text")
+               #myreply << "TEXT=\"" + x["fullTextAnnotation"]["text"][0..100].gsub(/[[:space:]\r\n]+/, ' ') + "\" "
+-              ##myreply << ", " + "\x1d".b + "\"" + x["fullTextAnnotation"]["text"][0..150].gsub(/[[:space:]\r\n]+/, ' ') + "\" " + "\x0f".b
++              ##myreply << ", \x1d\"" + x["fullTextAnnotation"]["text"][0..150].gsub(/[[:space:]\r\n]+/, ' ') + "\" \x0f"
+             end
+ 
+             
+diff --git a/lib/corona.rb b/lib/corona.rb
+index 326b71b..a4b0ed9 100644
+--- a/lib/corona.rb
++++ b/lib/corona.rb
+@@ -26,7 +26,7 @@ module Plugins
+     match /^!(?:help|commands)/, use_prefix: false, method: :help
+     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCorona
+     match /^\.corona(\s*|\s+[\S\s]+\S\s*)$/im, use_prefix: false, method: :getCorona_new
+-    match /^\.corona2(\s*|\s+[\S\s]+\S\s*)$/im, use_prefix: false, method: :getCorona_new
++    match /^\.corona2(\s*|\s+[\S\s]+\S\s*)$/im, use_prefix: false, method: :getCorona
+     #match /^\.coronatest$/im, use_prefix: false, method: :updatecorona_new
+ 
+     #timer 0,  {:method => :updatecorona, :shots => 1}
+@@ -52,8 +52,8 @@ module Plugins
+         return
+       end
+ 
+-      m.user.notice "\x02".b + "\x03".b + "04" + "CORONAVIRUS:\n" + "\x0f".b + 
+-      "\x02".b + "  .corona <[partial] country name>" + "\x0f".b + " - Get stats on coronavirus infections (optionally, in a specific country)\n"
++      m.user.notice "\x02\x0304CORONAVIRUS:\n\x0f"+ 
++      "\x02  .corona <[partial] country name>\x0f - Get stats on coronavirus infections (optionally, in a specific country)\n"
+     end
+ 
+     def updatecorona
+@@ -102,7 +102,7 @@ module Plugins
+           }
+ 
+         end
+-        puts @@corona_countries.keys.to_s
++        #puts @@corona_countries.keys.to_s
+         @@corona_new_lastupdate = DateTime.now
+       end
+ 
+@@ -160,17 +160,40 @@ module Plugins
+         if c.nil? || c.length == 0
+           w = @@corona_countries["World"]
+           #puts w.to_s
+-          #m.reply "\x03".b + "04" + "ZOMG CORONA!!!" + "\x0f".b + "  Confirmed: " + "\x02".b + "\x03".b + "07" + "#{w['cases']} (#{w['new_cases']})" + "\x0f".b + ", deaths: " + "\x02".b + "\x03".b + "04" + "#{w['deaths']} (#{w['new_deaths']})" + "\x0f".b + ", recovered: " + "\x02".b + "\x03".b + "09" + "#{w['recovered']}" + "\x0f".b + ". Active cases: " + "\x02".b + "\x03".b + "07" + "#{w['active']}" + "\x0f".b + " (" + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %" + "\x0f".b + " in serious condition.) Mortality: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + "\x0f".b + ", case fatality rate: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" + "\x0f".b + " " #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+-          
++          #m.reply "\x0304ZOMG CORONA!!!\x0f  Confirmed: \x02\x0307#{w['cases']} (#{w['new_cases']})\x0f, deaths: \x02\x0304#{w['deaths']} (#{w['new_deaths']})\x0f, recovered: \x02\x0309#{w['recovered']}\x0f. Active cases: \x02\x0307#{w['active']}\x0f (\x02\x0304#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %\x0f in serious condition.) Mortality: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %\x0f, case fatality rate: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %\x0f " #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
++        
++          m.reply "" + 
++                                     "\x02ZOMG CORONA!!!\x0f" + 
++          ", Confirmed: \x02\x0307#{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)\x0f" +
++          ", deaths: \x02\x0304#{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)\x0f" + 
++          ", recovered: \x02\x0309#{w['recovered']}\x0f" + 
++          ", Active cases: \x02\x0307#{w['active']}\x0f (\x02\x0304#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %\x0f in serious condition)" +
++          ", Mortality: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %\x0f" + 
++          ", case fatality rate: \x02\x0304#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %\x0f" + 
++          ", Tests: \x02\x0309#{w['tests']} (#{w['tests_per_mil']} /1M)\x0f" #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
++
++=begin
+           m.reply "" + 
+-                                     "\x02".b + "ZOMG CORONA!!!" + "\x0f".b + 
+-          ", Confirmed: "          + "\x02".b + "\x03".b + "07" + "#{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)" + "\x0f".b + 
+-          ", deaths: "             + "\x02".b + "\x03".b + "04" + "#{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)" + "\x0f".b + 
+-          ", recovered: "          + "\x02".b + "\x03".b + "09" + "#{w['recovered']}" + "\x0f".b + 
+-          ", Active cases: "       + "\x02".b + "\x03".b + "07" + "#{w['active']}" + "\x0f".b + " (" + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} %" + "\x0f".b + " in serious condition)" +
+-          ", Mortality: "          + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + "\x0f".b + 
+-          ", case fatality rate: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" + "\x0f".b + 
+-          ", Tests: "              + "\x02".b + "\x03".b + "09" + "#{w['tests']} (#{w['tests_per_mil']} /1M)" + "\x0f".b #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
++                                     "\x02ZOMG CORONA!!!\x0f"+ 
++          ", Confirmed: #{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)" + 
++          ", deaths: #{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)" +
++          ", recovered: #{w['recovered']}" +
++          ", Active cases: #{w['active']} (#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} % in serious condition)" +
++          ", Mortality: #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + 
++          ", case fatality rate: #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" +
++          ", Tests: #{w['tests']} (#{w['tests_per_mil']} /1M)"  #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
++=end
++=begin
++          m.reply "" + 
++                                     "\x02ZOMG CORONA!!!\x0f"+ 
++          ", \x0307Confirmed:\x0f #{w['cases']} (#{w['new_cases']}) (#{w['cases_per_mil']} /1M)" + 
++          ", \x0307deaths:\x0f #{w['deaths']} (#{w['new_deaths']}) (#{w['deaths_per_mil']} /1M)" +
++          ", \x0307recovered:\x0f #{w['recovered']}" +
++          ", \x0307Active cases:\x0f #{w['active']} (#{'%.2f' % (100 * w['serious'].gsub(/\D/,'').to_f/w['active'].gsub(/\D/,'').to_f)} % in serious condition)" +
++          ", \x0307Mortality:\x0f #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/w['cases'].gsub(/\D/,'').to_f)} %" + 
++          ", \x0307case fatality rate:\x0f #{'%.2f' % (100 * w['deaths'].gsub(/\D/,'').to_f/(w['recovered'].gsub(/\D/,'').to_f + w['deaths'].gsub(/\D/,'').to_f))} %" +
++          ", \x0307Tests:\x0f #{w['tests']} (#{w['tests_per_mil']} /1M)"  #+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
++=end
+           return
+         else
+         
+@@ -189,7 +212,7 @@ module Plugins
+ 
+             if !cc.nil?
+               m.reply "" +
+-              "\x02".b + "#{cc[0]}:" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
++              "\x02#{cc[0]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+ 
+               (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona_new_lastupdate}]" : "")
+             end
+@@ -262,7 +285,6 @@ module Plugins
+             c = @CountryCacheEntry[mycunt]
+             if c
+               puts "Found WOM (world-o-meter) code of '#{c.wom_code}'."
+-              #cc = @@corona_new.find{|x| (x["attributes"]["Country_Region"] || "").upcase == c.wom_code.upcase}
+               cc = @@corona_countries.select{|k,v| k.upcase == c.wom_code.upcase}.first
+               if cc.nil?
+                 errormsg = "Failed. (#{c.name} => #{c.wom_code.upcase})"
+@@ -283,15 +305,15 @@ module Plugins
+           puts "cc=#{cc}"
+ 
+           m.reply "" + 
+-                                     "\x02".b + "#{cc[0]}" + "\x0f".b + 
+-          ": Global rank: "        + "\x02".b + "\x03".b + "04" + "##{@@corona_countries.select{|k,v| v['cases'].gsub(/\D/,'').to_f > cc[1]['cases'].gsub(/\D/,'').to_f}.count} of #{@@corona_countries.count - 1}" + "\x0f".b + 
+-          ", Confirmed: "          + "\x02".b + "\x03".b + "07" + "#{cc[1]['cases']} (#{cc[1]['new_cases']}) (#{cc[1]['cases_per_mil']} /1M)" + "\x0f".b + 
+-          ", deaths: "             + "\x02".b + "\x03".b + "04" + "#{cc[1]['deaths']} (#{cc[1]['new_deaths']}) (#{cc[1]['deaths_per_mil']} /1M)" + "\x0f".b + 
+-          ", recovered: "          + "\x02".b + "\x03".b + "09" + "#{cc[1]['recovered']}" + "\x0f".b + 
+-          ", Active cases: "       + "\x02".b + "\x03".b + "07" + "#{cc[1]['active']}" + "\x0f".b + " (" + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * cc[1]['serious'].gsub(/\D/,'').to_f/cc[1]['active'].gsub(/\D/,'').to_f)} %" + "\x0f".b + " in serious condition)" +
+-          ", Mortality: "          + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/cc[1]['cases'].gsub(/\D/,'').to_f)} %" + "\x0f".b + 
+-          ", case fatality rate: " + "\x02".b + "\x03".b + "04" + "#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/(cc[1]['recovered'].gsub(/\D/,'').to_f + cc[1]['deaths'].gsub(/\D/,'').to_f))} %" + "\x0f".b + 
+-          ", Tests: "              + "\x02".b + "\x03".b + "09" + "#{cc[1]['tests']} (#{cc[1]['tests_per_mil']} /1M)" + "\x0f".b + #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
++                                     "\x02#{cc[0]}\x0f"+ 
++          ": Global rank: \x02\x0304##{@@corona_countries.select{|k,v| v['cases'].gsub(/\D/,'').to_f > cc[1]['cases'].gsub(/\D/,'').to_f}.count} of #{@@corona_countries.count - 1}\x0f"+ 
++          ", Confirmed: \x02\x0307#{cc[1]['cases']} (#{cc[1]['new_cases']}) (#{cc[1]['cases_per_mil']} /1M)\x0f"+ 
++          ", deaths: \x02\x0304#{cc[1]['deaths']} (#{cc[1]['new_deaths']}) (#{cc[1]['deaths_per_mil']} /1M)\x0f"+ 
++          ", recovered: \x02\x0309#{cc[1]['recovered']}\x0f"+ 
++          ", Active cases: \x02\x0307#{cc[1]['active']}\x0f (\x02\x0304#{'%.2f' % (100 * cc[1]['serious'].gsub(/\D/,'').to_f/cc[1]['active'].gsub(/\D/,'').to_f)} %\x0f in serious condition)" +
++          ", Mortality: \x02\x0304#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/cc[1]['cases'].gsub(/\D/,'').to_f)} %\x0f"+ 
++          ", case fatality rate: \x02\x0304#{'%.2f' % (100 * cc[1]['deaths'].gsub(/\D/,'').to_f/(cc[1]['recovered'].gsub(/\D/,'').to_f + cc[1]['deaths'].gsub(/\D/,'').to_f))} %\x0f"+ 
++          ", Tests: \x02\x0309#{cc[1]['tests']} (#{cc[1]['tests_per_mil']} /1M)\x0f"+ #. Case rate: 94,629/24h, death rate: 6,973/24h. Last update: 4m ago."
+           
+           (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona_new_lastupdate}]" : "")
+ 
+@@ -334,7 +356,7 @@ module Plugins
+           recovered = @@corona2.map{|x| x["attributes"]["Recovered"]}.inject(0, :+)
+ 
+           m.reply "" +
+-         "\x03".b + "04" + "CORONA!!!" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
++         "\x0304CORONA!!!\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+           (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona2_lastupdate}]" : "")
+           return
+ 
+@@ -358,7 +380,7 @@ module Plugins
+               recovered = @@corona.select{|x| (x["attributes"]["Province_State"] || "").upcase == cc["attributes"]["Province_State"].upcase}.map{|x| x["attributes"]["Recovered"]}.inject(0, :+)
+ 
+               m.reply "" +
+-              "\x03".b + "04" + "#{cc["attributes"]["Province_State"]}:" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
++              "\x0304#{cc["attributes"]["Province_State"]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+ 
+               (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona_lastupdate}]" : "")
+             end
+@@ -459,7 +481,7 @@ module Plugins
+ 
+ 
+           m.reply "" +
+-          "\x03".b + "04" + "#{cc["attributes"]["Country_Region"]}:" + "\x0f".b + "\x03".b + color_confirmed + "  Confirmed:" + "\x0f".b + " #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | "  + "\x03".b + color_deaths + "Deaths:" + "\x0f".b + " #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | " + "\x03".b + color_recovered + "Recovered:" + "\x0f".b + " #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
++          "\x0304#{cc["attributes"]["Country_Region"]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
+ 
+           (m.channel.to_s.downcase == "#testing12" ? " [#{@@corona2_lastupdate}]" : "")
+ 
+diff --git a/lib/dickbot.rb b/lib/dickbot.rb
+index 458a85d..1cb42e5 100644
+--- a/lib/dickbot.rb
++++ b/lib/dickbot.rb
+@@ -35,10 +35,10 @@ module Plugins
+     end
+ 
+     def help(m)
+-      m.user.notice "\x02".b + "\x03".b + "04" + "DICKBOT:\n" + "\x0f".b + 
+-      "\x02".b + "  !insult <name>" + "\x0f".b + " - Insult someone\n" +  
+-      "\x02".b + "  <address the bot>" + "\x0f".b + " - Make the bot ramble incoherently using your words as a seed\n" +
+-      "\x02".b + "  <perform a /me action on the bot>" + "\x0f".b + " - Bot will insult you."
++      m.user.notice "\x02\x0304DICKBOT:\n\x0f" + 
++      "\x02  !insult <name>\x0f - Insult someone\n" +  
++      "\x02  <address the bot>\x0f - Make the bot ramble incoherently using your words as a seed\n" +
++      "\x02  <perform a /me action on the bot>\x0f - Bot will insult you."
+     end
+     
+     def initialize_nicks
+diff --git a/lib/election.rb b/lib/election.rb
+index 10c4c35..3ba553c 100644
+--- a/lib/election.rb
++++ b/lib/election.rb
+@@ -13,8 +13,8 @@ module Plugins
+     match /^!(?:election|trump|clinton|cunt|president|hillary|donald|don|thedonald|the donald|donny)/i, use_prefix: false, method: :get_result
+ 
+     def help(m)
+-      m.user.notice "\x02".b + "\x03".b + "04" + "Election:\n" + "\x0f".b + 
+-      "\x02".b + "  !election" + "\x0f".b + " - Get current election results.\n"
++      m.user.notice "\x02\x0304Election:\n\x0f" + 
++      "\x02  !election\x0f - Get current election results.\n"
+     end
+         
+     def get_chart(m)
+@@ -59,11 +59,11 @@ module Plugins
+           color_text = "07"
+              
+           myreply = ""
+-          myreply << "\x03".b + color_name + "2016 Election" + "\x0f".b
+-          myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + clinton.to_s + "\x0f".b
+-          myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + trump.to_s   + "\x0f".b
+-          myreply << " | " + "\x03".b + "Other"   + "\x0f".b + ": " +"\x03".b + color_text + other.to_s   + "\x0f".b
+-          myreply << " | " + "\x03".b + "Days Left"   + "\x0f".b + ": " +"\x03".b + color_text + "#{daysLeft.to_i}"   + "\x0f".b
++          myreply << "\x03" + color_name + "2016 Election\x0f"
++          myreply << " | \x03Hillary\x0f: \x03" + color_text + clinton.to_s + "\x0f"
++          myreply << " | \x03Trump\x0f: \x03" + color_text + trump.to_s   + "\x0f"
++          myreply << " | \x03Other\x0f: \x03" + color_text + other.to_s   + "\x0f"
++          myreply << " | \x03Days Left\x0f: \x03" + color_text + "#{daysLeft.to_i}\x0f"
+ 
+           m.reply myreply
+           
+@@ -107,11 +107,11 @@ module Plugins
+           color_text = "07"
+ 
+           myreply = ""
+-          myreply << "\x03".b + color_name + "CNN 2016 Election (UNK % Reporting)" + "\x0f".b
+-          myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_clinton} EV (#{pv_clinton} popular votes [#{clinton["pctDecimal"]}%])" + "\x0f".b
+-          myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_trump} EV (#{pv_trump} popular votes [#{trump["pctDecimal"]}%])" + "\x0f".b
++          myreply << "\x03" + color_name + "CNN 2016 Election (UNK % Reporting)\x0f"
++          myreply << " | \x03Hillary\x0f: \x03" + color_text + "#{ev_clinton} EV (#{pv_clinton} popular votes [#{clinton["pctDecimal"]}%])\x0f"
++          myreply << " | \x03Trump\x0f: \x03" + color_text + "#{ev_trump} EV (#{pv_trump} popular votes [#{trump["pctDecimal"]}%])\x0f"
+           if pivit_trump != ''
+-            myreply << " | " + "\x03".b + "CNN Trump Odds" + "\x0f".b + ": " +"\x03".b + color_text + pivit_trump + "\x0f".b
++            myreply << " | \x03CNN Trump Odds\x0f: \x03" + color_text + pivit_trump + "\x0f"
+           end
+ 
+ 
+@@ -146,12 +146,12 @@ module Plugins
+       color_text = "07"
+          
+       myreply = ""
+-      myreply << "\x03".b + color_name + "Politico 2016 Election (#{results.last[0][6]}% Reporting)" + "\x0f".b
+-      myreply << " | " + "\x03".b + "Hillary" + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_clinton} EV (#{pv_clinton.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_clinton.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])" + "\x0f".b
+-      myreply << " | " + "\x03".b + "Trump"   + "\x0f".b + ": " +"\x03".b + color_text + "#{ev_trump} EV (#{pv_trump.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_trump.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])" + "\x0f".b
+-      myreply << " | " + "\x03".b + "Other"   + "\x0f".b + ": " +"\x03".b + color_text + "0 EV (#{(pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * (pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])" + "\x0f".b
++      myreply << "\x03" + color_name + "Politico 2016 Election (#{results.last[0][6]}% Reporting)\x0f"
++      myreply << " | \x03Hillary\x0f: \x03" + color_text + "#{ev_clinton} EV (#{pv_clinton.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_clinton.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])\x0f"
++      myreply << " | \x03Trump\x0f: \x03" + color_text + "#{ev_trump} EV (#{pv_trump.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * pv_trump.to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])\x0f"
++      myreply << " | \x03Other\x0f: \x03" + color_text + "0 EV (#{(pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} popular votes [#{((100.0 * (pv_total.to_i - (pv_clinton.to_i + pv_trump.to_i)).to_f)/pv_total.to_f).round(1).to_s.gsub(/NaN/,'0')}%])\x0f"
+       if pivit_trump != ''
+-        myreply << " | " + "\x03".b + "CNN Trump Odds" + "\x0f".b + ": " +"\x03".b + color_text + pivit_trump + "\x0f".b
++        myreply << " | \x03CNN Trump Odds\x0f: \x03" + color_text + pivit_trump + "\x0f"
+       end
+       
+       
+diff --git a/lib/google.rb b/lib/google.rb
+index 4ae58c9..b40d464 100644
+--- a/lib/google.rb
++++ b/lib/google.rb
+@@ -21,12 +21,12 @@ module Plugins
+     
+ 
+     def help(m)
+-      m.user.notice  "\x02".b + "\x03".b + "04" + "GOOGLE:\n" + "\x0f".b +
+-      "\x02".b + "  !google <search_terms>" + "\x0f".b + " - Perform google search and return 1st hit.\n"
+-      "\x02".b + "  !g <search_terms>" + "\x0f".b + "      - Perform google search and return 1st hit.\n"
+-      "\x02".b + "  !google2 <search_terms>" + "\x0f".b + " - Perform google search and return 2nd hit.\n"
+-      "\x02".b + "  !g2 <search_terms>" + "\x0f".b + "      - Perform google search and return 2nd hit.\n"
+-      "\x02".b + "  !g3 <search_terms>" + "\x0f".b + "      - Perform google search and return 3rd hit, etc, etc...\n"
++      m.user.notice  "\x02\x0304GOOGLE:\n\x0f" +
++      "\x02  !google <search_terms>\x0f - Perform google search and return 1st hit.\n"
++      "\x02  !g <search_terms>\x0f      - Perform google search and return 1st hit.\n"
++      "\x02  !google2 <search_terms>\x0f - Perform google search and return 2nd hit.\n"
++      "\x02  !g2 <search_terms>\x0f      - Perform google search and return 2nd hit.\n"
++      "\x02  !g3 <search_terms>\x0f      - Perform google search and return 3rd hit, etc, etc...\n"
+     end
+     
+     def get_google(m, n, q)
+@@ -56,13 +56,13 @@ module Plugins
+ 
+        
+           zreply = ""
+-          zreply << "\x03".b + "12" + "G" + "\x0f".b
+-          zreply << "\x03".b + "04" + "o" + "\x0f".b
+-          zreply << "\x03".b + "08" + "o" + "\x0f".b
+-          zreply << "\x03".b + "12" + "g" + "\x0f".b
+-          zreply << "\x03".b + "09" + "l" + "\x0f".b
+-          zreply << "\x03".b + "04" + "e" + "\x0f".b
+-          zreply << ": " #+ + "\x03".b + "04" + "[DIRECT] " + "\x0f".b
++          zreply << "\x0312G\x0f"
++          zreply << "\x0304o\x0f"
++          zreply << "\x0308o\x0f"
++          zreply << "\x0312g\x0f"
++          zreply << "\x0309l\x0f"
++          zreply << "\x0304e\x0f"
++          zreply << ": " #+ + "\x0304[DIRECT] \x0f"
+ 
+           currency1 = gok.css('#knowledge-currency__tgt-amount').first.content rescue nil
+           currency2 = gok.css('#knowledge-currency__tgt-currency').first.content rescue nil
+@@ -155,13 +155,13 @@ module Plugins
+           snip = search.body["items"][n-1]["snippet"]
+ 
+           myreply = ""
+-          myreply << "\x03".b + "12" + "G" + "\x0f".b
+-          myreply << "\x03".b + "04" + "o" + "\x0f".b
+-          myreply << "\x03".b + "08" + "o" + "\x0f".b
+-          myreply << "\x03".b + "12" + "g" + "\x0f".b
+-          myreply << "\x03".b + "09" + "l" + "\x0f".b
+-          myreply << "\x03".b + "04" + "e" + "\x0f".b
+-          myreply << ": [#{n} of #{totalResultsFormatted}] " + "\x03".b + "07" +  "#{link}" + "\x0f".b + " - #{snip.gsub(/[[:space:]\r\n]+/, ' ')}"[0..240]
++          myreply << "\x0312G\x0f"
++          myreply << "\x0304o\x0f"
++          myreply << "\x0308o\x0f"
++          myreply << "\x0312g\x0f"
++          myreply << "\x0309l\x0f"
++          myreply << "\x0304e\x0f"
++          myreply << ": [#{n} of #{totalResultsFormatted}] \x0307#{link}\x0f - #{snip.gsub(/[[:space:]\r\n]+/, ' ')}"[0..240]
+           m.reply myreply
+         else
+           m.reply "ZOMG ERROR!"
+diff --git a/lib/imdb.rb b/lib/imdb.rb
+index 5edcf74..f3e2d70 100644
+--- a/lib/imdb.rb
++++ b/lib/imdb.rb
+@@ -21,8 +21,8 @@ module Plugins
+         return
+       end
+       
+-      m.user.notice "\x02".b + "\x03".b + "04" + "IMDB:\n" + "\x0f".b + 
+-      "\x02".b + "  !imdb <movie_name>" + "\x0f".b + " - Get IMDB info about a movie (and RottenTomatoes as well).\n"
++      m.user.notice "\x02\x0304IMDB:\n\x0f" + 
++      "\x02  !imdb <movie_name>\x0f - Get IMDB info about a movie (and RottenTomatoes as well).\n"
+     end
+     
+     def self.getImdb(id)
+@@ -158,20 +158,20 @@ module Plugins
+       
+       myreply = {}
+       
+-      myreply[:title] = "\x03".b + color_name + i[:title]
++      myreply[:title] = "\x03" + color_name + i[:title]
+       if !i[:title].include?("(#{i[:year]})")
+         myreply[:title] << " (" + i[:year].to_s + ")" 
+       end
+-      myreply[:title] << "\x0f".b
++      myreply[:title] << "\x0f"
+       
+-      myreply[:rating] = "\x03".b + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes]"
++      myreply[:rating] = "\x03" + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes]"
+       
+       if(i.key?(:tomato) && i[:tomato])
+-        myreply[:rating] << "\x0f".b + " " + i[:tomato][:rating] + "\x03".b + color_rating
++        myreply[:rating] << "\x0f " + i[:tomato][:rating] + "\x03" + color_rating
+       end
+       
+-      myreply[:rating] << " #{i[:mpaa_rating]} #{i[:genres]}" + "\x0f".b
+-      myreply[:url] = "\x03".b + color_url + i[:url] + "\x0f".b
++      myreply[:rating] << " #{i[:mpaa_rating]} #{i[:genres]}\x0f"
++      myreply[:url] = "\x03" + color_url + i[:url] + "\x0f"
+       myreply[:synopsis] = (i[:plot] ? (i[:plot])[0..255] : "")
+       
+       return myreply    
+diff --git a/lib/moebtc.rb b/lib/moebtc.rb
+index 266f29f..7caa45c 100644
+--- a/lib/moebtc.rb
++++ b/lib/moebtc.rb
+@@ -27,9 +27,9 @@ module Plugins
+         return
+       end
+ 
+-      m.user.notice "\x02".b + "\x03".b + "04" + "CRYPTO COINS:\n" + "\x0f".b + 
+-      "\x02".b + "  .btc" + "\x0f".b + " - Get current prices of BTC on Coinbase, BitStamp, and Gemini.  Also show LTC & ETH price.\n" +  
+-      "\x02".b + "  .<[partial] coin_name or coin_abbreviation>" + "\x0f".b + " - Get info about a cryptocurrency from coinmarketcap\n"
++      m.user.notice "\x02\x0304CRYPTO COINS:\n\x0f" + 
++      "\x02  .btc\x0f - Get current prices of BTC on Coinbase, BitStamp, and Gemini.  Also show LTC & ETH price.\n" +  
++      "\x02  .<[partial] coin_name or coin_abbreviation>\x0f - Get info about a cryptocurrency from coinmarketcap\n"
+     end
+ 
+     def updatecoins
+@@ -81,11 +81,11 @@ module Plugins
+ 
+ 
+       m.reply "" +
+-      "\x03".b + "04" + "#{c["name"]} (#{c["symbol"]}):" + "\x0f".b + " $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
++      "\x0304#{c["name"]} (#{c["symbol"]}):\x0f $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
+       "Rank: #{c["cmc_rank"]} | " +
+-      "(7d) " + "\x0f".b  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%" + "\x0f".b + " | " +
+-      "(24h) " + "\x0f".b + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%" + "\x0f".b + " | " +
+-      "(1h) " + "\x0f".b  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x03".b + "04" : "\x03".b + "03" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%" + "\x0f".b +
++      "(7d) \x0f"  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%\x0f | " +
++      "(24h) \x0f" + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%\x0f | " +
++      "(1h) \x0f"  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%\x0f" +
+       (m.channel.to_s.downcase == "#testing12" ? " [#{@@coins_lastupdate}]" : "")
+ 
+     end
+@@ -99,8 +99,8 @@ module Plugins
+       botlog "", m
+     
+       x = rand
+-      myreply1 = "\x03".b + "04" + "Bitstamp" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
+-      myreply2 = "\x03".b + "04" + "Coinbase" + "\x0f".b + " | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
++      myreply1 = "\x0304Bitstamp\x0f | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
++      myreply2 = "\x0304Coinbase\x0f | Buy: $" + sprintf("%01.2f", ((x <= 0.9) ? (rand * 10) : ((x <= 0.95) ? (rand * 50) : ((x <= 0.99) ? (rand * 100) : (rand * 1000)))))
+       m.reply myreply1
+       m.reply myreply2
+     end
+@@ -136,12 +136,12 @@ module Plugins
+       g2 = g1.body["last"] rescue "" 
+       
+ 
+-      m.reply "\x03".b + "04" + "Gemini:"   + "\x0f".b + " $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+-              "\x03".b + "04" + "BitStamp:" + "\x0f".b + " $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+-              "\x03".b + "04" + "Coinbase:" + "\x0f".b + " $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) # + " | " +
+-              #"\x03".b + "04" + "BCH:"      + "\x0f".b + " $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+-              #"\x03".b + "04" + "LTC:"      + "\x0f".b + " $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
+-              #"\x03".b + "04" + "ETH:"      + "\x0f".b + " $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
++      m.reply "\x0304Gemini:\x0f $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
++              "\x0304BitStamp:\x0f $" + bsp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(bsp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
++              "\x0304Coinbase:\x0f $" + cbp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbp.to_s.gsub(/^[^.]*(.*)$/, '\1')) # + " | " +
++              #"\x0304BCH:\x0f $" + mcp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(mcp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
++              #"\x0304LTC:\x0f $" + cblp.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cblp.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +
++              #"\x0304ETH:\x0f $" + cbep.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(cbep.to_s.gsub(/^[^.]*(.*)$/, '\1'))  
+     
+     end
+     
+diff --git a/lib/quotedb.rb b/lib/quotedb.rb
+index 2dedcdc..b51982b 100644
+--- a/lib/quotedb.rb
++++ b/lib/quotedb.rb
+@@ -25,10 +25,10 @@ module Plugins
+         return
+       end 
+ 
+-      m.user.notice "\x02".b + "\x03".b + "04" + "QUOTES:\n" + "\x0f".b + 
+-      "\x02".b + "  !addquote <text>" + "\x0f".b + " - Add a quote\n" +  
+-      "\x02".b + "  !quote <text or id#>" + "\x0f".b + " - Find a quote.  Use same command multiple times to cycle through search matches.\n" +
+-      "\x02".b + "  !ratequote <id#> <0-10>" + "\x0f".b + " - Rate a quote."
++      m.user.notice "\x02\x0304QUOTES:\n\x0f" + 
++      "\x02  !addquote <text>\x0f - Add a quote\n" +  
++      "\x02  !quote <text or id#>\x0f - Find a quote.  Use same command multiple times to cycle through search matches.\n" +
++      "\x02  !ratequote <id#> <0-10>\x0f - Rate a quote."
+     end
+ 
+     
+@@ -42,7 +42,7 @@ module Plugins
+           prng = Random.new
+           myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
+ 
+-          Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
++          Channel(chan).send "\x0304[RANDOM_QUOTE] \x0f\x0303[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{myquote[:quote]}"
+         else
+           botlog "WTF!!!! No quotes available for timed interval randquote in chan #{chan}, but there should be."
+         end          
+@@ -112,10 +112,10 @@ module Plugins
+           scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)}        
+           prng = Random.new
+           myquote = quotes.order(:quotes__id).limit(1, prng.rand(quotes.count)).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first
+-          m.reply "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
++          m.reply "\x0303[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{myquote[:quote]}"
+         
+ 
+-          #Channel(chan).send "\x03".b + "04" + "[RANDOM_QUOTE] " + "\x0f".b + "\x03".b + "03" + "[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{myquote[:quote]}"
++          #Channel(chan).send "\x0304[RANDOM_QUOTE] \x0f\x0303[#{myquote[:id]} / #{myquote[:score].to_f.round(2)} (#{myquote[:count]} votes) / #{myquote[:nick]} @ #{Time.at(myquote[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{myquote[:quote]}"
+         else
+           botlog "WTF!!!! No quotes available for quote."
+         end
+@@ -161,7 +161,7 @@ module Plugins
+         scores = @config[:DB][:quote_scr].group_and_count(:id___idx).select_append{avg(:score).as(:score)} 
+         result = quotes.order(Sequel.desc(:timestamp)).limit(1, @lastquotes[lqkey][:offset]).left_join(Sequel.as(scores, :scr), :idx => :id).select_all(:quotes).select_append(Sequel.as(Sequel.function(:coalesce,:scr__score,0), :score), Sequel.as(Sequel.function(:coalesce, :scr__count,0), :count)).first   
+         if result
+-          m.reply "\x03".b + "04" + "[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] " + "\x0f".b + "\x03".b + "03" + "[#{result[:id]} / #{result[:score].to_f.round(2)} (#{result[:count]} votes) / #{result[:nick]} @ #{Time.at(result[:timestamp].to_i).strftime("%-d %b %Y")}]" + "\x0f".b + " #{result[:quote]}"
++          m.reply "\x0304[#{@lastquotes[lqkey][:offset] + 1} of #{rc}] \x0f\x0303[#{result[:id]} / #{result[:score].to_f.round(2)} (#{result[:count]} votes) / #{result[:nick]} @ #{Time.at(result[:timestamp].to_i).strftime("%-d %b %Y")}]\x0f #{result[:quote]}"
+         else
+           m.reply "No additional matches."
+           @lastquotes[lqkey][:offset] = -1
+diff --git a/lib/rssfeed.rb b/lib/rssfeed.rb
+index 33b3c5e..214e2aa 100644
+--- a/lib/rssfeed.rb
++++ b/lib/rssfeed.rb
+@@ -41,7 +41,7 @@ module Plugins
+     
+     def printnew(entry, feedname, chans, color, us)
+       chans.each do |chan|
+-        Channel(chan).send "\x02".b + "[#{feedname}]" + "\x0f".b + (color.nil? ? "" : "\x03".b + color) + " #{entry.title} - #{us.nil? ? entry.url : us.call(entry.url)}" + (color.nil? ? "" : "\x0f".b)
++        Channel(chan).send "\x02[#{feedname}]\x0f" + (color.nil? ? "" : "\x03" + color) + " #{entry.title} - #{us.nil? ? entry.url : us.call(entry.url)}" + (color.nil? ? "" : "\x0f")
+       end
+     end
+     
+diff --git a/lib/rt.rb b/lib/rt.rb
+index c3e49e3..e1ce3a0 100644
+--- a/lib/rt.rb
++++ b/lib/rt.rb
+@@ -92,8 +92,8 @@ module Plugins
+       end
+       
+       myreply = {}
+-      myreply[:title] = "\x03".b + color_name + tomato[:tomatoTitle] + "\x0f".b
+-      myreply[:rating] = "\x03".b + color_rating
++      myreply[:title] = "\x03" + color_name + tomato[:tomatoTitle] + "\x0f"
++      myreply[:rating] = "\x03" + color_rating
+       
+       if tomato[:tomatoMeter] && tomato[:tomatoMeter] != ""
+         myreply[:rating] << "[TomatoMeter: #{tomato[:tomatoMeter]} (+#{tomato[:tomatoFreshCount]}/-#{tomato[:tomatoRottenCount]}) Critics: #{tomato[:tomatoAvgCriticRating]}]"
+@@ -104,8 +104,8 @@ module Plugins
+         myreply[:rating] << "[TomatoAudience: #{tomato[:tomatoAudienceMeter]} liked it, #{tomato[:tomatoAvgAudienceRating]} with #{tomato[:tomatoAudienceVotes]} votes]"
+       end
+       
+-      myreply[:rating] << "\x0f".b
+-      myreply[:url] = "\x03".b + color_url + tomato[:tomatoURL] + "\x0f".b
++      myreply[:rating] << "\x0f"
++      myreply[:url] = "\x03" + color_url + tomato[:tomatoURL] + "\x0f"
+       myreply[:synopsis] = (tomato[:tomatoSynopsis] ? (tomato[:tomatoSynopsis])[0..245] : "")
+       
+       return myreply
+diff --git a/lib/tvmaze.rb b/lib/tvmaze.rb
+index f8088ed..04e321a 100644
+--- a/lib/tvmaze.rb
++++ b/lib/tvmaze.rb
+@@ -122,13 +122,13 @@ module Plugins
+         return
+       end
+ 
+-      m.user.notice "\x02".b + "\x03".b + "04" + "TV:\n" + "\x0f".b + 
+-      "\x02".b + "  @<show_name>" + "\x0f".b + " - Get info about show\n" +  
+-      "\x02".b + "  @2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
+-      "\x02".b + "  @3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n" 
+-      #"\x02".b + "  !tv <show_name>" + "\x0f".b + " - Get info about show\n" +  
+-      #"\x02".b + "  !tv2 <show_name>" + "\x0f".b + " - Get info about show, using 2nd search hit\n" +
+-      #"\x02".b + "  !tv3 <show_name>" + "\x0f".b + " - Get info about show, using 3rd search hit, etc, etc...\n"
++      m.user.notice "\x02\x0304TV:\n\x0f" + 
++      "\x02  @<show_name>\x0f - Get info about show\n" +  
++      "\x02  @2 <show_name>\x0f - Get info about show, using 2nd search hit\n" +
++      "\x02  @3 <show_name>\x0f - Get info about show, using 3rd search hit, etc, etc...\n" 
++      #"\x02  !tv <show_name>\x0f - Get info about show\n" +  
++      #"\x02  !tv2 <show_name>\x0f - Get info about show, using 2nd search hit\n" +
++      #"\x02  !tv3 <show_name>\x0f - Get info about show, using 3rd search hit, etc, etc...\n"
+     end
+     
+     def tvmaze(m, hitno, id)
+@@ -247,18 +247,18 @@ module Plugins
+             airstamp_last_local = DateTime.parse(airstamp_last_utc_time.getlocal(tz.period_for_utc(airstamp_last_utc_time).utc_total_offset).to_s)
+           end
+           
+-          myreply = "\x03".b + color_name + show.body["name"].to_s + "\x0f".b +          
+-          " | " + "\x0f".b + "\x03".b + color_title + "Next" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b +          
+-          " | " + "\x0f".b + "\x03".b + color_title + "Prev" + "\x0f".b +  ":" +"\x03".b + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f".b 
++          myreply = "\x03" + color_name + show.body["name"].to_s + "\x0f" +          
++          " | \x0f\x03" + color_title + "Next\x0f:\x03" + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", nextep.body.fetch("number", -1).to_s) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f" +          
++          " | \x0f\x03" + color_title + "Prev\x0f:\x03" + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + sprintf("%02d", lastep.body.fetch("number", -1).to_s) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f"
+                   
+           if(maxEpNumber)
+-            myreply << " | " + "\x0f".b + "\x03".b + color_title + "Final" + "\x0f".b +  ":" +"\x03".b + color_text + " " + nextep.body.fetch("season").to_s + "x" + sprintf("%02d", maxEpNumber.to_s) + "\x0f".b          
++            myreply << " | \x0f\x03" + color_title + "Final\x0f:\x03" + color_text + " " + nextep.body.fetch("season").to_s + "x" + sprintf("%02d", maxEpNumber.to_s) + "\x0f"
+           end
+           
+           if show.body.fetch("status", nil)
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f".b
++            "\x03" + color_text + show.body.fetch("status", "UNKNOWN_SHOW_STATUS").to_s + "\x0f"
+           end
+ 
+           days = show.body.dig("schedule","days") || []
+@@ -274,11 +274,11 @@ module Plugins
+           if airstamp_next_local
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + airstamp_next_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
++            "\x03" + color_text + airstamp_next_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f"
+           #elsif airstamp_last_local
+           #  myreply <<
+           #  " | " + 
+-          #  "\x03".b + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f".b
++          #  "\x03" + color_text + airstamp_last_local.strftime(((days.nil?) ? "%A" : days) + " %I:%M %p (UTC%z)") + "\x0f"
+           end 
+ 
+ 
+@@ -286,30 +286,30 @@ module Plugins
+           if network && network.length > 0
+             myreply << 
+             " | " + 
+-            "\x03".b + color_text + network + "\x0f".b
++            "\x03" + color_text + network + "\x0f"
+           end
+           
+           if show.body.fetch("genres", nil) && show.body.fetch("genres", Array.new).join(", ").length > 0
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f".b
++            "\x03" + color_text + (show.body.fetch("genres", nil) ? show.body.fetch("genres", Array.new).join(", ") : "") + "\x0f"
+             
+           elsif show.body.fetch("type", nil) && show.body.fetch("type", "").to_s.length > 0
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + show.body.fetch("type", "").to_s + "\x0f".b
++            "\x03" + color_text + show.body.fetch("type", "").to_s + "\x0f"
+           end
+ 
+           if show.body.fetch("language", nil) && show.body.fetch("language", "").to_s.length > 0 && show.body.fetch("language", "").to_s !~ /English/i
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + show.body.fetch("language", "").to_s + "\x0f".b
++            "\x03" + color_text + show.body.fetch("language", "").to_s + "\x0f"
+           end
+             
+           if show.body.fetch("url", nil)
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + show.body.fetch("url", "UNKNOWN_URL").to_s + "\x0f".b
++            "\x03" + color_text + show.body.fetch("url", "UNKNOWN_URL").to_s + "\x0f"
+           end
+           
+           countdown = ""
+@@ -332,7 +332,7 @@ module Plugins
+               minutes = ((diff-(days*60*60*24)-(hours*60*60))/60).floor
+               seconds = (diff-(days*60*60*24)-(hours*60*60)-(minutes*60)).floor
+               
+-              countdown = " | " + "\x0f".b + "\x03".b + color_title + "Countdown" + "\x0f".b +  ":" +"\x03".b + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s" + "\x0f".b
++              countdown = " | \x0f\x03" + color_title + "Countdown\x0f:\x03" + color_text + " " + negative + days.to_s + " days " + hours.to_s + "h " + minutes.to_s + "m " + seconds.to_s  + "s\x0f"
+             end
+           end
+           
+@@ -342,10 +342,10 @@ module Plugins
+             puts 'FOUND IMDBCacheEntry'
+             myreply <<
+             " | " + 
+-            "\x03".b + color_text + c.imdburl + "\x0f".b +
++            "\x03" + color_text + c.imdburl + "\x0f" +
+             
+             " | " + 
+-            "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
++            "\x03" + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)\x0f"
+             
+             myreply << countdown
+             m.reply myreply
+@@ -419,13 +419,13 @@ module Plugins
+             if imdblink
+               myreply <<
+               " | " + 
+-              "\x03".b + color_text + c.imdburl + "\x0f".b
++              "\x03" + color_text + c.imdburl + "\x0f"
+             end
+               
+             if i
+               myreply <<
+               " | " + 
+-              "\x03".b + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)" + "\x0f".b
++              "\x03" + color_text + c.imdb_score.to_s + "/10 (" + c.imdb_votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes)\x0f"
+             end
+ 
+ 
+diff --git a/lib/tvmaze_sched.rb b/lib/tvmaze_sched.rb
+index ae74874..d628e05 100644
+--- a/lib/tvmaze_sched.rb
++++ b/lib/tvmaze_sched.rb
+@@ -50,13 +50,13 @@ module Plugins
+       #  return
+       #end
+ 
+-      m.user.notice "\x02".b + "\x03".b + "04" + "TV SCHEDULE:\n" + "\x0f".b + 
+-      "\x02".b + "  !all" + "\x0f".b + " - Show yesterday, today, and tomorrow's TV schedule\n" +
+-      "\x02".b + "  !today" + "\x0f".b + " - Show today's TV schedule\n" +
+-      "\x02".b + "  !tomorrow" + "\x0f".b + " - Show tomorrow's TV schedule\n" +
+-      "\x02".b + "  !yesterday" + "\x0f".b + " - Show yesterday's TV schedule\n" +
+-      "\x02".b + "  !sunday, !sun, !monday, !mon, etc...." + "\x0f".b + " - Show TV schedule for next <day>\n" +
+-      "\x02".b + "  !premiers<optional max# of premiers, default 15> <optional show name or network search term>" + "\x0f".b + " - Show season premier dates\n" 
++      m.user.notice "\x02\x0304TV SCHEDULE:\n\x0f" + 
++      "\x02  !all\x0f - Show yesterday, today, and tomorrow's TV schedule\n" +
++      "\x02  !today\x0f - Show today's TV schedule\n" +
++      "\x02  !tomorrow\x0f - Show tomorrow's TV schedule\n" +
++      "\x02  !yesterday\x0f - Show yesterday's TV schedule\n" +
++      "\x02  !sunday, !sun, !monday, !mon, etc....\x0f - Show TV schedule for next <day>\n" +
++      "\x02  !premiers<optional max# of premiers, default 15> <optional show name or network search term>\x0f - Show season premier dates\n" 
+     end
+ 
+     def date_of_next(day)
+@@ -251,19 +251,19 @@ module Plugins
+     def sched_today
+       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)      
+       today     = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now + 0).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 1).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
+-      return  "\x02".b + "\x03".b + "11" + "Today: "     + "\x0f".b +  today.map    {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
++      return  "\x02\x0311Today: \x0f" +  today.map    {|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+     end
+ 
+     def sched_tomorrow
+       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)
+       tomorrow  = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now + 1).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 2).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
+-      return "\x02".b + "\x03".b + "09" + "Tomorrow: "  + "\x0f".b +  tomorrow.map {|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
++      return "\x02\x0309Tomorrow: \x0f" +  tomorrow.map {|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+     end
+ 
+     def sched_yesterday
+       myshows = @config[:DB][:tv_groups].distinct(:show_id).select(:show_id)
+       yesterday = @config[:DB][:episodes].join(:imdb_cache_entries, tv_maze_id: :show_id).where(show_id: myshows).where{(airstamp >= DateTime.parse((DateTime.now - 1).strftime("%Y-%m-%dT00:00:00%z"))) & (airstamp < DateTime.parse((DateTime.now + 0).strftime("%Y-%m-%dT00:00:00%z")))}.order(:name, :season, :episode).all
+-      return "\x02".b + "\x03".b + "04" + "Yesterday: " + "\x0f".b +  yesterday.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
++      return "\x02\x0304Yesterday: \x0f" +  yesterday.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+     end
+ 
+     def nall(m)  
+@@ -310,9 +310,9 @@ module Plugins
+       puts t.count.to_s
+ 
+       if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
+-        m.reply "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
++        m.reply "\x02\x0304" + d.strftime('%A, %B %-d') + ": \x0f" +  t.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+       else
+-        m.user.notice "\x02".b + "\x03".b + "04" + d.strftime('%A, %B %-d') + ": " + "\x0f".b +  t.map{|a| "\x02".b + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
++        m.user.notice "\x02\x0304" + d.strftime('%A, %B %-d') + ": \x0f" +  t.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
+       end
+     end
+ 
+@@ -349,15 +349,15 @@ module Plugins
+         end
+ 
+         if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
+-          m.user.send "\x02".b + "\x03".b + "04" + "SEASON PREMIERS: #{text}" + "\x0f".b +  "\n" + prems.map{|a| "\x02".b + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f".b + " - " + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - Season #{a[:season]}"}.join("\n")
++          m.user.send "\x02\x0304SEASON PREMIERS: #{text}\x0f\n" + prems.map{|a| "\x02" + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f - \x1f#{a[:name]}\x0f - Season #{a[:season]}"}.join("\n")
+         else
+-          m.user.notice "\x02".b + "\x03".b + "04" + "SEASON PREMIERS: #{text}" + "\x0f".b +  "\n" + prems.map{|a| "\x02".b + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f".b + " - " + "\x1f".b + "#{a[:name]}" + "\x0f".b + " - Season #{a[:season]}"}.join("\n")
++          m.user.notice "\x02\x0304SEASON PREMIERS: #{text}\x0f\n" + prems.map{|a| "\x02" + a[:airstamp].localtime.strftime('%a, %b %d') + "\x0f - \x1f#{a[:name]}\x0f - Season #{a[:season]}"}.join("\n")
+         end
+       else
+         if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)
+-          m.user.send "\x02".b + "\x03".b + "04" + "Nothing found." + "\x0f".b
++          m.user.send "\x02\x0304Nothing found.\x0f"
+         else
+-          m.user.notice "\x02".b + "\x03".b + "04" + "Nothing found." + "\x0f".b
++          m.user.notice "\x02\x0304Nothing found.\x0f"
+         end
+       end
+     end
+diff --git a/lib/url.rb b/lib/url.rb
+index f64bd01..7fc86a7 100644
+--- a/lib/url.rb
++++ b/lib/url.rb
+@@ -19,7 +19,7 @@ module Plugins
+ 
+ 
+     def help(m)
+-      msg = "\x02".b + "\x03".b + "04" + "URL's:" + "\x0f".b
++      msg = "\x02\x0304URL's:\x0f"
+ 
+       @handlers.each do |handler|
+         if !handler[:excludeChans].map(&:downcase).include?(m.channel.to_s.downcase)
+@@ -59,7 +59,7 @@ module Plugins
+                 #puts "pc=#{postCount}\n"
+                 if postCount > 0
+                   firstPost = entries.order(Sequel.asc(:Date)).limit(1).where(:URL => link).first
+-                  #output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+"\x03".b+"01"+"\x0f".b+firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"
++                  #output << "  (Link has been posted #{postCount} time#{postCount>1 ? 's' : ''} before, originally by #{firstPost[:Nick][0]+"\x0301\x0f"+firstPost[:Nick][1...999]} on #{firstPost[:Date].to_date})"
+                   output << "  (Posted #{postCount>1 ? postCount.to_s + ' times' : 'once'} before, #{postCount>1 ? 'originally ' : ''}by #{firstPost[:Nick][0]+ "\u200b" + firstPost[:Nick][1..-1]} on #{firstPost[:Date].to_date})"
+                 end
+               end
+diff --git a/lib/url_dumpert.rb b/lib/url_dumpert.rb
+index ecb4519..6127a90 100644
+--- a/lib/url_dumpert.rb
++++ b/lib/url_dumpert.rb
+@@ -8,7 +8,7 @@ module URLHandlers
+   module Dumpert
+ 
+     def help
+-      return "\x02".b + "  <Dumpert URL>" + "\x0f".b + " - Get title, info, and English translation of Dumpert video."
++      return "\x02  <Dumpert URL>\x0f - Get title, info, and English translation of Dumpert video."
+     end
+ 
+     def parse(url)
+@@ -28,7 +28,7 @@ module URLHandlers
+             #if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
+             if !search.nil? && search.length > 0
+               title = title + 
+-              "\x03".b + "04" + "  [" + search + "]" + "\x0f".b
++              "\x0304  [" + search + "]\x0f"
+               
+               return title
+             end
+diff --git a/lib/url_imdb.rb b/lib/url_imdb.rb
+index e77fbfc..880dafb 100644
+--- a/lib/url_imdb.rb
++++ b/lib/url_imdb.rb
+@@ -3,7 +3,7 @@ require 'imdb'
+ module URLHandlers  
+   module IMDB
+     def help
+-      return "\x02".b + "  <IMDB URL>" + "\x0f".b + " - Get title and info about IMDB movie or TV show."
++      return "\x02  <IMDB URL>\x0f - Get title and info about IMDB movie or TV show."
+     end
+ 
+     def parse(url)
+@@ -44,9 +44,9 @@ module URLHandlers
+           color_url = "03"
+           
+           myreply =
+-          "\x03".b + color_name + i.title + " (" + i.year.to_s + ")" + "\x0f".b + 
+-          "\x03".b + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
+-          myrating + mygenres + "\x0f".b + 
++          "\x03" + color_name + i.title + " (" + i.year.to_s + ")\x0f" + 
++          "\x03" + color_rating + " [IMDB: " + i.rating.to_s + "/10] [" + i.votes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " votes] " + 
++          myrating + mygenres + "\x0f" + 
+           (i.plot)[0..255]
+           
+           return myreply
+diff --git a/lib/url_imgur.rb b/lib/url_imgur.rb
+index 9b30f35..c27df69 100644
+--- a/lib/url_imgur.rb
++++ b/lib/url_imgur.rb
+@@ -6,7 +6,7 @@ module URLHandlers
+   module Imgur
+ 
+     def help
+-      return "\x02".b + "  <Imgur URL>" + "\x0f".b + " - Get title and info about Imgur image/gallery."
++      return "\x02  <Imgur URL>\x0f - Get title and info about Imgur image/gallery."
+     end
+ 
+ 
+@@ -141,7 +141,7 @@ module URLHandlers
+             color_rating = "07"
+             color_url = "03"
+           
+-            myreply = "\x03".b + color_yt + "[Imgur] " + "\x0f".b
++            myreply = "\x03" + color_yt + "[Imgur] \x0f"
+             
+             if g_title
+               mytitle = g_title.strip.gsub(/[[:space:]]+/m, ' ')
+@@ -160,10 +160,10 @@ module URLHandlers
+             myreply += " " 
+             
+             if search.body["data"].key?("nsfw") && !search.body["data"]["nsfw"].nil? && search.body["data"]["nsfw"] == true
+-              myreply += "\x03".b + color_name + "[NSFW] " + "\x0f".b
++              myreply += "\x03" + color_name + "[NSFW] \x0f"
+             end
+             
+-            myreply += "\x03".b + color_rating
++            myreply += "\x03" + color_rating
+             
+             if search.body["data"].key?("images_count")
+               myreply += "[Album"
+@@ -205,7 +205,7 @@ module URLHandlers
+               myreply += "[Section: #{section}] "
+             end
+             
+-            myreply += "\x0f".b
++            myreply += "\x0f"
+             
+             return myreply
+           
+diff --git a/lib/url_title.rb b/lib/url_title.rb
+index 06a5c53..b003df4 100644
+--- a/lib/url_title.rb
++++ b/lib/url_title.rb
+@@ -8,7 +8,7 @@ module URLHandlers
+   module TitleBot
+ 
+     def help
+-      return "\x02".b + "  <URL of HTML webpage>" + "\x0f".b + " - Get HTML title of webpage."
++      return "\x02  <URL of HTML webpage>\x0f - Get HTML title of webpage."
+     end
+ 
+ 
+diff --git a/lib/url_wikipedia.rb b/lib/url_wikipedia.rb
+index 5fa03c3..f52fd2c 100644
+--- a/lib/url_wikipedia.rb
++++ b/lib/url_wikipedia.rb
+@@ -8,7 +8,7 @@ module URLHandlers
+   module WikipediaURL
+ 
+     def help
+-      return "\x02".b + "  <Wikipedia ARTICLE URL>" + "\x0f".b + " - Get summary of Wikipedia article"
++      return "\x02  <Wikipedia ARTICLE URL>\x0f - Get summary of Wikipedia article"
+     end
+ 
+     def parse(url)
+@@ -21,7 +21,7 @@ module URLHandlers
+ 
+         if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0
+           myreply = ""
+-          myreply << "\x03".b + "04" + "[WIKIPEDIA]" + "\x0f".b
++          myreply << "\x0304[WIKIPEDIA]\x0f"
+           myreply << ": #{y.body["extract"][0..436]}"
+           return myreply
+         else
+diff --git a/lib/url_youtube.rb b/lib/url_youtube.rb
+index 1144713..ea62360 100644
+--- a/lib/url_youtube.rb
++++ b/lib/url_youtube.rb
+@@ -7,7 +7,7 @@ module URLHandlers
+   module Youtube
+ 
+     def help
+-      return "\x02".b + "  <Youtube URL>" + "\x0f".b + " - Get title and info about Youtube video."
++      return "\x02  <Youtube URL>\x0f - Get title and info about Youtube video."
+     end
+ 
+ 
+@@ -82,23 +82,23 @@ module URLHandlers
+           color_rating = "07"
+           color_url = "03"
+           
+-          #myreply = "\x02".b + "You" + "\x03".b + "04" + "Tube" + "\x0f".b + ": " +
+-          myreply =  "\x03".b + color_yt + "[YouTube] " + "\x0f".b + 
++          #myreply = "\x02You\x0304Tube\x0f: " +
++          myreply =  "\x03" + color_yt + "[YouTube] \x0f" + 
+           
+           #(title.nil? ? "UNKOWN_TITLE" : title) +
+           
+-          "\x03".b + color_name + 
++          "\x03" + color_name + 
+           (title.nil? ? "UNKOWN_TITLE" : title) + 
+-          "\x0f".b +
++          "\x0f" +
+ 
+-          "\x03".b + color_rating +
++          "\x03" + color_rating +
+           (duration.nil? ? ""    : (" (" + duration    + ")")) +    
+           (publishedAt.nil? ? "" : (" [" + (author.nil? ? "" : (author + " @ ")) + publishedAt + "]")) +
+-          " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [" + "\x0f".b + 
+-          "\x03".b + "03"         + "+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse    + "\x0f".b +
+-          "\x03".b + color_rating + "/" + "\x0f".b +
+-          "\x03".b + "04"         + "-" + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f".b +
+-          "\x03".b + color_rating +"]" + "\x0f".b
++          " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [\x0f" + 
++          "\x0303+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse    + "\x0f" +
++          "\x03" + color_rating + "/\x0f" +
++          "\x0304-" + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f" +
++          "\x03" + color_rating +"]\x0f"
+           
+           return myreply
+       	else
+diff --git a/lib/weather.rb b/lib/weather.rb
+index 4997ecc..0134f50 100644
+--- a/lib/weather.rb
++++ b/lib/weather.rb
+@@ -32,9 +32,9 @@ module Plugins
+     end
+ 
+     def help(m)
+-      m.user.notice  "\x02".b + "\x03".b + "04" + "WEATHER:\n" + "\x0f".b +
+-      "\x02".b + "  !w <location>" + "\x0f".b + " - Get weather for location. Uses Google geocoding & Weather Underground.\n" +
+-      "\x02".b + "  !w" + "\x0f".b + " - Get weather (using the last location you queried weather for)."
++      m.user.notice  "\x02\x0304WEATHER:\n\x0f" +
++      "\x02  !w <location>\x0f - Get weather for location. Uses Google geocoding & Weather Underground.\n" +
++      "\x02  !w\x0f - Get weather (using the last location you queried weather for)."
+     end
+     
+     def check_api_rate_limit(x=1)
+@@ -68,9 +68,9 @@ module Plugins
+       if m.user.nick == "moeSizlak"
+         myreply = ""
+         #myreply = "Conditions for: "
+-        myreply <<  "\x03".b + "04" 
++        myreply <<  "\x0304" 
+         myreply << "Buffalo, NY"
+-           myreply << "\x0f".b
++           myreply << "\x0f"
+         myreply << ": Mayhem, 20F/-7C"
+         m.reply myreply
+         return
+@@ -315,12 +315,12 @@ module Plugins
+  
+         myreply = ""
+         #myreply = "Conditions for: "
+-        myreply <<  "\x03".b + color_name 
++        myreply <<  "\x03" + color_name 
+         myreply << "#{display_location}"
+         #myreply << " [#{w["station_id"]}]" if w["station_id"]
+-        myreply << "\x0f".b
++        myreply << "\x0f"
+         puts "cccc=#{w["temperature"]}"
+-        myreply << (": " + "\x02".b + "#{w["summary"]}, #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}" + "\x0f".b) if w["temperature"]
++        myreply << (": \x02#{w["summary"]}, #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}\x0f") if w["temperature"]
+ 
+         if forecast
+           myreply << ", " + extended_summary if extended_summary
+@@ -331,16 +331,16 @@ module Plugins
+             
+           i = 0
+           #i = 1 if f[1]["title"] =~ /night/i
+-          myreply << ", " +  "\x03".b + color_name + 
+-            "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
++          myreply << ", \x03" + color_name + 
++            "#{f[i]["title"]}\x0f: #{f[i][fw]}"
+ 
+           i += 1
+-          myreply << " " + "\x03".b + color_name + 
+-            "#{f[i]["title"]}" + "\x0f".b + ": #{f[i][fw]}"
++          myreply << " \x03" + color_name + 
++            "#{f[i]["title"]}\x0f: #{f[i][fw]}"
+ 
+           if (f[0]["title"] + f[1]["title"]) =~ /night/i
+-            f = myreply << " " + "\x03".b + color_name + 
+-              "#{f[2]["title"]}" + "\x0f".b + ": #{f[2][fw]}"
++            f = myreply << " \x03" + color_name + 
++              "#{f[2]["title"]}\x0f: #{f[2][fw]}"
+           end
+ =end
+         end
+@@ -348,13 +348,13 @@ module Plugins
+ 
+ =begin        
+         myreply = "Weather: "
+-        myreply << "\x03".b + color_name + "#{display_location}"
++        myreply << "\x03" + color_name + "#{display_location}"
+         myreply << " [#{w["station_id"]}]" if w["station_id"]
+-        myreply << "\x0f".b
+-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Temp" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}, #{w["weather"]}" + "\x0f".b) if w["temperature_string"] && w["weather"]
+-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Wind" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["wind_string"]}" + "\x0f".b) if w["wind_string"]
+-        #myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Weather" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["weather"]}" + "\x0f".b) if w["weather"]
+-        myreply << (" | " + "\x0f".b + "\x03".b + color_title + "Precip today" + "\x0f".b + ":" +"\x03".b + color_text + " #{w["precip_today_string"]}" + "\x0f".b) if w["precip_today_string"]
++        myreply << "\x0f"
++        myreply << (" | \x0f\x03" + color_title + "Temp\x0f:\x03" + color_text + " #{w["temperature_string"].gsub(/^\s*(-?\d+)(?:\.\d+)?\s*F\s*\(\s*(-?\d+)(?:\.\d+)?\s*C.*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}, #{w["weather"]}\x0f") if w["temperature_string"] && w["weather"]
++        myreply << (" | \x0f\x03" + color_title + "Wind\x0f:\x03" + color_text + " #{w["wind_string"]}\x0f") if w["wind_string"]
++        #myreply << (" | \x0f\x03" + color_title + "Weather\x0f:\x03" + color_text + " #{w["weather"]}\x0f") if w["weather"]
++        myreply << (" | \x0f\x03" + color_title + "Precip today\x0f:\x03" + color_text + " #{w["precip_today_string"]}\x0f") if w["precip_today_string"]
+         if forecast
+           if country == 'US'
+             unitA = 'fahrenheit'
+@@ -368,7 +368,7 @@ module Plugins
+             unitBx = 'F'
+           end
+           (0..1).each do |i|
+-            myreply << (" | " + "\x0f".b + "\x03".b + color_title + ((i == 0) ? "Today" : ((i==1) ? "Tomorrow" : "#{f[i]["date"]["monthname_short"]} #{f[i]["date"]["day"]}")) + "\x0f".b + ":" +"\x03".b + color_text + " High: #{f[i]["high"][unitA]}#{unitAx}, Low: #{f[i]["low"][unitA]}#{unitAx}, #{f[i]["conditions"]}, #{f[i]["pop"]}% chance of precip" + "\x0f".b) if w["weather"]
++            myreply << (" | \x0f\x03" + color_title + ((i == 0) ? "Today" : ((i==1) ? "Tomorrow" : "#{f[i]["date"]["monthname_short"]} #{f[i]["date"]["day"]}")) + "\x0f:\x03" + color_text + " High: #{f[i]["high"][unitA]}#{unitAx}, Low: #{f[i]["low"][unitA]}#{unitAx}, #{f[i]["conditions"]}, #{f[i]["pop"]}% chance of precip\x0f") if w["weather"]
+           end
+         end
+ =end
+@@ -376,8 +376,8 @@ module Plugins
+ 
+         
+         #if m.channel.to_s.include?("#hdbits") || m.channel.to_s.downcase == "#newzbin" || m.channel.to_s.downcase == "#testing12"
+-        #  myreply2 =  "\x03".b + color_name + 
+-        #    "#{display_location}" + "\x0f".b + ": #{w["summary"]},  #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}"
++        #  myreply2 =  "\x03" + color_name + 
++        #    "#{display_location}\x0f: #{w["summary"]},  #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}"
+         #  m.reply myreply2
+         #end
+         #m.user.notice myreply
+diff --git a/lib/wikipedia.rb b/lib/wikipedia.rb
+index 9d977ec..d71cea7 100644
+--- a/lib/wikipedia.rb
++++ b/lib/wikipedia.rb
+@@ -18,8 +18,8 @@ module Plugins
+     
+ 
+     def help(m)
+-      m.user.notice  "\x02".b + "\x03".b + "04" + "WIKIPEDIA:\n" + "\x0f".b +
+-      "\x02".b + "  !wiki <search_terms>" + "\x0f".b + " - Perform Wikipedia search and return 1st hit.\n"
++      m.user.notice  "\x02\x0304WIKIPEDIA:\n\x0f" +
++      "\x02  !wiki <search_terms>\x0f - Perform Wikipedia search and return 1st hit.\n"
+     end
+     
+     def get_wikipedia(m, q)
+@@ -42,7 +42,7 @@ module Plugins
+ 
+         if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0       
+           myreply = ""
+-          myreply << "\x03".b + "04" + "[WIKIPEDIA]" + "\x0f".b
++          myreply << "\x0304[WIKIPEDIA]\x0f"
+           myreply << ": #{y.body["extract"][0..436]}"
+           m.reply myreply
+         else

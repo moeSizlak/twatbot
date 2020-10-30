@@ -40,11 +40,12 @@ module URLHandlers
         easy.on_body do |chunk, easy|
           recvd << chunk
           
-          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,512})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
             title_found.gsub!(/[[:space:]]+/m, ' ')
+            title_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
             easy.cleanup rescue nil
             File.unlink(tmpcookiefile) rescue nil
             return Cinch::Helpers.sanitize title_found
@@ -83,11 +84,12 @@ module URLHandlers
 
           #puts chunk
           
-          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,512})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
             title_found.gsub!(/[[:space:]]+/m, ' ')
+            title_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
             easy.cleanup rescue nil
             File.unlink(tmpcookiefile) rescue nil
             return {:title => Cinch::Helpers.sanitize(title_found), :effective_url => myurl }
