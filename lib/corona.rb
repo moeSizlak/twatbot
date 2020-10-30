@@ -115,19 +115,19 @@ module Plugins
         tab = doc.at("table#usa_table_countries_today tbody")
         
         @@corona_states = {}
-        states = tab.css("tr").select{|x| x['style'] !~ /display:\s*none/}.each do |row|
+        states = tab.css("tr").select{|x| x['style'] !~ /display:\s*none/ && x['class'] !~ /total_row/ }.each do |row|
           cols = row.css("td")
 
-          @@corona_states[cols[0].text.strip.to_s] = {
-            'cases' => cols[1].text.strip.to_s,
-            'new_cases' => cols[2].text.strip.to_s,
-            'deaths' => cols[3].text.strip.to_s,
-            'new_deaths' => cols[4].text.strip.to_s,
-            'active' => cols[5].text.strip.to_s,
-            'cases_per_mil' => cols[6].text.strip.to_s,
-            'deaths_per_mil' => cols[7].text.strip.to_s,
-            'tests' => cols[8].text.strip.to_s,
-            'tests_per_mil' => cols[9].text.strip.to_s
+          @@corona_states[cols[1].text.strip.to_s] = {
+            'cases' => cols[2].text.strip.to_s,
+            'new_cases' => cols[3].text.strip.to_s,
+            'deaths' => cols[4].text.strip.to_s,
+            'new_deaths' => cols[5].text.strip.to_s,
+            'active' => cols[6].text.strip.to_s,
+            'cases_per_mil' => cols[7].text.strip.to_s,
+            'deaths_per_mil' => cols[8].text.strip.to_s,
+            'tests' => cols[9].text.strip.to_s,
+            'tests_per_mil' => cols[10].text.strip.to_s
           }
 
         end
@@ -232,9 +232,11 @@ module Plugins
               #m.reply "" +
               #"\x02#{cc[0]}:\x0f\x03"+ color_confirmed + "  Confirmed:\x0f #{confirmed.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} | \x03"+ color_deaths + "Deaths:\x0f #{deaths.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*deaths.to_f/confirmed.to_f)} %) | \x03"+ color_recovered + "Recovered:\x0f #{recovered.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse} (#{'%.2f' % (100*recovered.to_f/confirmed.to_f)} %)" +
 
+              puts @@corona_states.select{|k,v| v['cases'].gsub(/\D/,'').to_i > cc[1]['cases'].gsub(/\D/,'').to_i}.count + 1
+
               m.reply "" + 
                                      "\x02#{cc[0]}\x0f"+ 
-              ": US State Rank: \x02\x0304##{@@corona_states.select{|k,v| v['cases'].gsub(/\D/,'').to_i > cc[1]['cases'].gsub(/\D/,'').to_i}.count }\x0f"+ # of #{@@corona_countries.count - 1}\x0f"+ 
+              ": US State Rank: \x02\x0304##{(@@corona_states.select{|k,v| v['cases'].gsub(/\D/,'').to_i > cc[1]['cases'].gsub(/\D/,'').to_i}.count.to_i) +1}\x0f"+ # of #{@@corona_countries.count - 1}\x0f"+ 
               " | Confirmed: \x02\x0307#{cc[1]['cases']}" +
               #" (#{cc[1]['new_cases']})" +
               ((cc[1]['cases_per_mil'].nil? || cc[1]['cases_per_mil'].empty?) ? "" : " (#{cc[1]['cases_per_mil']}/1M)") + "\x0f"+ 

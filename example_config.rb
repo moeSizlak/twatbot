@@ -29,6 +29,8 @@ module MyApp
           "Plugins::Election",
           "Plugins::RottenTomatoes",
           "Plugins::CloudVision",
+          "Plugins::TwitterSearch",
+          "Plugins::Wolfram",
         ],
       
         :IRC_RUN_AFTER_CONNECT => [
@@ -43,6 +45,13 @@ module MyApp
         :IRC_LOGLEVEL => :info ,  # :debug
 
         :TWATBOT_SQL => 'postgres://user:pass@localhost/twatbot?encoding=utf8' ,
+
+        :WOLFRAM_APP_ID => 'XXXXXXXXXXXXX',
+        :WOLFRAM_SEARCH_EXCLUDE_CHANS => [],
+
+
+        # Plugins::TwitterSearch
+      :TWITTER_SEARCH_EXCLUDE_CHANS => [],
         
         # Plugins::URL
         :URL_SUB_PLUGINS => [  # each one of these will be tried in order until one of them works: ,

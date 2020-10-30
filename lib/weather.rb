@@ -82,6 +82,10 @@ module Plugins
       forecast = nil
       pws = '1'
 
+      if m.bot.botconfig[:WEATHER_EXCLUDE_CHANS].map(&:downcase).include?(m.channel.to_s.downcase) || m.bot.botconfig[:WEATHER_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
+        return
+      end
+
       c = @WeatherLocationCacheEntry[m.bot.irc.network.name.to_s.downcase, m.user.to_s.downcase]
       if location.length == 0        
         if c
@@ -133,7 +137,7 @@ module Plugins
 
           if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
             # Remove all of the following address components unconditionally
-            ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
+            ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","neighborhood","sublocality","natural_feature","airport","park","point_of_interest"]).empty?}
             
             # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
             ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
@@ -216,12 +220,13 @@ module Plugins
       color_text = "07"
 
       puts "Country=\"#{country}\"" 
-      myreply =  "\x02\x0304#{display_location}\x0f"
-      myreply2 = "\x02\x0304#{display_location}\x0f"
-      myreply3 = "\x02\x0304#{display_location}\x0f"
+      myreply =  "\x0304#{display_location}\x0f"
+      myreply2 = "\x0304#{display_location}\x0f"
+      myreply3 = "\x0304#{display_location}\x0f"
 
       if weather3.body && weather3.body.dig('temp', 'value')
         w = weather3.body
+        #puts w
 
         if !w.dig('weather_code', 'value').nil?
           #myreply3 << " | \x02Conditions:\x0f "
@@ -308,9 +313,10 @@ module Plugins
         end
 
         m.reply myreply3
-        else
+      else
         weather3 = nil
         myreply3 = nil
+        m.reply "ERROR: Cant't get weather for location (#{mylocation}) [#{lat},#{lng}] due to Climacell API error."
       end
 
 

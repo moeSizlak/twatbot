@@ -17,7 +17,8 @@ module Plugins
     
     def updatefeed
       @feeds.each do |feed|      
-        #feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])    
+        #feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])  
+        puts feed  
         feedparsed = Feedjira.parse(URI.open(feed[:url]).read)
 
 

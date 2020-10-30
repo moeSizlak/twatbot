@@ -16,6 +16,7 @@ module URLHandlers
         id = $1
         search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics")
         #puts "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status"
+
         if search.body && search.body.key?("items") && search.body["items"].size > 0
           if search.body["items"][0].key?("snippet") 
             if search.body["items"][0]["snippet"].key?("publishedAt")
@@ -46,17 +47,18 @@ module URLHandlers
                   duration = Duration.load(duration).format("%h:%M:%S")
                 else
                   duration = Duration.load(duration).format("%tm:%S")
-                  if duration.to_f == 0
-                    duration2 = search.body["items"][0]["snippet"]["liveBroadcastContent"]
-                    if duration2.downcase == 'live'
-                      duration = "LIVE"
-                    elsif duration2.downcase == 'upcoming'
-                      duration = "UPCOMING"
-                    end
-                  end
                 end
               end
             end  
+          end
+
+          duration2 = search.body["items"][0]["snippet"]["liveBroadcastContent"]
+          if duration2.downcase == 'live'
+            duration2 = "LIVE"
+          elsif duration2.downcase == 'upcoming'
+            duration2 = "UPCOMING"
+          else
+            duration2 = nil
           end
           
           if search.body["items"][0].key?("statistics") 
@@ -100,6 +102,7 @@ module URLHandlers
           "\x0f" +
 
           "\x03" + color_rating +
+          (duration2.nil? ? ""   : (" (" + duration2    + ")")) + 
           (duration.nil? ? ""    : (" (" + duration    + ")")) +    
           (publishedAt.nil? ? "" : (" [" + (author.nil? ? "" : (author + " @ ")) + publishedAt + "]")) +
           " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [\x0f" + 
