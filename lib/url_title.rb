@@ -2,7 +2,6 @@ require 'htmlentities'
 require 'ethon'
 require 'tmpdir'
 require 'tempfile'
-require 'nokogiri'
 
 
 module URLHandlers  
