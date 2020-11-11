@@ -87,28 +87,32 @@ module URLHandlers
 
           puts chunk
 
-          recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,640})', Regexp::MULTILINE | Regexp::IGNORECASE)
-          if desc_found = $3
-            desc_found = coder.decode desc_found.force_encoding('utf-8')
-            desc_found.strip!
-            desc_found.gsub!(/[[:space:]]+/m, ' ')
-            desc_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
-          else
-            recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\1).){0,640})\1[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\3', Regexp::MULTILINE | Regexp::IGNORECASE)
-            if desc_found = $2
+          if desc_found.nil?
+            recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,640})', Regexp::MULTILINE | Regexp::IGNORECASE)
+            if desc_found = $3
               desc_found = coder.decode desc_found.force_encoding('utf-8')
               desc_found.strip!
               desc_found.gsub!(/[[:space:]]+/m, ' ')
               desc_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
+            else
+              recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\1).){0,640})\1[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\3', Regexp::MULTILINE | Regexp::IGNORECASE)
+              if desc_found = $2
+                desc_found = coder.decode desc_found.force_encoding('utf-8')
+                desc_found.strip!
+                desc_found.gsub!(/[[:space:]]+/m, ' ')
+                desc_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
+              end
             end
           end
           
-          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
-          if title_found = $1
-            title_found = coder.decode title_found.force_encoding('utf-8')
-            title_found.strip!
-            title_found.gsub!(/[[:space:]]+/m, ' ')
-            title_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
+          if title_found.nil?
+            recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+            if title_found = $1
+              title_found = coder.decode title_found.force_encoding('utf-8')
+              title_found.strip!
+              title_found.gsub!(/[[:space:]]+/m, ' ')
+              title_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
+            end
           end
           
           :abort if recvd.length > 1131072 || (title_found && desc_found)
