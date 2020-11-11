@@ -2,6 +2,7 @@ require 'htmlentities'
 require 'ethon'
 require 'tmpdir'
 require 'tempfile'
+require 'nokogiri'
 
 
 module URLHandlers  
@@ -14,11 +15,11 @@ module URLHandlers
 
     def parse(url)
       title = getTitleAndLocation(url);
-      if !title.nil? && !title[:title].nil?
+      if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
         #url =~ /https?:\/\/([^\/]+)/
         title[:effective_url] =~ /https?:\/\/([^\/]+)/
         host = $1
-        return "[ \x02" + title[:title] + "\x0f ] - " + host
+        return "[ \x02" + title[:title] + "\x0f ] - " + host + (title[:description].nil? ? '' : ("\n[ \x02" + title[:description] + "\x0f ] - " + host))
       end
       
       return nil    
@@ -72,6 +73,9 @@ module URLHandlers
       t = Tempfile.new(['url_cookies', '.dat'])
       tmpcookiefile = t.path
       t.close
+
+      desc_found = nil
+      title_found = nil
       
       begin
         easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, accept_encoding: "gzip", headers: {
@@ -82,7 +86,24 @@ module URLHandlers
           myurl = easy.effective_url
           recvd << chunk
 
-          #puts chunk
+          puts chunk
+
+          recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,640})', Regexp::MULTILINE | Regexp::IGNORECASE)
+          if desc_found = $3
+            puts "YOOOOO"
+            desc_found = coder.decode desc_found.force_encoding('utf-8')
+            desc_found.strip!
+            desc_found.gsub!(/[[:space:]]+/m, ' ')
+            desc_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
+          else
+            recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\1).){0,640})\1[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\3', Regexp::MULTILINE | Regexp::IGNORECASE)
+            if desc_found = $3
+              desc_found = coder.decode desc_found.force_encoding('utf-8')
+              desc_found.strip!
+              desc_found.gsub!(/[[:space:]]+/m, ' ')
+              desc_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
+            end
+          end
           
           recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
@@ -90,12 +111,9 @@ module URLHandlers
             title_found.strip!
             title_found.gsub!(/[[:space:]]+/m, ' ')
             title_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
-            easy.cleanup rescue nil
-            File.unlink(tmpcookiefile) rescue nil
-            return {:title => Cinch::Helpers.sanitize(title_found), :effective_url => myurl }
           end
           
-          :abort if recvd.length > 1131072 || title_found
+          :abort if recvd.length > 1131072 || (title_found && desc_found)
         end
         easy.perform
         rescue
@@ -104,7 +122,23 @@ module URLHandlers
       
       easy.cleanup rescue nil
       File.unlink(tmpcookiefile) rescue nil
-      return {:title => mytitle, :effective_url => myurl }
+
+      retval = {:effective_url => myurl}
+
+      if(title_found)
+        retval[:title] = Cinch::Helpers.sanitize(title_found)
+      else
+        retval[:title] = nil
+      end
+
+      if(desc_found)
+        retval[:description] = Cinch::Helpers.sanitize(desc_found)
+      else
+        retval[:description] = nil
+      end
+
+      return retval
+
     end
     
     

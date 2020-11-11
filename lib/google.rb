@@ -4,6 +4,7 @@ require 'time'
 require 'nokogiri'
 require 'open-uri'
 #require 'htmlentities'
+#require 'selenium-webdriver'
 
 module Plugins
   class Google
@@ -47,11 +48,35 @@ module Plugins
 
 
       ################
+
+
+
       myreply = nil
       begin
         if n == 1
           doc = open("https://www.google.com/search?q=#{CGI.escape(q)}&ie=UTF-8",
             "User-Agent" => "Ruby")
+
+          #options = Selenium::WebDriver::Chrome::Options.new
+          #options.add_argument('--ignore-certificate-errors')
+          #options.add_argument('--disable-extensions')
+          #options.add_argument('--disable-translate')
+          #options.add_argument('--no-sandbox')
+          #options.add_argument('--headless')
+          #driver = Selenium::WebDriver.for :chrome, options: options
+          #driver = Selenium::WebDriver.for :chrome
+
+          #driver.navigate.to "https://www.google.com"
+          #element = driver.find_element(name: 'q')
+          #element.send_keys q.to_s
+          #element.submit
+          #river.get "https://www.google.com?q=#{CGI.escape(q)}&ie=UTF-8"
+
+          #gok = Nokogiri::HTML(driver.page_source)
+          #puts gok.to_s[0..10000]
+          #puts "HIIIII=(#{gok.css('#cwos').first.content rescue nil})"
+
+
           gok = Nokogiri::HTML(doc, nil, Encoding::UTF_8.to_s)
 
        

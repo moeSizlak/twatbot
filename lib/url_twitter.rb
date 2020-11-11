@@ -69,7 +69,7 @@ module URLHandlers
       timestamp = doc.css(".main-tweet td.tweet-content .metadata").first.content.gsub(/[[:space:]]+/m, " ").strip
       verified = doc.css(".main-tweet .fullname a.badge img[alt='Verified Account']").first.content.strip rescue nil
 
-      return "\x0303[Twitter]\x0f \x0304#{username}\x0f#{verified.nil? ? '' : "\u2713"} (#{fullname}): \x02#{tweet}\x0f | \x0307#{timestamp}\x0f"
+      return "\x0303[Twitter]\x0f \x0304#{username}\x0f#{verified.nil? ? '' : "\u2713"} (#{fullname}): #{tweet} | \x0307#{timestamp}\x0f"
     end
 
 
