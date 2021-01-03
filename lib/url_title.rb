@@ -14,11 +14,13 @@ module URLHandlers
 
     def parse(url)
       title = getTitleAndLocation(url);
-      if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
+      #if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
+      if !title.nil? && !title[:title].nil?
         #url =~ /https?:\/\/([^\/]+)/
         title[:effective_url] =~ /https?:\/\/([^\/]+)/
         host = $1
-        return "[ \x02" + title[:title] + "\x0f ] - " + host + (title[:description].nil? ? '' : ("\n[ \x02" + title[:description] + "\x0f ] - " + host))
+        #return "[ \x02" + title[:title] + "\x0f ] - " + host + (title[:description].nil? ? '' : ("\n[ \x02" + title[:description] + "\x0f ] - " + host))
+        return "[ \x02" + title[:title] + "\x0f ] - " + host
       end
       
       return nil    
@@ -87,7 +89,7 @@ module URLHandlers
 
           #puts chunk
 
-          if desc_found.nil?
+          if 1==0 && desc_found.nil?
             recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,640})', Regexp::MULTILINE | Regexp::IGNORECASE)
             if desc_found = $3
               desc_found = coder.decode desc_found.force_encoding('utf-8')
@@ -117,7 +119,7 @@ module URLHandlers
             end
           end
           
-          :abort if recvd.length > 1131072 || (title_found && desc_found)
+          :abort if recvd.length > 1131072 || title_found #(title_found && desc_found)
         end
         easy.perform
         rescue

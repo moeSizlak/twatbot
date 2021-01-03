@@ -39,6 +39,8 @@ module Plugins
         m.reply "Failure connecting to API."
         return
       end
+
+      #puts doc.to_s
       
 
       pods = doc.css("pod")
@@ -53,6 +55,14 @@ module Plugins
         return
       end
 
+      if pods.count >= 3
+        pod3_title = pods[2]["title"] rescue nil
+        if ['Decimal form','Decimal approximation'].include?(pod3_title)
+          decimal_form = pods[2].css("subpod")[0].at_css("plaintext").text rescue nil
+        end
+      end
+
+
       title = pods[1]["title"] rescue nil
       answer = subpods[0].at_css("plaintext").text rescue nil
 
@@ -62,7 +72,7 @@ module Plugins
       end
 
 
-      m.reply "\x02#{title}:\x0f #{answer}"
+      m.reply "\x02#{title}:\x0f #{answer}" + (decimal_form.nil? ? '' : " (\x02#{pod3_title}:\x0f #{decimal_form})")
 
 
                  
