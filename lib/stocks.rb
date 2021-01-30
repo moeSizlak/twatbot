@@ -98,7 +98,7 @@ module Plugins
 
 
           m.reply "" +
-          "\x0304#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f(\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}\x0f) (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Daily Range: (#{c["dayLow"]}-#{c["dayHigh"]}) 52-Week Range: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
+          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f(\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}\x0f) (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Daily Range: (#{c["dayLow"]}-#{c["dayHigh"]}) 52-Week Range: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
         end
       end
     end
