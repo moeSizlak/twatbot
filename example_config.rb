@@ -101,6 +101,10 @@ module MyApp
 
         :CORONA_EXCLUDE_CHANS => [],
         :CORONA_EXCLUDE_USERS => [],
+
+        # Plugins::Stocks
+       :STOCKS_EXCLUDE_CHANS  => [] ,
+       :STOCKS_EXCLUDE_USERS  => [] ,
           
         # Plugins::QuoteDB
         :QUOTEDB_CHANS => [] ,
@@ -270,6 +274,10 @@ module MyApp
 
         :CORONA_EXCLUDE_CHANS => [],
         :CORONA_EXCLUDE_USERS => [],
+
+        # Plugins::Stocks
+       :STOCKS_EXCLUDE_CHANS  => [] ,
+       :STOCKS_EXCLUDE_USERS  => [] ,
         
         # prob1 is the percentage probability a insult will be thrown at someone who joins.
         # prob1 is the percentage probability that a thrown insult will be of the type Foul-O-Matic,

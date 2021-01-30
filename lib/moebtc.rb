@@ -39,6 +39,7 @@ module Plugins
       if !mycoins.nil? && !mycoins.body.nil? && !mycoins.body["data"].nil?
           @@coins = mycoins.body["data"]
           @@coins_lastupdate = DateTime.now
+          #puts @@coins
       end
     end
 
