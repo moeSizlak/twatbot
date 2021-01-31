@@ -53,13 +53,13 @@ module Plugins
       c1 = c
       c2 = c.upcase.split(/\s+/).intersection(@@stocks.map{|x| x["symbol"]})
 
-      puts c2.inspect
+      #puts c2.inspect
 
       if c2.length == 0
         cc = @@stocks.find{|x| x["name"].upcase == c1.upcase}
       end
 
-      if c2.length == 0 && cc.nil? && c1.length >= 5
+      if c2.length == 0 && cc.nil? && c1.length >= 4
         cc = @@stocks.find{|x| x["name"].upcase.include?(c1.upcase)}
       end
 
@@ -77,8 +77,8 @@ module Plugins
           next if cc.nil?
           cc = Unirest::get("https://api.gon.gs/v1/quote/#{cc["symbol"]}", headers:{"Accept" => "application/json" }) rescue nil
           if cc.nil? || cc.body.nil? || cc.body.length <= 0
-              #m.reply "Error loading stock data."
-              next
+            m.reply "Error loading stock data (symbol=#{cc["symbol"]})."
+            next
           end
 
 
@@ -98,7 +98,7 @@ module Plugins
 
 
           m.reply "" +
-          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f(\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}\x0f) (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Daily Range: (#{c["dayLow"]}-#{c["dayHigh"]}) 52-Week Range: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
+          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}%\x0f (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Daily Range: (#{c["dayLow"]}-#{c["dayHigh"]}) 52-Week Range: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
         end
       end
     end
