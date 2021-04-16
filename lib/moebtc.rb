@@ -12,7 +12,7 @@ module Plugins
     match /^\.moe/i, use_prefix: false, method: :moebtc
     match /^\.(btcx|motherfucker)\s*$/i, use_prefix: false, method: :getBTCRates
     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getCoin
-    match /^\.(?!btcx)(.{2,})\s*$/im, use_prefix: false, method: :getCoin
+    match /^\.(?!\.)(?!btcx)(.{2,})\s*$/im, use_prefix: false, method: :getCoin
 
     #timer 0,  {:method => :updatecoins, :shots => 1}
     #timer 60, {:method => :updatecoins}  
@@ -51,7 +51,7 @@ module Plugins
       c.strip!
 
       @@coins_mutex.synchronize do
-        updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (15/1440.0))))
+        updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (5/1440.0))))
 
         c1 = c
         c2 = c.upcase.split(/\s+/).intersection(@@coins.map{|x| x["symbol"].upcase})

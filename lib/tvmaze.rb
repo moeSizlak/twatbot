@@ -200,9 +200,10 @@ module Plugins
             if (nextep && nextep.body && nextep.body.dig("season"))
               thisSeason = nextep.body.dig("season")
               eps = Unirest::get("http://api.tvmaze.com/shows/#{CGI.escape(show.body.fetch("id").to_s)}/episodes")
+
               if eps.body && eps.body.size>0
                 maxEp = eps.body.select { |e| e.fetch("season", nil) && e.fetch("number", nil) && e.fetch("season") == thisSeason }.max { |a,b| a["number"] <=> b["number"]}
-                maxEpNumber = maxEp["number"]
+                maxEpNumber = maxEp["number"] rescue nil 
               end
             end
           end

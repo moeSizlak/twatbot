@@ -10,7 +10,7 @@ module Plugins
     
     match /^!(?:help|commands)/, use_prefix: false, method: :help
     #match lambda {|m| /^\.(?!btc)(#{m.bot.botconfig[:COINS].map{|x| Regexp.escape(x["symbol"])}.join('|')})\s*$/im}, use_prefix: false, method: :getStock
-    match /^\.(?!btcx)(.{2,})\s*$/im, use_prefix: false, method: :getStock
+    match /^\.(?!\.)(?!btcx)(.{2,})\s*$/im, use_prefix: false, method: :getStock
 
     def initialize(*args)
       super
@@ -48,10 +48,12 @@ module Plugins
         return
       end
 
+      symbol_blacklist = ['LTC','ETH','BTC']
+
       c.strip!
       
       c1 = c
-      c2 = c.upcase.split(/\s+/).intersection(@@stocks.map{|x| x["symbol"]})
+      c2 = c.upcase.split(/\s+/).intersection(@@stocks.map{|x| x["symbol"]}-symbol_blacklist)
 
       #puts c2.inspect
 
@@ -98,7 +100,7 @@ module Plugins
 
 
           m.reply "" +
-          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}%\x0f (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Daily Range: (#{c["dayLow"]}-#{c["dayHigh"]}) 52-Week Range: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
+          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}%\x0f (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Day: (#{c["dayLow"]}-#{c["dayHigh"]}) Year: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
         end
       end
     end

@@ -25,7 +25,7 @@ module Plugins
     timer 5,  {:method => :updatetv3, :shots => 1}
     
     match /^!(?:help|commands)/, use_prefix: false, method: :help
-    match /^!all\s*$/, use_prefix: false, method: :nall
+    match /^!(all|list|список)\s*$/, use_prefix: false, method: :nall
     match /^!(today|tonight)\s*$/, use_prefix: false, method: :today
     match /^!tomorrow\s*$/, use_prefix: false, method: :tomorrow
     match /^!yesterday\s*$/, use_prefix: false, method: :yesterday
@@ -266,11 +266,12 @@ module Plugins
       return "\x02\x0304Yesterday: \x0f" +  yesterday.map{|a| "\x02\x1f#{a[:name]}\x0f - #{a[:season].to_s + "x" + (a[:episode].nil? ? 'Special' : sprintf("%02d", a[:episode].to_s)) rescue nil}"}.join(" | ")
     end
 
-    def nall(m)  
+    def nall(m, trigger)  
       if ['#hdbits', '##tv', '#newzbin'].include?(m.channel.name.downcase)      
         m.reply sched_today
         m.reply sched_tomorrow
         m.reply sched_yesterday
+        #m.reply "(You're welcome KettleMan.)" if trigger == "список" && (m.user.nick =~ /KettleMan/ || m.user.nick =~ /moeSizlak/)
       else
         m.user.notice sched_today
         m.user.notice sched_tomorrow
