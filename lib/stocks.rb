@@ -32,6 +32,7 @@ module Plugins
         return if !@@stocks_lastupdate.nil?
 
         mystocks = Unirest::get("https://api.gon.gs/v1/symbols/", headers:{"Accept" => "application/json" }) rescue nil
+        #puts "AAAAAAAAAAAAAAAAA #{mystocks.body}"
 
         if !mystocks.nil? && !mystocks.body.nil? && mystocks.body.length > 0
             puts "Loading stock symbols"
@@ -48,7 +49,7 @@ module Plugins
         return
       end
 
-      symbol_blacklist = ['LTC','ETH','BTC']
+      symbol_blacklist = ['LTC','ETH','BTC','CHMA']
 
       c.strip!
       

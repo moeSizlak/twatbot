@@ -2,9 +2,10 @@ module Plugins
   class MoeBTC
     include Cinch::Plugin
 
-    @@coins = nil
-    @@coins_lastupdate = nil
+
     @@coins_mutex = Mutex.new
+    @@coinsymbols = nil
+    @@coinsymbols_lastupdate = nil
 
     set :react_on, :message
     
@@ -33,13 +34,16 @@ module Plugins
     end
 
     def updatecoins
-      #mycoins = Unirest::get("https://api.coinmarketcap.com/v1/ticker/?limit=0") rescue nil
-      mycoins = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=600&convert=USD", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
+      @@coins_mutex.synchronize do
+        if (@@coinsymbols_lastupdate.nil? || (@@coinsymbols_lastupdate < (DateTime.now - (1.0))))
+          mysyms = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
 
-      if !mycoins.nil? && !mycoins.body.nil? && !mycoins.body["data"].nil?
-          @@coins = mycoins.body["data"]
-          @@coins_lastupdate = DateTime.now
-          #puts @@coins
+          if !mysyms.nil? && !mysyms.body.nil? && !mysyms.body["data"].nil?
+              @@coinsymbols = mysyms.body["data"].reject { |y| y["name"].include?("okenized")}
+              @@coinsymbols_lastupdate = DateTime.now
+              #puts "SYM=#{mysyms.body}"
+          end
+        end
       end
     end
 
@@ -50,48 +54,54 @@ module Plugins
 
       c.strip!
 
-      @@coins_mutex.synchronize do
-        updatecoins if (@@coins_lastupdate.nil? || (@@coins_lastupdate < (DateTime.now - (5/1440.0))))
+      updatecoins
 
-        c1 = c
-        c2 = c.upcase.split(/\s+/).intersection(@@coins.map{|x| x["symbol"].upcase})
-        #puts c2.inspect
+      c1 = c
+      c2 = c.upcase.split(/\s+/).intersection(@@coinsymbols.map{|x| x["symbol"].upcase})
+      #puts c2.inspect
 
-        if c2.length == 0
-          cc = @@coins.find{|x| x["name"].upcase == c.upcase}
+      if c2.length == 0
+        cc = @@coinsymbols.find{|x| x["name"].upcase == c.upcase}
 
-          if cc.nil? && c.length >= 3
-            cc = @@coins.find{|x| x["name"].upcase.include?(c.upcase)}
-          end          
+        if cc.nil? && c.length >= 3
+          cc = @@coinsymbols.find{|x| x["name"].upcase.include?(c.upcase)}
+        end          
 
-          if !cc.nil?
-            c2 = [cc["symbol"]]
-          end
-        end
-
-        if c2.length > 0 
-          b = @@coins.find{|x| x["symbol"].upcase == 'BTC'} 
-          return if b.nil?
-
-          c2.each do |x|    
-            c = @@coins.find{|y| y["symbol"].upcase == x.upcase} 
-            botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@coins_lastupdate}",m             
-
-            p = ""
-            if m.user.to_s.downcase =~ /pinch/i
-               p = sprintf("%.8f", (c["quote"]["USD"]["price"].to_f  / @@coins.find{|x| x["symbol"].upcase == "ETH"}["quote"]["USD"]["price"].to_f)).sub(/\.?0*$/,'') + " ETH | " #rescue ""
-            end
-
-            m.reply "" +
-            "\x0304#{c["name"]} (#{c["symbol"]}):\x0f $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
-            "Rank: #{c["cmc_rank"]} | " +
-            "(7d) \x0f"  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%\x0f | " +
-            "(24h) \x0f" + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%\x0f | " +
-            "(1h) \x0f"  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%\x0f" +
-            (m.channel.to_s.downcase == "#testing12" ? " [#{@@coins_lastupdate}]" : "")
-          end
+        if !cc.nil?
+          c2 = [cc["symbol"]]
         end
       end
+
+      if c2.length > 0 
+        requested_coins = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=#{(c2+['BTC','ETH']).uniq.join(',')}&convert=USD", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
+
+        return if requested_coins.nil? || requested_coins.body.nil? || requested_coins.body["data"].nil?
+        requested_coins = requested_coins.body["data"]
+        #puts "REQ=#{requested_coins}"
+
+        b = requested_coins['BTC'] 
+        e = requested_coins['ETH']
+
+        c2.each do |x|    
+          #c = requested_coins.find{|y| y["symbol"].upcase == x.upcase} 
+          c = requested_coins[x.upcase]
+          botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@coinsymbols_lastupdate}",m             
+
+          p = ""
+          if m.user.to_s.downcase =~ /pinch/i
+             p = sprintf("%.8f", (c["quote"]["USD"]["price"].to_f  / e["quote"]["USD"]["price"].to_f)).sub(/\.?0*$/,'') + " ETH | " #rescue ""
+          end
+
+          m.reply "" +
+          "\x0304#{c["name"]} (#{c["symbol"]}):\x0f $#{('%.8f' % c["quote"]["USD"]["price"]).to_s.sub(/\.?0*$/,'')} | #{('%.8f' %  (c["quote"]["USD"]["price"].to_f / b["quote"]["USD"]["price"].to_f)).to_s.sub(/\.?0*$/,'')} BTC | " + p +
+          "Rank: #{c["cmc_rank"]} | " +
+          "(7d) \x0f"  + (!c["quote"]["USD"]["percent_change_7d"].nil?  && c["quote"]["USD"]["percent_change_7d"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_7d"].to_f.round(2).to_s  + "%\x0f | " +
+          "(24h) \x0f" + (!c["quote"]["USD"]["percent_change_24h"].nil? && c["quote"]["USD"]["percent_change_24h"] < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_24h"].to_f.round(2).to_s + "%\x0f | " +
+          "(1h) \x0f"  + (!c["quote"]["USD"]["percent_change_1h"].nil?  && c["quote"]["USD"]["percent_change_1h"]  < 0 ? "\x0304" : "\x0303" + '+') + c["quote"]["USD"]["percent_change_1h"].to_f.round(2).to_s  + "%\x0f" +
+          (m.channel.to_s.downcase == "#testing12" ? " [#{@@coinsymbols_lastupdate}]" : "")
+        end
+      end
+
     end
 
     

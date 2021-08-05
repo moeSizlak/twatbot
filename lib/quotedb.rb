@@ -180,7 +180,7 @@ module Plugins
         return
       end
 
-      if m.user.to_s =~ /twatboxt|dickboxt|#{Regexp.escape(@config[:BOT].nick.to_s)}|#{Regexp.escape(@config[:DICKBOT].nick.to_s)}/im
+      if m.user.to_s =~ /twatboxt|dickboxt|#{Regexp.escape(@config[:BOT].nick.to_s)}|#{Regexp.escape((@config[:DICKBOT].nick rescue 'zzzzzzzzzzzzzzzzz').to_s)}/im
         m.reply "Nah."
         return
       end
