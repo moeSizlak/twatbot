@@ -37,11 +37,12 @@ module Plugins
       @@coins_mutex.synchronize do
         if (@@coinsymbols_lastupdate.nil? || (@@coinsymbols_lastupdate < (DateTime.now - (1.0))))
           mysyms = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
+          #puts mysyms.body["data"]
 
           if !mysyms.nil? && !mysyms.body.nil? && !mysyms.body["data"].nil?
               @@coinsymbols = mysyms.body["data"].reject { |y| y["name"].include?("okenized")}
               @@coinsymbols_lastupdate = DateTime.now
-              #puts "SYM=#{mysyms.body}"
+              #puts "SYM='#{@@coinsymbols.find{|x| x["symbol"].upcase == "TSLA"}}'"
           end
         end
       end
@@ -58,7 +59,8 @@ module Plugins
 
       c1 = c
       c2 = c.upcase.split(/\s+/).intersection(@@coinsymbols.map{|x| x["symbol"].upcase})
-      #puts c2.inspect
+      #puts "SYM2='#{@@coinsymbols.find{|x| x["symbol"].upcase == "TSLA"}}'"
+      #puts "zzzzzz" + c2.inspect
 
       if c2.length == 0
         cc = @@coinsymbols.find{|x| x["name"].upcase == c.upcase}
@@ -85,7 +87,8 @@ module Plugins
         c2.each do |x|    
           #c = requested_coins.find{|y| y["symbol"].upcase == x.upcase} 
           c = requested_coins[x.upcase]
-          botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@coinsymbols_lastupdate}",m             
+          botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@coinsymbols_lastupdate}",m   
+          next if c["name"].include?("okenized")
 
           p = ""
           if m.user.to_s.downcase =~ /pinch/i

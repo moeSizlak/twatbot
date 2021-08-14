@@ -192,17 +192,16 @@ module Plugins
           else
             url = "https://api.darksky.net/forecast/#{@config[:DARK_SKY_SECRET_KEY]}/#{lat},#{lng}"
             url2 = "https://api.openweathermap.org/data/2.5/onecall?lat=#{lat}&lon=#{lng}&exclude=minutely,hourly&appid=#{@config[:OPEN_WEATHER_KEY]}"
-            url3 = "https://api.climacell.co/v3/weather/realtime?apikey=#{@config[:CLIMACELL_API_KEY]}&lat=#{lat}&lon=#{lng}&unit_system=us&fields=temp,feels_like,humidity,wind_speed,wind_direction,wind_gust,sunrise,sunset,weather_code,surface_shortwave_radiation,baro_pressure,epa_health_concern,pollen_tree,pollen_weed,pollen_grass"
-            url4 = "https://api.climacell.co/v3/weather/forecast/daily?apikey=#{@config[:CLIMACELL_API_KEY]}&lat=#{lat}&lon=#{lng}&unit_system=#{country == 'US' ? 'us' : 'si'}&fields=temp,feels_like,humidity,wind_speed,wind_direction,sunrise,sunset,weather_code,baro_pressure"
+
+            url3 = "https://api.climacell.co/v3/weather/realtime?apikey=#{@config[:CLIMACELL_API_KEY]}&lat=#{lat}&lon=#{lng}&unit_system=us&fields=temp,feels_like,dewpoint,wind_speed,wind_direction,wind_gust,sunrise,sunset,weather_code,surface_shortwave_radiation,baro_pressure,epa_health_concern,pollen_tree,pollen_weed,pollen_grass"
+            url4 = "https://api.climacell.co/v3/weather/forecast/daily?apikey=#{@config[:CLIMACELL_API_KEY]}&lat=#{lat}&lon=#{lng}&unit_system=#{country == 'US' ? 'us' : 'si'}&fields=temp,feels_like,dewpoint,wind_speed,wind_direction,sunrise,sunset,weather_code,baro_pressure"
+            
+            url5 = "https://api.tomorrow.io/v4/timelines?apikey=#{@config[:TOMORROW_IO_API_KEY]}&timesteps=current,1d&location=#{lat},#{lng}&units=imperial&fields=temperature,temperatureApparent,dewPoint,windSpeed,windDirection,windGust,sunriseTime,sunsetTime,weatherCode,cloudCover"
           end
 
-          ##puts "Using URL2 = #{url2}"
-          puts "Using URL3 = #{url3}"
-          puts "Using URL4 = #{url4}"
-          #weather = Unirest::get(url)
-          ##weather2 = Unirest::get(url2)
-          weather3 = Unirest::get(url3)
-          weather4 = Unirest::get(url4)
+          puts "Using URL5 = #{url5}"
+          weather3 = Unirest::get(url5)
+
           @@apicalls_day.unshift(Time.now.to_i)
           @@apicalls_minute.unshift(Time.now.to_i)   
           break       
@@ -224,69 +223,111 @@ module Plugins
       myreply2 = "\x0304#{display_location}\x0f"
       myreply3 = "\x0304#{display_location}\x0f"
 
-      if weather3.body && weather3.body.dig('temp', 'value')
+      if weather3.body && weather3.body.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'temperature')
         w = weather3.body
         #puts w
 
-        if !w.dig('weather_code', 'value').nil?
+        temperature = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'temperature')
+        weatherCode = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'weatherCode')
+        temperatureApparent = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'temperatureApparent')
+        dewPoint = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'dewPoint')
+        windSpeed = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'windSpeed')
+        windDirection = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'windDirection')
+        windGust = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'windGust')
+        sunriseTime = w.dig('data', 'timelines', 1, 'intervals', 0, 'values', 'sunriseTime')
+        sunsetTime = w.dig('data', 'timelines', 1, 'intervals', 0, 'values', 'sunsetTime')
+        cloudCover = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'cloudCover')
+
+
+        weatherCodes = [
+          {:weatherCode => 4201, :weatherDescription => "Heavy Rain", :weatherIcon => "\u{1F327} "},
+          {:weatherCode => 4001, :weatherDescription => "Rain", :weatherIcon => "\u{1F327} "},
+          {:weatherCode => 4200, :weatherDescription => "Light Rain", :weatherIcon => "\u{1F326} "},
+          {:weatherCode => 6201, :weatherDescription => "Heavy Freezing Rain", :weatherIcon => "\u{1F327} "},
+          {:weatherCode => 6001, :weatherDescription => "Freezing Rain", :weatherIcon => "\u{1F327} "},
+          {:weatherCode => 6200, :weatherDescription => "Light Freezing Rain", :weatherIcon => "\u{1F327} "},
+          {:weatherCode => 6000, :weatherDescription => "Freezing Drizzle", :weatherIcon => "\u{1F327} "},
+          {:weatherCode => 4000, :weatherDescription => "Drizzle", :weatherIcon => "\u{1F326} "},
+          {:weatherCode => 7101, :weatherDescription => "Heavy Ice Pellets", :weatherIcon => "\u{1F328} "},
+          {:weatherCode => 7000, :weatherDescription => "Ice Pellets", :weatherIcon => "\u{1F328} "},
+          {:weatherCode => 7102, :weatherDescription => "Light Ice Pellets", :weatherIcon => "\u{1F328} "},
+          {:weatherCode => 5101, :weatherDescription => "Heavy Snow", :weatherIcon => "\u2744 "},
+          {:weatherCode => 5000, :weatherDescription => "Snow", :weatherIcon => "\u2744 "},
+          {:weatherCode => 5100, :weatherDescription => "Light Snow", :weatherIcon => "\u{1F328} "},
+          {:weatherCode => 5001, :weatherDescription => "Flurries", :weatherIcon => "\u{1F328} "},
+          {:weatherCode => 8000, :weatherDescription => "Thunderstorm", :weatherIcon => "\u26C8 "},
+          {:weatherCode => 2100, :weatherDescription => "Light Fog", :weatherIcon => "\u{1F32B} "},
+          {:weatherCode => 2000, :weatherDescription => "Fog", :weatherIcon => "\u{1F32B} "},
+          {:weatherCode => 1001, :weatherDescription => "Cloudy", :weatherIcon => "\u2601 "},
+          {:weatherCode => 1102, :weatherDescription => "Mostly Cloudy", :weatherIcon => "\u{1F325} "},
+          {:weatherCode => 1101, :weatherDescription => "Partly Cloudy", :weatherIcon => "\u26C5 "},
+          {:weatherCode => 1100, :weatherDescription => "Mostly Clear", :weatherIcon => "\u{1F324} "},
+          {:weatherCode => 1000, :weatherDescription => "Clear", :weatherIcon => "\u2600 "},
+          {:weatherCode => 3000, :weatherDescription => "Light Wind", :weatherIcon => " "},
+          {:weatherCode => 3001, :weatherDescription => "Wind", :weatherIcon => " "},
+          {:weatherCode => 3002, :weatherDescription => "Strong Wind", :weatherIcon => " "}
+        ]
+
+        if !weatherCode.nil?
           #myreply3 << " | \x02Conditions:\x0f "
           myreply3 << " | "
-          condition = w.dig('weather_code', 'value')
-
-          myreply3 << "\u{1F327} " if condition == "freezing_rain_heavy" 
-          myreply3 << "\u{1F327} " if condition == "freezing_rain" 
-          myreply3 << "\u{1F327} " if condition == "freezing_rain_light" 
-          myreply3 << "\u{1F327} " if condition == "freezing_drizzle" 
-          myreply3 << "\u{1F328} " if condition == "ice_pellets_heavy" 
-          myreply3 << "\u{1F328} " if condition == "ice_pellets" 
-          myreply3 << "\u{1F328} " if condition == "ice_pellets_light" 
-          myreply3 << "\u2744 " if condition == "snow_heavy" 
-          myreply3 << "\u2744 " if condition == "snow" 
-          myreply3 << "\u{1F328} " if condition == "snow_light" 
-          myreply3 << "\u{1F328} " if condition == "flurries" 
-          myreply3 << "\u26C8 " if condition == "tstorm" 
-          myreply3 << "\u{1F327} " if condition == "rain_heavy" 
-          myreply3 << "\u{1F327} " if condition == "rain" 
-          myreply3 << "\u{1F326} " if condition == "rain_light" 
-          myreply3 << "\u{1F326} " if condition == "drizzle" 
-          myreply3 << "\u{1F32B} " if condition == "fog_light" 
-          myreply3 << "\u{1F32B} " if condition == "fog" 
-          myreply3 << "\u2601 " if condition == "cloudy" # \ufe0f
-          myreply3 << "\u{1F325} " if condition == "mostly_cloudy" 
-          myreply3 << "\u26C5 " if condition == "partly_cloudy" 
-          myreply3 << "\u{1F324} " if condition == "mostly_clear" 
-          myreply3 << "\u2600 " if condition == "clear" 
-
-          myreply3 << condition.gsub(/_/, ' ').split.map(&:capitalize).join(' ')
+          condition = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'weatherCode')
+          condition = weatherCodes.find{|x| x[:weatherCode] == condition}
+          myreply3 << "#{condition[:weatherIcon]} #{condition[:weatherDescription]}"
         end
 
-        myreply3 << " \x0307#{w.dig('temp', 'value').round(0)}\x0f\u00B0F/\x0307#{f_to_c(w.dig('temp', 'value')).round(0)}\x0f\u00B0C"
+        myreply3 << " \x0307#{temperature.round(0)}\x0f\u00B0F/\x0307#{f_to_c(temperature).round(0)}\x0f\u00B0C"
 
-        if !w.dig('feels_like', 'value').nil? && (w.dig('feels_like', 'value') - w.dig('temp', 'value')).abs > 3
-          myreply3 << " | \x02Feels Like:\x0f \x0307#{w.dig('feels_like', 'value').round(0)}\x0f\u00B0F/\x0307#{f_to_c(w.dig('feels_like', 'value')).round(0)}\x0f\u00B0C"
+        if !temperatureApparent.nil? && (temperatureApparent - temperature).abs > 3
+          myreply3 << " | \x02Feels Like:\x0f \x0307#{temperatureApparent.round(0)}\x0f\u00B0F/\x0307#{f_to_c(temperatureApparent).round(0)}\x0f\u00B0C"
         end
 
-        myreply3 << " | \x02Humidity:\x0f #{w.dig('humidity', 'value').round(0)}%" unless w.dig('humidity', 'value').nil?
+        myreply3 << " | \x02Dewpoint:\x0f #{dewPoint.round(0)}\u00B0F/#{f_to_c(dewPoint).round(0)}\u00B0C" unless dewPoint.nil?
 
 
-        if !w.dig('wind_speed', 'value').nil?
-          myreply3 << " | \x02Wind:\x0f #{w.dig('wind_speed', 'value').round(0)}#{w.dig('wind_speed','units')}"
-          if !w.dig('wind_gust', 'value').nil? && w.dig('wind_gust', 'value').round(0) > (w.dig('wind_speed', 'value').round(0) + 5)
-            myreply3 << " (gusts #{w.dig('wind_gust', 'value').round(0)})"
+        if !windSpeed.nil?
+          myreply3 << " | \x02Wind:\x0f #{windSpeed.round(0)}mph"
+          if !windGust.nil? && windGust.round(0) > (windSpeed.round(0) + 5)
+            myreply3 << " (gusts #{windGust.round(0)})"
           end
 
-          if !w.dig('wind_direction', 'value').nil?
-            direction = w.dig('wind_direction', 'value')
+          if !windDirection.nil?
             directions = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
             directions2 = ["\u2191","\u2197","\u2192","\u2198","\u2193","\u2199","\u2190","\u2196"]
-            myreply3 << " #{directions2[(((direction+22.5+180)%360)/45).floor]} #{directions[(((direction+11.25)%360)/22.5).floor]} (#{direction.round(0)}\u00B0)"
+            myreply3 << " #{directions2[(((windDirection+22.5+180)%360)/45).floor]} #{directions[(((windDirection+11.25)%360)/22.5).floor]} (#{windDirection.round(0)}\u00B0)"
           end
         end
 
-        myreply3 << " | \x02Baro:\x0f #{w.dig('baro_pressure', 'value').round(2)} #{w.dig('baro_pressure', 'units')}" unless w.dig('baro_pressure', 'value').nil?
-        c
-        myreply3 << " | \x02Solar:\x0f #{w.dig('surface_shortwave_radiation', 'value')} #{w.dig('surface_shortwave_radiation', 'units')}" unless w.dig('surface_shortwave_radiation', 'value').nil?
-        myreply3 << " | \x02Pollen:\x0f #{w.dig('pollen_weed', 'value')}/#{w.dig('pollen_tree', 'value')}/#{w.dig('pollen_grass', 'value')}" unless w.dig('pollen_grass', 'value').nil?
+        myreply3 << " | \x02Cloud Cover:\x0f #{cloudCover.round(0)}%" unless cloudCover.nil?
+
+        if !sunriseTime.nil? 
+          sunriseTime = DateTime.parse(sunriseTime)
+          if !sunriseTime.nil?
+            tz = Unirest::get("https://maps.googleapis.com/maps/api/timezone/json?location=#{lat},#{lng}&timestamp=#{sunriseTime.to_time.to_i}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+            if tz && tz.body.dig('rawOffset')
+              sunriseTime = Time.at(sunriseTime.to_time.to_i + tz.body.dig('rawOffset').to_i + tz.body.dig('dstOffset').to_i ).utc.to_datetime
+              myreply3 << " | \x02Sunrise:\x0f #{sunriseTime.strftime("%l:%M %P").strip} #{tz.body.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
+            end
+          end
+        end
+
+        if !sunsetTime.nil? 
+          sunsetTime = DateTime.parse(sunsetTime)
+          if !sunsetTime.nil?
+            tz = Unirest::get("https://maps.googleapis.com/maps/api/timezone/json?location=#{lat},#{lng}&timestamp=#{sunsetTime.to_time.to_i}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+            if tz && tz.body.dig('rawOffset')
+              sunsetTime = Time.at(sunsetTime.to_time.to_i + tz.body.dig('rawOffset').to_i + tz.body.dig('dstOffset').to_i ).utc.to_datetime
+              myreply3 << " | \x02Sunset:\x0f #{sunsetTime.strftime("%l:%M %P").strip} #{tz.body.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
+            end
+          end
+        end
+
+        if !sunriseTime.nil? && !sunsetTime.nil?
+          dayLength = sunsetTime.to_time.to_i - sunriseTime.to_time.to_i
+          myreply3 << " | \x02Day Length:\x0f #{dayLength/(60*60)}:#{((dayLength % (60*60))/60).to_s.rjust(2, "0")}"
+        end
+
+       
         
         #tf = TimezoneFinder.create
         #mytz = tf.timezone_at(lng: lng.to_f, lat: lat.to_f)
@@ -296,7 +337,7 @@ module Plugins
         #myreply3 << " | \x02Sunrise:\x0f #{sunrise.strftime('%a %F %T %Z')}" unless sunrise.nil?
         #myreply3 << " | \x02Sunset:\x0f #{sunset.strftime('%a %F %T %Z')}" unless sunset.nil?
 
-        
+=begin        
         if weather4.body && weather4.body.count >= 3 && weather4.body[0].dig('temp')
           w = weather4.body
           weather4.body[0...3].each do |d|
@@ -311,7 +352,7 @@ module Plugins
             end
           end
         end
-
+=end
         m.reply myreply3
       else
         weather3 = nil
@@ -319,85 +360,7 @@ module Plugins
         m.reply "ERROR: Cant't get weather for location (#{mylocation}) [#{lat},#{lng}] due to Climacell API error."
       end
 
-
-=begin
-      if weather2.body && weather2.body.key?("daily") && weather2.body.key?("current")
-        #puts weather2.body.to_s
-        f = weather2.body["daily"]
-        w = weather2.body["current"]
-        #puts f
-
-        if country == 'US'
-          myreply2 << ": \x02#{w["weather"][0]["description"].capitalize}, #{k_to_f(w["temp"]).round}F/#{k_to_c(w["temp"]).round}C, \x0f"
-        else
-          myreply2 << ": \x02#{w["weather"][0]["description"].capitalize}, #{k_to_c(w["temp"]).round}C/#{k_to_f(w["temp"]).round}F, \x0f"
-        end
-
-        extended_summary2 = ""        
-        f[0..2].each_with_index do |day, i|
-          d = Time.at(day["dt"]).to_date.strftime('%a')
-
-          if country == 'US'           
-            myreply2 << "\x02[#{d}]\x0f #{day["weather"][0]["description"].capitalize} (#{k_to_f(day["temp"]["day"]).round}/#{k_to_f(day["temp"]["night"]).round})F  "
-          else            
-            myreply2 << "\x02[#{d}]\x0f #{day["weather"][0]["description"].capitalize} (#{k_to_c(day["temp"]["day"]).round}/#{k_to_c(day["temp"]["night"]).round})C  "
-          end            
-        end
-        puts extended_summary2     
-        m.reply myreply2   
-
-      else
-        weather2 = nil
-        myreply2 = nil
-      end
-=end
-
-=begin
-      
-      if weather.body && weather.body.key?("daily") && weather.body["daily"].key?("summary") && weather.body["daily"].key?("data") && weather.body["daily"]["data"].size >= 3
-        forecast = weather
-        #puts "OK"
-      else
-        forecast = nil
-      end
-
-
-      if weather.body.key?("currently")
-        
-        
-        
-        w = weather.body["currently"]
-        extended_summary = nil
-
-
-        if forecast
-          f = forecast.body["daily"]
-          if forecast.body["daily"].key?("summary")
-            extended_summary = forecast.body["daily"]["summary"]
-            
-            extended_summary.gsub!(/(\S+)\u00b0F/) {|f| f_to_c(f.to_f).round.to_s + "\u00b0C" } if country != 'US'
-          end
-        end
-
-        
-
-        puts "cccc=#{w["temperature"]}"
-
-
-        myreply << (": \x02#{w["summary"]}, #{(" " + w["temperature"].to_f.round.to_s + " " + f_to_c(w["temperature"]).to_f.round.to_s).gsub(/^\s*(\S+)\s+(\S+)\s*$/, country == 'US' ? '\1F/\2C' : '\2C/\1F')}\x0f") if w["temperature"]
-
-        if forecast
-          myreply << ", " + extended_summary if extended_summary
-        end
-
-
-
-        m.reply myreply
-        puts myreply.gsub(/[^ -~]/,'')
-
-             
-      end  
-=end    
+  
     end
   end
 end
