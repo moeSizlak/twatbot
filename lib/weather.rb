@@ -87,6 +87,8 @@ module Plugins
       end
 
       c = @WeatherLocationCacheEntry[m.bot.irc.network.name.to_s.downcase, m.user.to_s.downcase]
+      otherUserLocation = nil
+
       if location.length == 0        
         if c
           mylocation = c.location
@@ -97,7 +99,12 @@ module Plugins
           return
         end
       else
-        if c
+        d = @WeatherLocationCacheEntry[m.bot.irc.network.name.to_s.downcase, location.downcase]
+        if d
+          mylocation = d.location
+          otherUserLocation = location
+          puts "Using user \"location.downcase]\"'s location:' \"#{d.location}\""
+        elsif c
           c.location = mylocation
           c.save
         else
@@ -196,7 +203,7 @@ module Plugins
             url3 = "https://api.climacell.co/v3/weather/realtime?apikey=#{@config[:CLIMACELL_API_KEY]}&lat=#{lat}&lon=#{lng}&unit_system=us&fields=temp,feels_like,dewpoint,wind_speed,wind_direction,wind_gust,sunrise,sunset,weather_code,surface_shortwave_radiation,baro_pressure,epa_health_concern,pollen_tree,pollen_weed,pollen_grass"
             url4 = "https://api.climacell.co/v3/weather/forecast/daily?apikey=#{@config[:CLIMACELL_API_KEY]}&lat=#{lat}&lon=#{lng}&unit_system=#{country == 'US' ? 'us' : 'si'}&fields=temp,feels_like,dewpoint,wind_speed,wind_direction,sunrise,sunset,weather_code,baro_pressure"
             
-            url5 = "https://api.tomorrow.io/v4/timelines?apikey=#{@config[:TOMORROW_IO_API_KEY]}&timesteps=current,1d&location=#{lat},#{lng}&units=imperial&fields=temperature,temperatureApparent,dewPoint,windSpeed,windDirection,windGust,sunriseTime,sunsetTime,weatherCode,cloudCover"
+            url5 = "https://api.tomorrow.io/v4/timelines?apikey=#{@config[:TOMORROW_IO_API_KEY]}&timesteps=current,1d&location=#{lat},#{lng}&units=imperial&fields=temperature,temperatureApparent,dewPoint,windSpeed,windDirection,windGust,sunriseTime,sunsetTime,weatherCode,cloudCover,humidity"
           end
 
           puts "Using URL5 = #{url5}"
@@ -223,20 +230,29 @@ module Plugins
       myreply2 = "\x0304#{display_location}\x0f"
       myreply3 = "\x0304#{display_location}\x0f"
 
-      if weather3.body && weather3.body.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'temperature')
+      idx1 = 0
+      idx2 = 1
+
+      if weather3.body && weather3.body.dig('data', 'timelines', 0, 'timestep') != "current"
+        idx1=1
+        idx2=0
+      end
+
+      if weather3.body && weather3.body.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'temperature')
         w = weather3.body
         #puts w
 
-        temperature = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'temperature')
-        weatherCode = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'weatherCode')
-        temperatureApparent = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'temperatureApparent')
-        dewPoint = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'dewPoint')
-        windSpeed = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'windSpeed')
-        windDirection = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'windDirection')
-        windGust = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'windGust')
-        sunriseTime = w.dig('data', 'timelines', 1, 'intervals', 0, 'values', 'sunriseTime')
-        sunsetTime = w.dig('data', 'timelines', 1, 'intervals', 0, 'values', 'sunsetTime')
-        cloudCover = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'cloudCover')
+        temperature = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'temperature')
+        weatherCode = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'weatherCode')
+        temperatureApparent = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'temperatureApparent')
+        dewPoint = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'dewPoint')
+        windSpeed = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'windSpeed')
+        windDirection = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'windDirection')
+        windGust = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'windGust')
+        sunriseTime = w.dig('data', 'timelines', idx2, 'intervals', 0, 'values', 'sunriseTime')
+        sunsetTime = w.dig('data', 'timelines', idx2, 'intervals', 0, 'values', 'sunsetTime')
+        cloudCover = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'cloudCover')
+        humidity = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'humidity')
 
 
         weatherCodes = [
@@ -271,7 +287,7 @@ module Plugins
         if !weatherCode.nil?
           #myreply3 << " | \x02Conditions:\x0f "
           myreply3 << " | "
-          condition = w.dig('data', 'timelines', 0, 'intervals', 0, 'values', 'weatherCode')
+          condition = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'weatherCode')
           condition = weatherCodes.find{|x| x[:weatherCode] == condition}
           myreply3 << "#{condition[:weatherIcon]} #{condition[:weatherDescription]}"
         end
@@ -282,7 +298,7 @@ module Plugins
           myreply3 << " | \x02Feels Like:\x0f \x0307#{temperatureApparent.round(0)}\x0f\u00B0F/\x0307#{f_to_c(temperatureApparent).round(0)}\x0f\u00B0C"
         end
 
-        myreply3 << " | \x02Dewpoint:\x0f #{dewPoint.round(0)}\u00B0F/#{f_to_c(dewPoint).round(0)}\u00B0C" unless dewPoint.nil?
+        myreply3 << " | \x02Dewpoint (Humidity):\x0f #{dewPoint.round(0)}\u00B0F/#{f_to_c(dewPoint).round(0)}\u00B0C (#{humidity}%)" unless dewPoint.nil?
 
 
         if !windSpeed.nil?

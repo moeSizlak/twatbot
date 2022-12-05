@@ -13,6 +13,7 @@ module URLHandlers
 
 
     def parse(url)
+      #url = url.gsub(/^(https?:\/\/(?:[^\/]*\.)*)twitter.com\//, '\1nitter.net/')
       title = getTitleAndLocation(url);
       #if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
       if !title.nil? && !title[:title].nil?
@@ -33,14 +34,15 @@ module URLHandlers
       tmpcookiefile = t.path
       t.write("#HttpOnly_.dumpert.nl\tTRUE\t/\tFALSE\t0\tcpc\t10") if(url =~ /https?:\/\/[^\s\/]*dumpert.nl/)
       t.close
-      
+
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, accept_encoding: "gzip", headers: {
+        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, accept_encoding: "gzip", headers: {
         #easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
-          'User-Agent' => 'foo'
+          'User-Agent' => (url =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
         }
         easy.on_body do |chunk, easy|
           recvd << chunk
+
           
           recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
@@ -77,17 +79,17 @@ module URLHandlers
 
       desc_found = nil
       title_found = nil
-      
+
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, accept_encoding: "gzip", headers: {
+        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, accept_encoding: "gzip", headers: {
         #easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
-          'User-Agent' => 'foo'
+          'User-Agent' => (url =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
         }
         easy.on_body do |chunk, easy|
           myurl = easy.effective_url
+          #puts "myurl=\"#{myurl}\"\nrecvd=\"#{recvd}\""
           recvd << chunk
 
-          #puts chunk
 
           if 1==0 && desc_found.nil?
             recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,640})', Regexp::MULTILINE | Regexp::IGNORECASE)
@@ -125,6 +127,7 @@ module URLHandlers
         rescue
         # EXCEPTION!
       end
+
       
       easy.cleanup rescue nil
       File.unlink(tmpcookiefile) rescue nil

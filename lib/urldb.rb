@@ -173,8 +173,8 @@ module Plugins
             end
           
             begin
-              easy = Ethon::Easy.new url: tempurl, followlocation: true, ssl_verifypeer: false, headers: {
-                'User-Agent' => 'foo'
+              easy = Ethon::Easy.new url: tempurl, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, headers: {
+                'User-Agent' => (tempurl =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
               }
         
               easy.on_body do |chunk, easy|
@@ -213,7 +213,7 @@ module Plugins
               File.open(imagedir + imagefile, "wb") do |saved_file|
                 begin
                   easy = Ethon::Easy.new url: tempurl, followlocation: true, ssl_verifypeer: false, headers: {
-                  'User-Agent' => 'foo'
+                  'User-Agent' => (tempurl =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
                   }         
                     
                   easy.on_body do |chunk, easy|
@@ -244,6 +244,7 @@ module Plugins
             imagefile = imgurlink
           end
           
+
           #entries = m.bot.botconfig[:DB][:TitleBot]
           entries = m.bot.botconfig[:DB][m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:table]]
           entries.insert(:Date => Sequel.function(:now), :Nick => m.user.to_s, :URL => url, :Title => mytitle.force_encoding('utf-8'), :ImageFile => imagefile)

@@ -101,7 +101,7 @@ module Plugins
 
 
           m.reply "" +
-          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"]} \x0f\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"]}%\x0f (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Day: (#{c["dayLow"]}-#{c["dayHigh"]}) Year: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
+          "\x02#{c["symbol"]} (#{c["name"]}):\x0f Last: #{c["price"]} \x03#{changeColor}#{changeSymbol}#{c["change"].to_f.round(2)} \x0f\x03#{changeColor}#{changeSymbol}#{c["changesPercentage"].to_f.round(2)}%\x0f (Vol: #{c["volume"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}) Day: (#{c["dayLow"]}-#{c["dayHigh"]}) Year: (#{c["yearLow"]}-#{c["yearHigh"]}) Cap: #{c["marketCap"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse}"
         end
       end
     end

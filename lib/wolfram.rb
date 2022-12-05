@@ -40,7 +40,7 @@ module Plugins
         return
       end
 
-      #puts doc.to_s
+      puts doc.to_s
       
 
       pods = doc.css("pod")
@@ -57,8 +57,8 @@ module Plugins
 
       if pods.count >= 3
         pod3_title = pods[2]["title"] rescue nil
-        if ['Decimal form','Decimal approximation'].include?(pod3_title)
-          decimal_form = pods[2].css("subpod")[0].at_css("plaintext").text rescue nil
+        if ['Decimal form','Decimal approximation','Genealogical relation','Possible named relationship'].include?(pod3_title)
+          pod3_plaintext = pods[2].css("subpod")[0].at_css("plaintext").text rescue nil
         end
       end
 
@@ -72,7 +72,7 @@ module Plugins
       end
 
 
-      m.reply "\x02#{title}:\x0f #{answer}" + (decimal_form.nil? ? '' : " (\x02#{pod3_title}:\x0f #{decimal_form})")
+      m.reply "\x02#{title}:\x0f #{answer}" + (pod3_plaintext.nil? ? '' : " (\x02#{pod3_title}:\x0f #{pod3_plaintext})")
 
 
                  

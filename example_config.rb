@@ -31,6 +31,7 @@ module MyApp
           "Plugins::CloudVision",
           "Plugins::TwitterSearch",
           "Plugins::Wolfram",
+          "Plugins::OpenAI",
         ],
       
         :IRC_RUN_AFTER_CONNECT => [
@@ -50,6 +51,19 @@ module MyApp
         :WOLFRAM_SEARCH_EXCLUDE_CHANS => [],
 
 
+      :OPENAI_SECRET_KEY => "zzzzzzzzzzzzzzzzzzzzzz",
+      :OPENAI_ORG => "zzzzzzzzzzzzzz",
+      :OPENAI_API_RATE_LIMIT_MINUTE  => 2 ,
+      :OPENAI_API_RATE_LIMIT_DAY  => 300 ,
+      :OPENAI_EXCLUDE_CHANS => [] ,
+      :OPENAI_EXCLUDE_USERS => [] ,
+      :OPENAI_PASTEBIN_DEVKEY => "zzzzzzzzzzzzzzzzzz",
+      :OPENAI_PASTEBINEE_DEVKEY => "zzzzzzzzzzzzzzzzzzzzzzzz",
+      :OPENAI_PIC_RATE_LIMIT_MINUTE  => 6 ,
+      :OPENAI_PIC_RATE_LIMIT_DAY  => 6 ,
+
+
+
         # Plugins::TwitterSearch
       :TWITTER_SEARCH_EXCLUDE_CHANS => [],
         
@@ -62,6 +76,7 @@ module MyApp
           {:class => "URLHandlers::TitleBot", :excludeChans => [], :excludeNicks => []},
         ],
         
+
         :YOUTUBE_GOOGLE_SERVER_KEY => "YOUR_GOOGLE_SERVER_KEY_FOR_YOUTUBE_API" ,
         :IMGUR_API_CLIENT_ID => "YOUR IMGUR API CLIENT ID" ,
         :OMDB_API_KEY => "XXXXXXXXXXXXXXXXX" ,

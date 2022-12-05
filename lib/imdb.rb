@@ -42,7 +42,7 @@ module Plugins
       end
       
       if i && i.title
-        puts "Successful IMDB lookup"
+        puts "Successful IMDB lookup (tit=#{i.title})"
         omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id) + "&apikey=#{IMDB.class_variable_get(:@@config)[:OMDB_API_KEY]}") rescue nil
         if !omdb || !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
           omdb = nil
@@ -158,6 +158,8 @@ module Plugins
       
       myreply = {}
       
+      puts "tit='#{i[:title]}'"
+
       myreply[:title] = "\x03" + color_name + i[:title]
       if !i[:title].include?("(#{i[:year]})")
         myreply[:title] << " (" + i[:year].to_s + ")" 

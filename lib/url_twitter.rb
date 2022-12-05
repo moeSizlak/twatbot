@@ -6,6 +6,8 @@ module URLHandlers
   module Twitter
 
     def parse(url)
+
+=begin
       u = URI.parse(url)
 
       # figure out the redirection of t.co shortlinks
@@ -71,6 +73,27 @@ module URLHandlers
 
       #return "\x0303[Twitter]\x0f \x0304#{username}\x0f#{verified.nil? ? '' : "\u2713"} (#{fullname}): #{tweet} | \x0307#{timestamp}\x0f"
       return "\x0303[Twitter]\x0f \x0304#{username}\x0f#{verified.nil? ? '' : "\u2713"} (#{fullname}): \x02#{tweet}\x0f | \x0307#{timestamp}\x0f"
+
+=end
+      title = getTitleAndLocation(url)
+      url =  title[:effective_url] rescue nil
+
+      if(!url.nil? && url =~ /^(https?:\/\/(?:[^\/]*\.)*)twitter.com\//)
+        url = url.gsub(/^(https?:\/\/)(?:[^\/]*\.)*twitter.com\//, '\1nitter.net/')
+        title = getTitleAndLocation(url)
+
+        #if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
+        if !title.nil? && !title[:title].nil?
+          #url =~ /https?:\/\/([^\/]+)/
+          title[:effective_url] =~ /https?:\/\/([^\/]+)/
+          host = $1
+          #return "[ \x02" + title[:title] + "\x0f ] - " + host + (title[:description].nil? ? '' : ("\n[ \x02" + title[:description] + "\x0f ] - " + host))
+          return "[ \x02" + title[:title].gsub(/\s*\|\s*nitter\s*$/, "") + "\x0f ] - " + host.gsub(/nitter\.net/, "twitter.com")
+        end
+      end
+      
+      return nil
+
     end
 
 
