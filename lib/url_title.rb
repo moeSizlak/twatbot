@@ -149,11 +149,37 @@ module URLHandlers
       return retval
 
     end
+
+
+    def getEffectiveUrl(url)
+      myurl = nil
+      t = Tempfile.new(['url_cookies', '.dat'])
+      tmpcookiefile = t.path
+      t.close
+
+      begin
+        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, accept_encoding: "gzip", headers: {
+          'User-Agent' => (url =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
+        }
+        easy.on_body do |chunk, easy|
+          myurl = easy.effective_url
+          :abort
+        end
+        easy.perform
+      rescue
+        # EXCEPTION!
+      end
+
+      easy.cleanup rescue nil
+      File.unlink(tmpcookiefile) rescue nil
+      return myurl
+    end
     
     
   module_function :parse
   module_function :getTitle
   module_function :getTitleAndLocation
+  module_function :getEffectiveUrl
     
   end  
 end

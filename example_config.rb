@@ -51,6 +51,8 @@ module MyApp
         :WOLFRAM_SEARCH_EXCLUDE_CHANS => [],
 
 
+      :TWITTER_BEARER_TOKEN => "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+
       :OPENAI_SECRET_KEY => "zzzzzzzzzzzzzzzzzzzzzz",
       :OPENAI_ORG => "zzzzzzzzzzzzzz",
       :OPENAI_API_RATE_LIMIT_MINUTE  => 2 ,

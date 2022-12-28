@@ -115,14 +115,27 @@ module Plugins
           @apicalls_minute.unshift(Time.now.to_i)   
 
           r_raw = response.dig("choices", 0, "text").to_s
+
+          if(r_raw.nil? || r_raw.length <= 0)
+            puts "GPT3 ERROR:"
+            puts response.inspect
+
+            r = response.parsed_response.dig("error", "message")
+            m.reply m.user.to_s + ": " + "\x02" + "[gpt3bot:] " + "\x0f"+ "API ERROR: " + r
+            return
+          end
+
           r = r_raw.strip.gsub(/[\n]/, ", ").gsub(/[\t]/, " ")
 
-          p = Unirest::post("https://api.paste.ee/v1/pastes",  headers:{ "X-Auth-Token" => m.bot.botconfig[:OPENAI_PASTEBINEE_DEVKEY], "content-type" => 'application/json' }, parameters: {"description" => question[0..63],"sections" => [{"name" => question[0..63],"syntax" => "text","contents" => WordWrap.ww(question + "\n\n" + r_raw, 120)}]}.to_json) 
-          if p.body.dig("link").nil?
-            puts p.inspect
-            p = ""
-          else
-            p = " :: " + "\x03" + "07" + p.body.dig("link") + "\x0f" 
+          p = ""
+          if r.length > 420 || r_raw.strip =~ /[\r\n\t]/
+            p = Unirest::post("https://api.paste.ee/v1/pastes",  headers:{ "X-Auth-Token" => m.bot.botconfig[:OPENAI_PASTEBINEE_DEVKEY], "content-type" => 'application/json' }, parameters: {"description" => question[0..63],"sections" => [{"name" => question[0..63],"syntax" => "text","contents" => WordWrap.ww(question + "\n\n" + r_raw, 120)}]}.to_json) rescue nil
+            if (p.body.dig("link") rescue nil).nil?
+              puts p.inspect
+              p = " :: " + "\x03" + "07" + "[paste.ee error]" + "\x0f"
+            else
+              p = " :: " + "\x03" + "07" + p.body.dig("link") + "\x0f" 
+            end
           end
 
 
@@ -186,20 +199,18 @@ module Plugins
 
 
 
-
-          if r && r.length >=0
+ 
+         if r && r.length >=0
             imagefile = Time.now.utc.strftime("%Y%m%d%H%M%S") + "-" + SecureRandom.uuid + '.png'
 
-            open('/var/www/newzbin.bitlanticcity.com/public/images/urldb/' + imagefile, 'wb') do |file|
+            open(@config[:OPENAI_PIC_DIRECTORY] + '/' + imagefile, 'wb') do |file|
               file << URI.open(r).read
             end
 
-
-
             r = m.user.to_s + ": " + "\x02" + "[gpt3pic:] " + "\x0f"+ 'https://newzbin.bitlanticcity.com/images/urldb/' + imagefile
 
-             entries = m.bot.botconfig[:DB][:TitleBot]
-            entries.insert(:Date => Sequel.function(:now), :Nick => m.user.to_s, :URL => 'https://newzbin.bitlanticcity.com/images/urldb/' + imagefile, :Title => 'gpt3pic: ' + question, :ImageFile => imagefile)
+            entries = m.bot.botconfig[:DB][@config[:OPENAI_PIC_TABLE]]
+            entries.insert(:Date => Sequel.function(:now), :Nick => m.user.to_s, :URL => @config[:OPENAI_PIC_URL_PREFIX] + imagefile, :Title => 'gpt3pic: ' + question, :ImageFile => imagefile)
 
             m.reply r
           else

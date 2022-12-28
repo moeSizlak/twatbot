@@ -1,95 +1,123 @@
 require "open-uri"
 require "nokogiri"
-#require 'htmlentities'
+require "typhoeus"
+require "json"
+require 'htmlentities'
 
 module URLHandlers
   module Twitter
 
+    def tweet_lookup(tweet_ids)
+      options = {
+        method: 'get',
+        headers: {
+          "User-Agent": "v2TweetLookupRuby",
+          "Authorization": "Bearer #{@config[:TWITTER_BEARER_TOKEN]}"
+        },
+        params: params = {
+          "ids": tweet_ids,
+          "expansions": "author_id", #,referenced_tweets.id",
+          "tweet.fields": "attachments,author_id,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,public_metrics",
+          "user.fields": "id,name,username,verified" 
+          # "media.fields": "url", 
+          # "place.fields": "country_code",
+          # "poll.fields": "options"
+        }
+      }
+
+      request = Typhoeus::Request.new("https://api.twitter.com/2/tweets", options)
+      response = request.run
+
+      return response
+    end
+
+
     def parse(url)
+      url = getEffectiveUrl(url) rescue nil
 
-=begin
-      u = URI.parse(url)
+      if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*twitter.com\/(?:#!\/)?\w+\/status(?:es)?\/(\d+)/)
+        tweet = $1
+        response = tweet_lookup(tweet)
+        r = JSON.parse(response.body)
+        puts response.code, JSON.pretty_generate(r)
 
-      # figure out the redirection of t.co shortlinks
-      if u.host == "t.co"
-        begin
-          u.open(redirect: false)
-        rescue OpenURI::HTTPRedirect => redirect
-          u = redirect.uri
-          puts "Handled t.co redirect to #{u}"
+        myreply = ""
+
+        r.dig("data").each do |t|
+          author =  r.dig("includes", "users").find{|x| x[:id] == t[:author_id]}
+          text = t.dig("text")
+
+          coder = HTMLEntities.new
+          text = coder.decode text.force_encoding('utf-8')
+          text = text.gsub(/\n/, " ")
+          text = text.gsub(/\s+/, " ")
+
+          hashtags = t.dig("entities", "hashtags")
+          if !hashtags.nil?
+            hashtags.each do |h|
+              text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+            end
+          end
+
+          mentions = t.dig("entities", "mentions")
+          if !mentions.nil?
+            mentions.each do |h|
+              text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+            end
+          end
+
+          retweets = t.dig("public_metrics", "retweet_count") || 0
+          if(retweets > 1000000)
+            retweets = "#{(retweets/1000000.0).floor(1).to_s.gsub(/\.0*$/, '')}M"
+          elsif(retweets > 1000)
+            retweets = "#{(retweets/1000.0).floor(1).to_s.gsub(/\.0*$/, '')}K"
+          end
+
+          likes = t.dig("public_metrics", "like_count") || 0
+          if(likes > 1000000)
+            likes = "#{(likes/1000000.0).floor(1).to_s.gsub(/\.0*$/, '')}M"
+          elsif(likes > 1000)
+            likes = "#{(likes/1000.0).floor(1).to_s.gsub(/\.0*$/, '')}K"
+          end
+
+          createdAt = t.dig("created_at")
+          timeAgo = nil
+
+          if !createdAt.nil?
+            now = Time.now
+            createdAt = DateTime.iso8601(createdAt).to_time
+
+            diff = (now-createdAt).floor
+            days = (diff/(60*60*24)).floor
+            hours = ((diff-(days*60*60*24))/(60*60)).floor
+            minutes = ((diff-(days*60*60*24)-(hours*60*60))/60).floor
+            #seconds = (diff-(days*60*60*24)-(hours*60*60)-(minutes*60)).floor
+
+            if(days == 0)
+              if(hours == 0)
+                timeAgo = minutes == 1 ? "1 minute ago" : "#{minutes} minutes ago"
+              else
+                timeAgo = hours == 1 ? "1 hour ago" : "#{hours} hours ago"
+              end
+            elsif(days < 7)
+              timeAgo = days == 1 ? "1 day ago" : "#{days} days ago"
+            else
+              timeAgo = createdAt.strftime("%b %d %Y")
+            end
+
+          end
+
+          #myreply <<  "\x0303" + "[Twitter] \x0f"
+          myreply << "\x0304" + "(@" + author.dig("username") + (author.dig("verified") == true ? "\x0f\x0302\u{2705}\x0f\x0304" : "") + " - " + author.dig("name") + ")" + "\x0f "
+          myreply << "\x02" + text + "\x0f" + " | "
+          if !timeAgo.nil?
+            myreply << timeAgo + " " 
+          end
+          myreply << "(#{retweets} \u{1f503} / #{likes} \u{2665})"
+
         end
-      end
 
-      return unless u.to_s =~ /^https?:\/\/([^.\/\s]+\.)*twitter\.com\/.*status/
-
-      #coder = HTMLEntities.new
-
-      # only the mobile site contains the data we need;
-      # the main site only has lots of javascript
-      u.host = "mobile.twitter.com"
-      doc = Nokogiri::HTML(u.read)
-
-      tweet = doc.css(".main-tweet div.tweet-text").first rescue nil
-      return if tweet.nil?
-
-      # highlight hashtags and ats
-      tweet.css("a.twitter-hashtag,a.twitter-atreply").each do |a|
-        a.replace("§_START_HASHTAG_§#{a.text}§_END_HASHTAG_§")
-      end
-
-      # fix links
-      tweet.css("a").each do |a|
-        href = a["href"]
-        expanded = a["data-expanded-url"]
-        tco = a["data-tco-id"]
-
-        if expanded && expanded !~ /^https?:\/\/(([^.\/\s]+\.)*twitter\.com|t\.co)\//
-          a.replace expanded
-        elsif href && href !~ /^https?:\/\/(([^.\/\s]+\.)*twitter\.com|t\.co)\//
-           a.replace href
-        elsif href =~ /https?:\/\/t.co\//
-          a.replace href
-        elsif tco
-          a.replace "http://t.co/#{a["data-tco-id"]}"
-        elsif href =~ /^http/
-          a.replace href
-        else
-          a.replace a.content
-        end
-
-      end
-
-      # remove html tags and line breaks
-      tweet = tweet.content.gsub(/[[:space:]]+/m, " ").strip
-
-      # fix color codes that don't survive going through Nokogiri
-      tweet.gsub!(/§_START_HASHTAG_§/, "\x0312")
-      tweet.gsub!(/§_END_HASHTAG_§/, "\x0f\x02")
-
-      username = doc.css(".main-tweet .username").first.content.strip
-      fullname = doc.css(".main-tweet .fullname").first.content.strip
-      timestamp = doc.css(".main-tweet td.tweet-content .metadata").first.content.gsub(/[[:space:]]+/m, " ").strip
-      verified = doc.css(".main-tweet .fullname a.badge img[alt='Verified Account']").first.content.strip rescue nil
-
-      #return "\x0303[Twitter]\x0f \x0304#{username}\x0f#{verified.nil? ? '' : "\u2713"} (#{fullname}): #{tweet} | \x0307#{timestamp}\x0f"
-      return "\x0303[Twitter]\x0f \x0304#{username}\x0f#{verified.nil? ? '' : "\u2713"} (#{fullname}): \x02#{tweet}\x0f | \x0307#{timestamp}\x0f"
-
-=end
-      title = getTitleAndLocation(url)
-      url =  title[:effective_url] rescue nil
-
-      if(!url.nil? && url =~ /^(https?:\/\/(?:[^\/]*\.)*)twitter.com\//)
-        url = url.gsub(/^(https?:\/\/)(?:[^\/]*\.)*twitter.com\//, '\1nitter.net/')
-        title = getTitleAndLocation(url)
-
-        #if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
-        if !title.nil? && !title[:title].nil?
-          #url =~ /https?:\/\/([^\/]+)/
-          title[:effective_url] =~ /https?:\/\/([^\/]+)/
-          host = $1
-          #return "[ \x02" + title[:title] + "\x0f ] - " + host + (title[:description].nil? ? '' : ("\n[ \x02" + title[:description] + "\x0f ] - " + host))
-          return "[ \x02" + title[:title].gsub(/\s*\|\s*nitter\s*$/, "") + "\x0f ] - " + host.gsub(/nitter\.net/, "twitter.com")
-        end
+        return myreply
       end
       
       return nil
