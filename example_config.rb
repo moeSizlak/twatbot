@@ -22,16 +22,23 @@ module MyApp
           "Plugins::URL",
           "Plugins::TvMaze",
           "Plugins::IMDB",
-          #"Plugins::URLDB",
-          #"Plugins::MoeBTC",
-          #"Plugins::QuoteDB",
+          "Plugins::URLDB",
+          "Plugins::MoeBTC",
           "Plugins::Weather",
           "Plugins::Election",
           "Plugins::RottenTomatoes",
+          "Plugins::QuoteDB",
           "Plugins::CloudVision",
+          "Plugins::Google",
+          "Plugins::Wikipedia",
+          "Plugins::TvMazeSchedule",
+          "Plugins::CoronaVirus",
+          "Plugins::Logmobile",
           "Plugins::TwitterSearch",
           "Plugins::Wolfram",
+          "Plugins::Stocks",
           "Plugins::OpenAI",
+          "Plugins::TwitterFeed",
         ],
       
         :IRC_RUN_AFTER_CONNECT => [
@@ -52,6 +59,15 @@ module MyApp
 
 
       :TWITTER_BEARER_TOKEN => "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+
+      # Plugins::RSSFeed
+      :TWITTER_FEEDS  => [
+        {:name => "Musk", :rule => "from:elonmusk", :chans => ["#testing123"], :include_replies => false},  
+        {:name => "SpaceX", :rule => "from:SpaceX", :chans => ["#testing123"], :include_replies => false},  
+        {:name => "BuffaloBlizzard", :rule => "buffalo blizzard", :chans => ["#testing123"], :include_replies => false},
+      ]   ,  
+
+
 
       :OPENAI_SECRET_KEY => "zzzzzzzzzzzzzzzzzzzzzz",
       :OPENAI_ORG => "zzzzzzzzzzzzzz",
@@ -212,13 +228,23 @@ module MyApp
           "Plugins::URL",
           "Plugins::TvMaze",
           "Plugins::IMDB",
-          #"Plugins::URLDB",
-          #"Plugins::MoeBTC",
-          #"Plugins::QuoteDB",
+          "Plugins::URLDB",
+          "Plugins::MoeBTC",
           "Plugins::Weather",
           "Plugins::Election",
           "Plugins::RottenTomatoes",
+          "Plugins::QuoteDB",
+          "Plugins::CloudVision",
+          "Plugins::Google",
+          "Plugins::Wikipedia",
+          "Plugins::TvMazeSchedule",
           "Plugins::CoronaVirus",
+          "Plugins::Logmobile",
+          "Plugins::TwitterSearch",
+          "Plugins::Wolfram",
+          "Plugins::Stocks",
+          "Plugins::OpenAI",
+          "Plugins::TwitterFeed",
         ],
       
         :TWATBOT_SQL => 'postgres://user:pass@localhost/twatbot?encoding=utf8' ,

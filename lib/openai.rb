@@ -85,7 +85,10 @@ module Plugins
         return
       end
 
-      
+      if question =~ /tr0n|TR0N|Thomas Christopher Mitchell/
+        m.reply ["#{m.user.to_s}: stfu pedobot", "#{m.user.to_s}: no", "#{m.user.to_s}: nah", "#{m.user.to_s}: go fuck yourself", "!op #{m.user.to_s}", "#{m.user.to_s}: eat ebola dick"].sample
+        return
+      end
         
       @apicalls_mutex.synchronize do
         if !check_api_rate_limit(1)

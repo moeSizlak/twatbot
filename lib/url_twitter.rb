@@ -39,7 +39,7 @@ module URLHandlers
         tweet = $1
         response = tweet_lookup(tweet)
         r = JSON.parse(response.body)
-        puts response.code, JSON.pretty_generate(r)
+        #puts response.code, JSON.pretty_generate(r)
 
         myreply = ""
 
@@ -108,7 +108,7 @@ module URLHandlers
           end
 
           #myreply <<  "\x0303" + "[Twitter] \x0f"
-          myreply << "\x0304" + "(@" + author.dig("username") + (author.dig("verified") == true ? "\x0f\x0302\u{2705}\x0f\x0304" : "") + " - " + author.dig("name") + ")" + "\x0f "
+          myreply << "\x0304" + "@" + author.dig("username") + (author.dig("verified") == true ? "\x0f\x0302\u{2705}\x0f\x0304" : "") + " (" + author.dig("name") + "):" + "\x0f "
           myreply << "\x02" + text + "\x0f" + " | "
           if !timeAgo.nil?
             myreply << timeAgo + " " 

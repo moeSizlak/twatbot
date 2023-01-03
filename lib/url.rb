@@ -32,7 +32,7 @@ module Plugins
     
 
     def url_listen(m)
-      return if m.message =~ /https?:\/\/williampitcock.com/
+       return if m.message =~ /sodom...sein|kS4XgIzYSBw|Zs6IuQPdIUA|cnmi\.nsopw\....\/Search...ender|thoma...itchell-mu...ot2|bit\.ly\/3GjWtbc|attrition\.org|hQAC2pPVu88|fTWEwjk-LfQ|3BEbqKLE7FJYJg5A7/
 
       URI.extract(m.message, ["http", "https"]) do |link|
         @handlers.each do |handler|

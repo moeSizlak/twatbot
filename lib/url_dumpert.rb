@@ -20,12 +20,7 @@ module URLHandlers
           
           if search.body
             search = search.body[0][0][0] rescue nil
-            #puts "ZZZZ\n#{search[0][0][0]}"
-            #search.gsub!(/,+/, ',')
-            #search.gsub!(/\[,/, '[')
-            #search = JSON.parse(search.body)
-            
-            #if search.size > 0 && search[0].size > 0 && search[0][0].size > 0
+
             if !search.nil? && search.length > 0
               title = title + 
               "\x0304  [" + search + "]\x0f"
