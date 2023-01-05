@@ -310,42 +310,10 @@ module Plugins
       text = text.gsub(/\n/, " ")
       text = text.gsub(/\s+/, " ")
 
-      hashtags = t.dig("entities", "hashtags")
-      if !hashtags.nil?
-        hashtags.each do |h|
-          #text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
-          #text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
-        end
-      end
-
-      mentions = t.dig("entities", "mentions")
-      if !mentions.nil?
-        mentions.each do |h|
-          #text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
-          #text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
-        end
-      end
-
       if(text2)
         text2 = coder.decode text2.force_encoding('utf-8')
         text2 = text2.gsub(/\n/, " ")
         text2 = text2.gsub(/\s+/, " ")
-
-        hashtags = t2.dig("entities", "hashtags")
-        if !hashtags.nil?
-          hashtags.each do |h|
-            #text2.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
-            #text2.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
-          end
-        end
-
-        mentions = t2.dig("entities", "mentions")
-        if !mentions.nil?
-          mentions.each do |h|
-            #text2.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
-            #text2.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
-          end
-        end
       end
 
       retweets = t.dig("public_metrics", "retweet_count") || 0

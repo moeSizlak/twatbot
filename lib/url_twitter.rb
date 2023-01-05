@@ -49,23 +49,7 @@ module URLHandlers
 
           coder = HTMLEntities.new
           text = coder.decode text.force_encoding('utf-8')
-=begin
-          hashtags = t.dig("entities", "hashtags")
-          if !hashtags.nil?
-            hashtags.each do |h|
-              #text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
-              text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "07" + "\\1" + "\x0f")
-            end
-          end
 
-          mentions = t.dig("entities", "mentions")
-          if !mentions.nil?
-            mentions.each do |h|
-              #text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
-              text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "07" + "\\1" + "\x0f")
-            end
-          end
-=end
           highlights = ((t.dig("entities", "hashtags") || []) + (t.dig("entities", "mentions") || [])).sort_by{|k| k['start']}.reverse
           highlights.each do |k|
             text.insert(k['end'], "\x0f")
