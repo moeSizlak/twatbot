@@ -89,6 +89,11 @@ module Plugins
         m.reply ["#{m.user.to_s}: stfu pedobot", "#{m.user.to_s}: no", "#{m.user.to_s}: nah", "#{m.user.to_s}: go fuck yourself", "!op #{m.user.to_s}", "#{m.user.to_s}: eat ebola dick"].sample
         return
       end
+
+      if m.user.to_s =~ /^(n8)$/
+        m.reply ["#{m.user.to_s}: no", "#{m.user.to_s}: nah", "#{m.user.to_s}: yes?", "!op #{m.user.to_s}", "eat ebola dick"].sample
+        return
+      end
         
       @apicalls_mutex.synchronize do
         if !check_api_rate_limit(1)

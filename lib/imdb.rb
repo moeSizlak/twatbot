@@ -160,11 +160,11 @@ module Plugins
       
       puts "tit='#{i[:title]}'"
 
-      myreply[:title] = "\x03" + color_name + i[:title]
+      myreply[:title] = "\x02[IMDB] \x0f"  + i[:title]
       if !i[:title].include?("(#{i[:year]})")
         myreply[:title] << " (" + i[:year].to_s + ")" 
       end
-      myreply[:title] << "\x0f"
+      #myreply[:title] << "\x0f"
       
       myreply[:rating] = "\x03" + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes]"
       

@@ -228,7 +228,8 @@ module Plugins
       puts "Country=\"#{country}\"" 
       myreply =  "\x0304#{display_location}\x0f"
       myreply2 = "\x0304#{display_location}\x0f"
-      myreply3 = "\x0304#{display_location}\x0f"
+      #myreply3 = "\x0304#{display_location}\x0f"
+      myreply3 = "#{m.user}: \x02#{display_location}\x0f"
 
       idx1 = 0
       idx2 = 1

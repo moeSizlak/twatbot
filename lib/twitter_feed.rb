@@ -242,9 +242,9 @@ module Plugins
         end
       end
 
-      sleep 5
       
       Thread.new do
+        sleep 5
         result = @@stream_thread_mutex.try_lock
         return if !result
 
@@ -313,14 +313,16 @@ module Plugins
       hashtags = t.dig("entities", "hashtags")
       if !hashtags.nil?
         hashtags.each do |h|
-          text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+          #text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+          #text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
         end
       end
 
       mentions = t.dig("entities", "mentions")
       if !mentions.nil?
         mentions.each do |h|
-          text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+          #text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+          #text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
         end
       end
 
@@ -332,14 +334,16 @@ module Plugins
         hashtags = t2.dig("entities", "hashtags")
         if !hashtags.nil?
           hashtags.each do |h|
-            text2.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+            #text2.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+            #text2.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
           end
         end
 
         mentions = t2.dig("entities", "mentions")
         if !mentions.nil?
           mentions.each do |h|
-            text2.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+            #text2.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+            #text2.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "03" + "\\1" + "\x0f")
           end
         end
       end
@@ -386,20 +390,24 @@ module Plugins
       end
 
       #myreply <<  "\x0303" + "[Twitter] \x0f"
-      myreply << "\x0304" + "@" + author.dig("username") + (author.dig("verified") == true ? "\x0f\x0302\u{2705}\x0f\x0304" : "") + " (" + author.dig("name") + "):" + "\x0f "
-      
+      #myreply << "\x0304" + "@" + author.dig("username") + (author.dig("verified") == true ? "\x0f\x0302\u{2705}\x0f\x0304" : "") + " (" + author.dig("name") + "):" + "\x0f "
+      #myreply << "\x02[Twitter]\x0f (@" + "\x0311" + author.dig("username") + "\x0f" +  (author.dig("verified") == true ? "\x0302\u{2705}\x0f" : "") + " - " + author.dig("name") + "): "
+      myreply << "\x02@" + author.dig("username") + "\x0f" + " (" + author.dig("name") + "): "
+
       if(text2)
-        myreply << "\x02" + text.gsub(/^(RT[^:]*:\s*).*$/, '\1') +  text2 + "\x0f" + " | "
+        #myreply << "\x02" + text.gsub(/^(RT[^:]*:\s*).*$/, '\1') +  text2 + "\x0f" + " | "
+        myreply << text.gsub(/^(RT[^:]*:\s*).*$/, '\1') +  text2 #+ " | "
       else
-        myreply << "\x02" + text + "\x0f" + " | "
+        #myreply << "\x02" + text + "\x0f" + " | "
+        myreply << text #+ " | "
       end
       
 
 
       if !timeAgo.nil?
-        myreply << timeAgo + " " 
+        #myreply << timeAgo + " " 
       end
-      myreply << "(#{retweets} \u{1f503} / #{likes} \u{2665})"
+      #myreply << "(#{retweets} \u{1f503} / #{likes} \u{2665})"
 
 
 

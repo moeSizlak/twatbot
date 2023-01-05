@@ -248,7 +248,7 @@ module Plugins
             airstamp_last_local = DateTime.parse(airstamp_last_utc_time.getlocal(tz.period_for_utc(airstamp_last_utc_time).utc_total_offset).to_s)
           end
           
-          myreply = "\x03" + color_name + show.body["name"].to_s + "\x0f" +          
+          myreply = "\x02" + show.body["name"].to_s + "\x0f" +          
           " | \x0f\x03" + color_title + "Next\x0f:\x03" + color_text + " " + (nextep && nextep.body && nextep.body.size > 0 ? nextep.body.fetch("season", "??").to_s + "x" + (nextep.body.fetch("number", -1).nil? ? 'Special' : sprintf("%02d", nextep.body.fetch("number", -1).to_s)) + " - " + nextep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_next_local.nil? ? airstamp_next_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f" +          
           " | \x0f\x03" + color_title + "Prev\x0f:\x03" + color_text + " " + (lastep && lastep.body && lastep.body.size > 0 ? lastep.body.fetch("season", "??").to_s + "x" + (lastep.body.fetch("number", -1).nil? ? 'Special' : sprintf("%02d", lastep.body.fetch("number", -1).to_s)) + " - " + lastep.body.fetch("name", "UNKNOWN_EPISODE_NAME").to_s + " (" + (!airstamp_last_local.nil? ? airstamp_last_local.strftime("%d/%b/%Y") : "UNKNOWN_DATE") + ")" : "N/A") + "\x0f"
                   

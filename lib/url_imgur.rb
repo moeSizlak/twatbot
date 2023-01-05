@@ -141,7 +141,7 @@ module URLHandlers
             color_rating = "07"
             color_url = "03"
           
-            myreply = "\x03" + color_yt + "[Imgur] \x0f"
+            myreply = "\x02" + "[Imgur] \x0f"
             
             if g_title
               mytitle = g_title.strip.gsub(/[[:space:]]+/m, ' ')

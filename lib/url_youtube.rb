@@ -44,9 +44,9 @@ module URLHandlers
               duration = search.body["items"][0]["contentDetails"]["duration"]
               if duration.size > 0
                 if Duration.load(duration).format("%tm").to_f >= 60
-                  duration = Duration.load(duration).format("%h:%M:%S")
+                  duration = Duration.load(duration).format("%hh %Mm %Ss")
                 else
-                  duration = Duration.load(duration).format("%tm:%S")
+                  duration = Duration.load(duration).format("%tmm %Ss")
                 end
               end
             end  
@@ -87,29 +87,17 @@ module URLHandlers
             dislikeCount = 0
           end
           
-          color_yt = "03"     
-          color_name = "04"
-          color_rating = "07"
-          color_url = "03"
-          
           #myreply = "\x02You\x0304Tube\x0f: " +
-          myreply =  "\x03" + color_yt + "[YouTube] \x0f" + 
+          #myreply =  "\x03" + color_yt + "[YouTube] \x0f" + 
+          #myreply =  "\x02[\x0300,04 \u25ba \x0f\x02YouTube] \x0f" + 
+          myreply =  "\x02[\x0304\u25ba\x0f\x02YouTube] \x0f" + 
+          (title.nil? ? "UNKOWN_TITLE" : title) + " | \x0307" +
+          (duration2.nil? ? (duration.nil? ? "" : duration + "\x0f | \x0307") : (duration2 == "LIVE" ? "\x0f\x0303LIVE\x0f": duration2) + "\x0f | \x0307") + 
+          (author.nil? ? "" : "Channel: #{author}\x0f | \x0307") +
+          viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views\x0f | \x0307" +
+          "\x0303+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f | \x0307" +
+          (publishedAt.nil? ? "" : "Uploaded #{publishedAt}") + "\x0f"
           
-          #(title.nil? ? "UNKOWN_TITLE" : title) +
-          
-          "\x03" + color_name + 
-          (title.nil? ? "UNKOWN_TITLE" : title) + 
-          "\x0f" +
-
-          "\x03" + color_rating +
-          (duration2.nil? ? ""   : (" (" + duration2    + ")")) + 
-          (duration.nil? ? ""    : (" (" + duration    + ")")) +    
-          (publishedAt.nil? ? "" : (" [" + (author.nil? ? "" : (author + " @ ")) + publishedAt + "]")) +
-          " [" + viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] [\x0f" + 
-          "\x0303+" + likeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse    + "\x0f" +
-          "\x03" + color_rating + "/\x0f" +
-          "\x0304-" + dislikeCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "\x0f" +
-          "\x03" + color_rating +"]\x0f"
           
           return myreply
       	else

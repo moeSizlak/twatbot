@@ -2,6 +2,7 @@ require 'htmlentities'
 require 'ethon'
 require 'tmpdir'
 require 'tempfile'
+require 'uri'
 
 
 module URLHandlers  
@@ -14,10 +15,22 @@ module URLHandlers
 
     def parse(url)
       title = getTitleAndLocation(url);
-      if !title.nil? && !title[:title].nil?
+      if !title.nil? && !title[:title].nil? && title[:title].length > 0
+
+        url =~ /https?:\/\/([^\/]+)/
+        host1 = $1.downcase
         title[:effective_url] =~ /https?:\/\/([^\/]+)/
-        host = $1
-        return "[ \x02" + title[:title] + "\x0f ] - " + host
+        host2 = $1.downcase
+        
+        domain_redirect = false
+        if(host1 != host2 && host1 !~ /^\d+\.\d+\.\d+\.\d+$/ && host2 !~ /^\d+\.\d+\.\d+\.\d+$/)
+          domain1 = host1.gsub(/^.*([^\.]*\.[^\.]*)$/, '\1')
+          domain2 = host2.gsub(/^.*([^\.]*\.[^\.]*)$/, '\1')
+
+          domain_redirect = true if domain1 != domain2
+        end
+
+        return "\x02[Title]\x0f #{title[:title]}" + (domain_redirect == true ? (" :: \x0307#{host2}\x0f") : '')
       end
       
       return nil    

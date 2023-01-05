@@ -21,11 +21,8 @@ module URLHandlers
           if search.body
             search = search.body[0][0][0] rescue nil
 
-            if !search.nil? && search.length > 0
-              title = title + 
-              "\x0304  [" + search + "]\x0f"
-              
-              return title
+            if !search.nil? && search.length > 0              
+              return "\x02[Dumpert]\x0f #{title} :: \x0307#{search}\x0f"
             end
           end        
         end

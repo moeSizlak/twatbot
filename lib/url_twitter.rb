@@ -49,22 +49,31 @@ module URLHandlers
 
           coder = HTMLEntities.new
           text = coder.decode text.force_encoding('utf-8')
-          text = text.gsub(/\n/, " ")
-          text = text.gsub(/\s+/, " ")
-
+=begin
           hashtags = t.dig("entities", "hashtags")
           if !hashtags.nil?
             hashtags.each do |h|
-              text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+              #text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+              text.gsub!(/(##{h.dig("tag")})(?=\b)/, "\x03" + "07" + "\\1" + "\x0f")
             end
           end
 
           mentions = t.dig("entities", "mentions")
           if !mentions.nil?
             mentions.each do |h|
-              text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+              #text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "02" + "\\1" + "\x0f\x02")
+              text.gsub!(/(@#{h.dig("username")})(?=\b)/, "\x03" + "07" + "\\1" + "\x0f")
             end
           end
+=end
+          highlights = ((t.dig("entities", "hashtags") || []) + (t.dig("entities", "mentions") || [])).sort_by{|k| k['start']}.reverse
+          highlights.each do |k|
+            text.insert(k['end'], "\x0f")
+            text.insert(k['start'], "\x0307")
+          end
+
+          text = text.gsub(/\n/, " ")
+          text = text.gsub(/\s+/, " ")
 
           retweets = t.dig("public_metrics", "retweet_count") || 0
           if(retweets > 1000000)
@@ -108,8 +117,9 @@ module URLHandlers
           end
 
           #myreply <<  "\x0303" + "[Twitter] \x0f"
-          myreply << "\x0304" + "@" + author.dig("username") + (author.dig("verified") == true ? "\x0f\x0302\u{2705}\x0f\x0304" : "") + " (" + author.dig("name") + "):" + "\x0f "
-          myreply << "\x02" + text + "\x0f" + " | "
+          myreply << "\x02[Twitter]\x0f (@" + "\x0311" + author.dig("username") + "\x0f" +  (author.dig("verified") == true ? "\x0302\u{2705}\x0f" : "") + " - " + author.dig("name") + "): "
+          #myreply << "\x02" + text + "\x0f" + " | "
+          myreply << text  + " | "
           if !timeAgo.nil?
             myreply << timeAgo + " " 
           end
