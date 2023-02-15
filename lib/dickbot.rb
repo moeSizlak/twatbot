@@ -17,10 +17,10 @@ module Plugins
     match /^!latest/, use_prefix: false, method: :insult3
     match /^!list/, use_prefix: false, method: :insult3
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
-    match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :action_insult, react_on: :action
+    match lambda {|m| /^(?!.gpt3dickbot).*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :action_insult, react_on: :action
     listen_to :join , method: :join_insult
     
-    match lambda {|m| /twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)}/im}, use_prefix: false, method: :talkback    
+    match lambda {|m| /^(?!.gpt3dickbot).*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :talkback    
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate   
     match /^(?!!)(?!@)(?!\.).*$/, use_prefix: false, method: :speak
     

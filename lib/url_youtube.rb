@@ -44,9 +44,9 @@ module URLHandlers
               duration = search.body["items"][0]["contentDetails"]["duration"]
               if duration.size > 0
                 if Duration.load(duration).format("%tm").to_f >= 60
-                  duration = Duration.load(duration).format("%hh %Mm %Ss")
+                  duration = Duration.load(duration).format("%hh %mm %ss")
                 else
-                  duration = Duration.load(duration).format("%tmm %Ss")
+                  duration = Duration.load(duration).format("%tmm %ss")
                 end
               end
             end  
@@ -90,8 +90,8 @@ module URLHandlers
           #myreply = "\x02You\x0304Tube\x0f: " +
           #myreply =  "\x03" + color_yt + "[YouTube] \x0f" + 
           #myreply =  "\x02[\x0300,04 \u25ba \x0f\x02YouTube] \x0f" + 
-          myreply =  "\x02[\x0304\u25ba\x0f\x02YouTube] \x0f" + 
-          (title.nil? ? "UNKOWN_TITLE" : title) + " | \x0307" +
+          myreply =  "[\x0304\u25ba\x0f] \x02" + 
+          (title.nil? ? "UNKOWN_TITLE" : title) + "\x0f | \x0307" +
           (duration2.nil? ? (duration.nil? ? "" : duration + "\x0f | \x0307") : (duration2 == "LIVE" ? "\x0f\x0303LIVE\x0f": duration2) + "\x0f | \x0307") + 
           (author.nil? ? "" : "Channel: #{author}\x0f | \x0307") +
           viewCount.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views\x0f | \x0307" +

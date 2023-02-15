@@ -13,7 +13,7 @@ module Plugins
 
     @@params = params = {
       "expansions": "author_id,referenced_tweets.id",
-      "tweet.fields": "attachments,author_id,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,public_metrics",
+      "tweet.fields": "attachments,author_id,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,public_metrics,source",
       "user.fields": "id,name,username,verified"
       #{}"tweet_mode": "extended"
       # "media.fields": "url", 
@@ -288,6 +288,12 @@ module Plugins
       author =  r.dig("includes", "users").find{|x| x[:id] == t[:author_id]}
       text = t.dig("text")
 
+
+      src = t.dig("source")
+      if(!src.nil? && src =~/dvertiser/)
+        puts "BLOCKING TWITTER AD"
+        return
+      end
 
       rt = t.dig("referenced_tweets")
       if rt 

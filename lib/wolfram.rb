@@ -12,7 +12,7 @@ module Plugins
     set :react_on, :message
     
     match /^!(?:help|commands)/, use_prefix: false, method: :help
-    match /^(?:!(?:wa|wolfram)|\?+)\s+(\S.*$)/, use_prefix: false, method: :get_wolfram
+    match /^(?:!(?:wa|wolfram)|\?)\s+(\S.*$)/, use_prefix: false, method: :get_wolfram
 
     def initialize(*args)
       super

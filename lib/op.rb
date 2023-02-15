@@ -21,6 +21,8 @@ module Plugins
     match /^(?=.*[^ -~\r\n])[^[:space:]]{3}[[:space:]][^[:space:]]{5}[[:space:]][^[:space:]]{4}[[:space:]][^[:space:]]{7}[[:space:]][^[:space:]]{3}[[:space:]][^[:space:]]{5}/, use_prefix: false, method: :kickass, react_on: :message
     match /.*https?:\/\/williampitcock\.com/, use_prefix: false, method: :kickass, react_on: :message
     match /^THIS CHANNEL.*COVID/, use_prefix: false, method: :kickass, react_on: :message
+    match /^[.!]op\s+(.*)$/i, use_prefix: false, method: :opjoke1
+    match /^[.!]opme\s*$/i, use_prefix: false, method: :opjoke2
 
 
     match lambda {|m| /^#{m.bot.botconfig[:OP_PASSWORD]}\s+op\s+(#[^\s]+)\s*$/im}, use_prefix: false, method: :op
@@ -38,6 +40,14 @@ module Plugins
         @auto_ops << {:chan => row[:channel], :mask => Cinch::Mask.from(row[:mask])}
       end      
 
+    end
+
+    def opjoke1(m, x)
+      m.action_reply("sets mode +faggot #{x}")
+    end
+
+    def opjoke2(m)
+      m.action_reply("sets mode +faggot #{m.user}")
     end
 
 

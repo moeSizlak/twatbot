@@ -157,8 +157,8 @@ module Plugins
         
         imagefile = nil
 
-        #if Dir.exists?(m.bot.botconfig[:URLDB_IMAGEDIR])
-        if !m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir].nil? && Dir.exists?(m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir])
+        #if Dir.exist?(m.bot.botconfig[:URLDB_IMAGEDIR])
+        if !m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir].nil? && Dir.exist?(m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir])
           #imagedir = m.bot.botconfig[:URLDB_IMAGEDIR]
           imagedir = m.bot.botconfig[:URLDB_DATA].select{|x| x[:chan] =~ /^#{m.channel}$/i}[0][:imagedir]
 

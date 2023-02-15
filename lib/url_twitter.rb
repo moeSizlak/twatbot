@@ -35,7 +35,7 @@ module URLHandlers
     def parse(url)
       url = getEffectiveUrl(url) rescue nil
 
-      if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*twitter.com\/(?:#!\/)?\w+\/status(?:es)?\/(\d+)/)
+      if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*twitter.com\/(?:[^\/]*\/)*\w+\/status(?:es)?\/(\d+)/)
         tweet = $1
         response = tweet_lookup(tweet)
         r = JSON.parse(response.body)
@@ -45,16 +45,16 @@ module URLHandlers
 
         r.dig("data").each do |t|
           author =  r.dig("includes", "users").find{|x| x[:id] == t[:author_id]}
-          text = t.dig("text")
-
-          coder = HTMLEntities.new
-          text = coder.decode text.force_encoding('utf-8')
+          text = t.dig("text").force_encoding('utf-8')
 
           highlights = ((t.dig("entities", "hashtags") || []) + (t.dig("entities", "mentions") || [])).sort_by{|k| k['start']}.reverse
           highlights.each do |k|
-            text.insert(k['end'], "\x0f")
-            text.insert(k['start'], "\x0307")
+            text.force_encoding('utf-8').insert(k['end'], "\x0f")
+            text.force_encoding('utf-8').insert(k['start'], "\x0307")
           end
+
+          coder = HTMLEntities.new
+          text = coder.decode text.force_encoding('utf-8')
 
           text = text.gsub(/\n/, " ")
           text = text.gsub(/\s+/, " ")
@@ -102,6 +102,7 @@ module URLHandlers
 
           #myreply <<  "\x0303" + "[Twitter] \x0f"
           myreply << "\x02[Twitter]\x0f (@" + "\x0311" + author.dig("username") + "\x0f" +  (author.dig("verified") == true ? "\x0302\u{2705}\x0f" : "") + " - " + author.dig("name") + "): "
+          #myreply << "\x02@" + author.dig("username") + "\x0f" +  (author.dig("verified") == true ? "\x0302\u{2705}\x0f" : "") + " (" + author.dig("name") + "): "
           #myreply << "\x02" + text + "\x0f" + " | "
           myreply << text  + " | "
           if !timeAgo.nil?

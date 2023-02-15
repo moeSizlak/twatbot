@@ -30,7 +30,7 @@ module URLHandlers
           domain_redirect = true if domain1 != domain2
         end
 
-        return "\x02[Title]\x0f #{title[:title]}" + (domain_redirect == true ? (" :: \x0307#{host2}\x0f") : '')
+        return "[ \x02#{title[:title]}\x0f ]" + (domain_redirect == true ? (" :: \x0307#{host2}\x0f") : '')
       end
       
       return nil    
