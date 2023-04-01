@@ -85,19 +85,15 @@ module Plugins
         
         iscore = i.rating.to_s
         ivotes = i.votes.to_s.gsub(/,/,'')
+        ovotes = (omdb.body["imdbVotes"].gsub(/,/,'')) rescue nil
+        oscore = (omdb.body["imdbRating"]) rescue nil
+
+
         puts "IMDB DATA: #{iscore}, #{ivotes}"
-        ovotes = ''
-        oscore = ''
-        myvotes = ''
-        myscore = ''
-        if omdb && omdb.body.key?('imdbVotes')
-          ovotes = omdb.body["imdbVotes"].gsub(/,/,'')
-        end
-        if omdb && omdb.body.key?('imdbRating')
-         oscore = omdb.body["imdbRating"]
-        end
-        if ivotes && ivotes =~ /^\d+$/
-          if ovotes && ovotes =~ /^\d+$/
+        puts "OMDB DATA: #{oscore}, #{ovotes}"
+
+        if ivotes && ivotes =~ /^\d+$/ && iscore && iscore =~ /^[\d\.]+$/
+          if ovotes && ovotes =~ /^\d+$/ && oscore && oscore =~ /^[\d\.]+$/
             if ovotes.to_i > ivotes.to_i
               puts "Using OMDB score/votes"
               myvotes = ovotes
@@ -113,7 +109,7 @@ module Plugins
             myscore = iscore
           end
         else
-          if ovotes && ovotes =~ /^\d+$/
+          if ovotes && ovotes =~ /^\d+$/ && oscore && oscore =~ /^[\d\.]+$/
             puts "Using OMDB score/votes"
             myvotes = ovotes
             myscore = oscore
@@ -122,20 +118,22 @@ module Plugins
             myvotes = 0
             myscore = 0.0
           end
-        end        
+        end       
+
+
+
         myvotes = myvotes.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
         myscore = myscore.to_s + "/10"
-        
-        if omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /^\s*(unknown|N[\\\/A])/i
-          puts "Using OMDB plot" # \"#{omdb.body["Plot"]}\", vs imdb \"#{i.plot}\""
+
+        myplot = i.plot
+        if myplot && myplot.length > 0
+          puts "Using IMDB plot"
+        elsif omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /^\s*(unknown|N[\\\/A])/i
+          puts "Using OMDB plot"
           myplot = omdb.body["Plot"]
         else
-          puts "Using IMDB plot" # \"#{omdb.body["Plot"]}\", vs imdb \"#{i.plot}\""
-          myplot = i.plot
-          if myplot.nil?
-            myplot = ""
-          end
-          myplot.gsub!(/[\r\n].*/, "")
+          puts "Unable to get plot from IMDB or OMDB."
+          myplot = ""
         end  
         
         return { :id => i.id, :title => i.title, :year => i.year, :url => 'http://www.imdb.com/title/tt' + CGI.escape(i.id) + '/', :plot => myplot, :tomato => tomato,
