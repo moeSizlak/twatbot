@@ -60,7 +60,15 @@ module Plugins
                 postCount = entries.where(:URL => link).where('"Date" < (NOW() + interval \'-35 seconds\')').count
                 if postCount > 0
                   firstPost = entries.order(Sequel.asc(:Date)).limit(1).where(:URL => link).first
-                  output << "  (Posted #{postCount>1 ? postCount.to_s + ' times' : 'once'} before, #{postCount>1 ? 'originally ' : ''}by #{firstPost[:Nick][0]+ "\u200b" + firstPost[:Nick][1..-1]} on #{firstPost[:Date].to_date})"
+                  # don't highlight people's nicknames
+                  username = firstPost[:Nick].sub(/(.)/, "\\1\x0f")
+                  if postCount > 1
+                    times = "#{postCount} times"
+                    originally_ = "originally "
+                  else
+                    times = "once"
+                  end
+                  output << "  (Posted #{times} before, #{originally_}by #{username} on #{firstPost[:Date].to_date})"
                 end
               end
 
