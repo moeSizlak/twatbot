@@ -324,6 +324,8 @@ module Plugins
             if tz && tz.body.dig('rawOffset')
               sunriseTime = Time.at(sunriseTime.to_time.to_i + tz.body.dig('rawOffset').to_i + tz.body.dig('dstOffset').to_i ).utc.to_datetime
               myreply3 << " | \x02Sunrise:\x0f #{sunriseTime.strftime("%l:%M %P").strip} #{tz.body.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
+
+              myreply3.sub!(/\|/, "| " + Time.at(Time.now.to_i + tz.body.dig('rawOffset').to_i + ((tz.body.dig('dstOffset').to_i) rescue 0)).utc.to_datetime.strftime("%l:%M%P").strip + " |")
             end
           end
         end
