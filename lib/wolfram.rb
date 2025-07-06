@@ -1,8 +1,6 @@
 require 'cgi'
-require 'unirest'
 require 'time'
-require 'nokogiri'
-require 'open-uri'
+require 'httpx'
 #require 'htmlentities'
 
 module Plugins
@@ -34,7 +32,7 @@ module Plugins
       botlog "", m
       q.strip!
 
-      doc = Nokogiri::HTML(URI.open("http://api.wolframalpha.com/v2/query?input=#{CGI.escape(q)}&appid=#{@config[:WOLFRAM_APP_ID]}"))
+      doc = Nokogiri::HTML(HTTPX.plugin(:follow_redirects).get("http://api.wolframalpha.com/v2/query?input=#{CGI.escape(q)}&appid=#{@config[:WOLFRAM_APP_ID]}").body.to_s)
       if doc.nil?
         m.reply "Failure connecting to API."
         return

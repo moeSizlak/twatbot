@@ -1,10 +1,8 @@
 require 'cgi'
-require 'unirest'
+require 'httpx'
 require 'time'
 require 'nokogiri'
-require 'open-uri'
-#require 'htmlentities'
-#require 'selenium-webdriver'
+
 
 module Plugins
   class Google
@@ -54,8 +52,7 @@ module Plugins
       myreply = nil
       begin
         if n == 1
-          doc = open("https://www.google.com/search?q=#{CGI.escape(q)}&ie=UTF-8",
-            "User-Agent" => "Ruby")
+          doc = HTTPX.plugin(:follow_redirects).with(headers: {"User-Agent" => "Ruby"}).get("https://www.google.com/search?q=#{CGI.escape(q)}&ie=UTF-8".body.to_s)
 
           #options = Selenium::WebDriver::Chrome::Options.new
           #options.add_argument('--ignore-certificate-errors')
@@ -160,24 +157,24 @@ module Plugins
 
 
 
-      search = Unirest::get("https://www.googleapis.com/customsearch/v1?key=#{@config[:GOOGLE_SEARCH_APIKEY]}&cx=#{@config[:GOOGLE_SEARCH_ENGINE_ID]}&q=" + CGI.escape(q))
+      search = HTTPX.plugin(:follow_redirects).get("https://www.googleapis.com/customsearch/v1?key=#{@config[:GOOGLE_SEARCH_APIKEY]}&cx=#{@config[:GOOGLE_SEARCH_ENGINE_ID]}&q=" + CGI.escape(q)).json
 
-      if search && search.body && search.body.key?("searchInformation") && search.body["searchInformation"].key?("totalResults")
+      if search && search && search.key?("searchInformation") && search["searchInformation"].key?("totalResults")
         
-        if search.body["searchInformation"]["totalResults"].to_i == 0
+        if search["searchInformation"]["totalResults"].to_i == 0
           m.reply "No Results. [\"#{q}\"]"
           return
-        elsif search.body["items"].count < n
-          m.reply "ERROR: I can only see the top #{search.body["items"].count} results. [\"#{q}\"]"
+        elsif search["items"].count < n
+          m.reply "ERROR: I can only see the top #{search["items"].count} results. [\"#{q}\"]"
           return
         end
 
-        totalResults = search.body["searchInformation"]["totalResults"]
+        totalResults = search["searchInformation"]["totalResults"]
         totalResultsFormatted = totalResults.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
 
-        if search.body.key?("items") && search.body["items"].count >= n && search.body["items"][n-1].key?("link") && search.body["items"][n-1].key?("snippet")
-          link = search.body["items"][n-1]["link"]
-          snip = search.body["items"][n-1]["snippet"]
+        if search.key?("items") && search["items"].count >= n && search["items"][n-1].key?("link") && search["items"][n-1].key?("snippet")
+          link = search["items"][n-1]["link"]
+          snip = search["items"][n-1]["snippet"]
 
           myreply = ""
           myreply << "\x0312G\x0f"

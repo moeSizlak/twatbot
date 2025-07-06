@@ -1,7 +1,6 @@
 require 'sequel'
 require 'csv'
-require 'tempfile'
-require 'unirest'
+require 'httpx'
 require 'nokogiri'
 
 
@@ -57,16 +56,16 @@ module Plugins
     end
 
     def updatecorona
-      mycorona2 = Unirest::get("https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/2/query?f=json&where=Confirmed%20%3E%200&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc&resultOffset=0&resultRecordCount=200&cacheHint=true", headers:{"authority" => "services1.arcgis.com", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "sec-fetch-dest" => "empty", "accept" => "*/*", "origin" => "https://gisanddata.maps.arcgis.com", "sec-fetch-site" => "same-site", "sec-fetch-mode" => "cors", "referer" => "https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html", "accept-language" => "en-US,en;q=0.9"}) rescue nil
-      mycorona = Unirest::get("https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=Confirmed%20%3E%200&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&resultOffset=0&resultRecordCount=250&cacheHint=true", headers:{"authority" => "services1.arcgis.com", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "sec-fetch-dest" => "empty", "accept" => "*/*", "origin" => "https://gisanddata.maps.arcgis.com", "sec-fetch-site" => "same-site", "sec-fetch-mode" => "cors", "referer" => "https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html", "accept-language" => "en-US,en;q=0.9"}) rescue nil
+      mycorona2 = HTTPX.plugin(:follow_redirects).with(headers: {"authority" => "services1.arcgis.com", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "sec-fetch-dest" => "empty", "accept" => "*/*", "origin" => "https://gisanddata.maps.arcgis.com", "sec-fetch-site" => "same-site", "sec-fetch-mode" => "cors", "referer" => "https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html", "accept-language" => "en-US,en;q=0.9"}).get("https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/2/query?f=json&where=Confirmed%20%3E%200&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc&resultOffset=0&resultRecordCount=200&cacheHint=true").json
+      mycorona = HTTPX.plugin(:follow_redirects).with(headers: {"authority" => "services1.arcgis.com", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "sec-fetch-dest" => "empty", "accept" => "*/*", "origin" => "https://gisanddata.maps.arcgis.com", "sec-fetch-site" => "same-site", "sec-fetch-mode" => "cors", "referer" => "https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html", "accept-language" => "en-US,en;q=0.9"}).get("https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=Confirmed%20%3E%200&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&resultOffset=0&resultRecordCount=250&cacheHint=true").json
 
-      if !mycorona.nil? && !mycorona.body.nil? && !mycorona.body["features"].nil?
-        @@corona = mycorona.body["features"]
+      if !mycorona.nil? && !mycorona.nil? && !mycorona["features"].nil?
+        @@corona = mycorona["features"]
         @@corona_lastupdate = DateTime.now
       end
 
-      if !mycorona2.nil? && !mycorona2.body.nil? && !mycorona2.body["features"].nil?
-        @@corona2 = mycorona2.body["features"]
+      if !mycorona2.nil? && !mycorona2.nil? && !mycorona2["features"].nil?
+        @@corona2 = mycorona2["features"]
         @@corona2_lastupdate = DateTime.now
       end
 
@@ -74,12 +73,12 @@ module Plugins
 
 
     def updatecorona_new(m=nil)
-      mycorona_countries = Unirest::get("https://www.worldometers.info/coronavirus/",      headers:{"authority" => "www.worldometers.info", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "accept-language" => "en-US,en;q=0.9"}) rescue nil
-      mycorona_usa = Unirest::get("https://www.worldometers.info/coronavirus/country/us/", headers:{"authority" => "www.worldometers.info", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "accept-language" => "en-US,en;q=0.9"}) rescue nil
+      mycorona_countries = HTTPX.plugin(:follow_redirects).with(headers:{"authority" => "www.worldometers.info", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "accept-language" => "en-US,en;q=0.9"}).get("https://www.worldometers.info/coronavirus/").body.to_s rescue nil
+      mycorona_usa = HTTPX.plugin(:follow_redirects).with(headers: {"authority" => "www.worldometers.info", "pragma" => "no-cache", "cache-control" => "no-cache", "user-agent" => "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36", "accept-language" => "en-US,en;q=0.9"}).get("https://www.worldometers.info/coronavirus/country/us/").body.to_s  rescue nil
       
 
-      if !mycorona_countries.nil? && !mycorona_countries.body.nil?
-        doc = Nokogiri::HTML(mycorona_countries.body)
+      if !mycorona_countries.nil?
+        doc = Nokogiri::HTML(mycorona_countries)
         tab = doc.at("table#main_table_countries_today tbody")
         
         @@corona_countries = {}
@@ -110,8 +109,8 @@ module Plugins
       end
 
 
-      if !mycorona_usa.nil? && !mycorona_usa.body.nil?
-        doc = Nokogiri::HTML(mycorona_usa.body)
+      if !mycorona_usa.nil?
+        doc = Nokogiri::HTML(mycorona_usa)
         tab = doc.at("table#usa_table_countries_today tbody")
         
         @@corona_states = {}
@@ -285,15 +284,15 @@ module Plugins
               puts "Found cached lat/long of \"#{c.lat}\", \"#{c.long}\""
             else
               puts "Using URL1 = https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
-              newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+              newloc = HTTPX.plugin(:follow_redirects).get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}").json
               
-              if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("geometry") && newloc.body["results"][0]["geometry"].key?("location") && newloc.body["results"][0]["geometry"]["location"].key?("lat") && newloc.body["results"][0]["geometry"]["location"].key?("lng")
-                lat  = newloc.body["results"][0]["geometry"]["location"]["lat"].to_s
-                lng  = newloc.body["results"][0]["geometry"]["location"]["lng"].to_s
+              if newloc && newloc && newloc.key?("results") && newloc["results"][0] && newloc["results"][0].key?("geometry") && newloc["results"][0]["geometry"].key?("location") && newloc["results"][0]["geometry"]["location"].key?("lat") && newloc["results"][0]["geometry"]["location"].key?("lng")
+                lat  = newloc["results"][0]["geometry"]["location"]["lat"].to_s
+                lng  = newloc["results"][0]["geometry"]["location"]["lng"].to_s
 
-                if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
+                if newloc && newloc && newloc.key?("results") && newloc["results"][0] && newloc["results"][0].key?("address_components") && newloc["results"][0]["address_components"].length > 0
                   # Remove all of the following address components unconditionally
-                  ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
+                  ac = newloc["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
                   
                   # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
                   ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
@@ -302,7 +301,7 @@ module Plugins
                   sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
                   fad = ac.collect{|x| x[sl]}.join(", ")
                 end
-                mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+                mycunt = newloc["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
 
                 @LocationCacheEntry.create(:location => mylocation, :lat => lat, :long => lng, :display_name => fad, :country => mycunt, :counter => 1)
               else
@@ -455,15 +454,15 @@ module Plugins
               puts "Found cached lat/long of \"#{c.lat}\", \"#{c.long}\""
             else
               puts "Using URL1 = https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
-              newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+              newloc = HTTPX.plugin(:follow_redirects).get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}").json
               
-              if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("geometry") && newloc.body["results"][0]["geometry"].key?("location") && newloc.body["results"][0]["geometry"]["location"].key?("lat") && newloc.body["results"][0]["geometry"]["location"].key?("lng")
-                lat  = newloc.body["results"][0]["geometry"]["location"]["lat"].to_s
-                lng  = newloc.body["results"][0]["geometry"]["location"]["lng"].to_s
+              if newloc && newloc && newloc.key?("results") && newloc["results"][0] && newloc["results"][0].key?("geometry") && newloc["results"][0]["geometry"].key?("location") && newloc["results"][0]["geometry"]["location"].key?("lat") && newloc["results"][0]["geometry"]["location"].key?("lng")
+                lat  = newloc["results"][0]["geometry"]["location"]["lat"].to_s
+                lng  = newloc["results"][0]["geometry"]["location"]["lng"].to_s
 
-                if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
+                if newloc && newloc && newloc.key?("results") && newloc["results"][0] && newloc["results"][0].key?("address_components") && newloc["results"][0]["address_components"].length > 0
                   # Remove all of the following address components unconditionally
-                  ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
+                  ac = newloc["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","natural_feature","airport","park","point_of_interest"]).empty?}
                   
                   # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
                   ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
@@ -472,7 +471,7 @@ module Plugins
                   sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
                   fad = ac.collect{|x| x[sl]}.join(", ")
                 end
-                mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+                mycunt = newloc["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
 
 
                 @LocationCacheEntry.create(:location => mylocation, :lat => lat, :long => lng, :display_name => fad, :country => mycunt, :counter => 1)

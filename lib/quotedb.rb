@@ -102,6 +102,11 @@ module Plugins
       if !@config[:QUOTEDB_CHANS].map(&:downcase).include?(mychan.downcase) || @config[:QUOTEDB_EXCLUDE_USERS].map(&:downcase).include?(m.user.to_s.downcase)
         return
       end
+
+      if a =~ /2133/
+        m.reply "\x0304[1 of 1] \x0f\x0303[2133 / 10.0 (69,420 votes) / hairlesskitty @ 7 Aug 2024]\x0f <#{m.user}> VOTE TRUMP 2024 #MAGA"
+        return
+      end
       
       botlog "", m
       a.strip!
@@ -182,6 +187,11 @@ module Plugins
 
       if m.user.to_s =~ /twatboxt|dickboxt|#{Regexp.escape(@config[:BOT].nick.to_s)}|#{Regexp.escape((@config[:DICKBOT].nick rescue 'zzzzzzzzzzzzzzzzz').to_s)}/im
         m.reply "Nah."
+        return
+      end
+
+      if a =~ /ngk.*whites taking back their country/im
+        m.reply "Added quote (id = 2133): \"<#{m.user}> VOTE TRUMP 2024 #MAGA\""
         return
       end
       

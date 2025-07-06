@@ -1,6 +1,5 @@
 require 'sequel'
-require 'unirest'
-require 'ethon'
+require 'httpx'
 require 'filemagic'
 require 'securerandom'
 require 'time'
@@ -48,17 +47,17 @@ module Plugins
             image = nil
             
             if type == "gallery"
-              gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
+              gallery = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/gallery/#{path}.json").json
               
-              if gallery.body && gallery.body.key?("success") && gallery.body["success"] == true && gallery.body.key?("data")
-                if gallery.body["data"].key?("is_album") && gallery.body["data"]["is_album"] == true
-                  album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
-                  if !album.body || !album.body.key?("success") || !album.body["success"] == true || !album.body.key?("data")
+              if gallery && gallery.key?("success") && gallery["success"] == true && gallery.key?("data")
+                if gallery["data"].key?("is_album") && gallery["data"]["is_album"] == true
+                  album = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/album/#{path}.json").json
+                  if !album || !album.key?("success") || !album["success"] == true || !album.key?("data")
                     album = nil
                   end
                 else
-                  image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
-                  if !image.body || !image.body.key?("success") || !image.body["success"] == true || !image.body.key?("data")
+                  image = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/image/#{path}.json").json
+                  if !image || !image.key?("success") || !image["success"] == true || !image.key?("data")
                     image = nil
                   end
                 end
@@ -67,12 +66,12 @@ module Plugins
               end
               
             elsif type == "album"
-              album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
+              album = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/album/#{path}.json").json
               
-              if album.body && album.body.key?("success") && album.body["success"] == true && album.body.key?("data")
-                if album.body["data"].key?("in_gallery") && album.body["data"]["in_gallery"] == true
-                  gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
-                  if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
+              if album && album.key?("success") && album["success"] == true && album.key?("data")
+                if album["data"].key?("in_gallery") && album["data"]["in_gallery"] == true
+                  gallery = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/gallery/#{path}.json").json
+                  if !gallery || !gallery.key?("success") || !gallery["success"] == true || !gallery.key?("data")
                     gallery = nil
                   end
                 end
@@ -81,12 +80,12 @@ module Plugins
               end
               
             elsif type == "image"
-              image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
+              image = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/image/#{path}.json").json
               
-              if image.body && image.body.key?("success") && image.body["success"] == true && image.body.key?("data")
-                if image.body["data"].key?("in_gallery") && image.body["data"]["in_gallery"] == true
-                  gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
-                  if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
+              if image && image.key?("success") && image["success"] == true && image.key?("data")
+                if image["data"].key?("in_gallery") && image["data"]["in_gallery"] == true
+                  gallery = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/gallery/#{path}.json").json
+                  if !gallery || !gallery.key?("success") || !gallery["success"] == true || !gallery.key?("data")
                     gallery = nil
                   end
                 end
@@ -95,8 +94,8 @@ module Plugins
               end            
             end
             
-            if gallery && gallery.body["data"].key?("title") && !gallery.body["data"]["title"].nil? && gallery.body["data"]["title"].length > 0
-              g_title = gallery.body["data"]["title"]
+            if gallery && gallery["data"].key?("title") && !gallery["data"]["title"].nil? && gallery["data"]["title"].length > 0
+              g_title = gallery["data"]["title"]
             end
             
             if !image.nil?
@@ -106,8 +105,8 @@ module Plugins
             end
             
             if !search.nil?          
-              if search.body["data"].key?("title") && !search.body["data"]["title"].nil? && search.body["data"]["title"].length > 0
-                title = search.body["data"]["title"]
+              if search["data"].key?("title") && !search["data"]["title"].nil? && search["data"]["title"].length > 0
+                title = search["data"]["title"]
               end             
 
               if g_title
@@ -124,22 +123,22 @@ module Plugins
                 imgurtitle = "[Untitled]"
               end
               
-              if search.body["data"].key?("images_count")
+              if search["data"].key?("images_count")
                 imgurtitle = "[ALBUM] " + imgurtitle
-                if search.body["data"].key?("cover") && !search.body["data"]["cover"].nil? && search.body["data"]["cover"].length > 0
-                  cover = search.body["data"]["cover"]
-                  image = Unirest::get("https://api.imgur.com/3/image/#{cover}.json", headers:{ "Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] })
-                  if !image.body || !image.body.key?("success") || image.body["success"] != true || !image.body.key?("data")
+                if search["data"].key?("cover") && !search["data"]["cover"].nil? && search["data"]["cover"].length > 0
+                  cover = search["data"]["cover"]
+                  image = HTTPX.plugin(:follow_redirects).with(headers: {"Authorization" => "Client-ID " + m.bot.botconfig[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/image/#{cover}.json").json
+                  if !image || !image.key?("success") || image["success"] != true || !image.key?("data")
                     image = nil
                   end
                 end
               end
               
               if !image.nil?
-                if image.body["data"].key?("mp4") && !image.body["data"]["mp4"].nil? && image.body["data"]["mp4"].length > 0
-                  imgurlink = image.body["data"]["mp4"]
-                elsif image.body["data"].key?("link") && !image.body["data"]["link"].nil? && image.body["data"]["link"].length > 0
-                  imgurlink = image.body["data"]["link"]
+                if image["data"].key?("mp4") && !image["data"]["mp4"].nil? && image["data"]["mp4"].length > 0
+                  imgurlink = image["data"]["mp4"]
+                elsif image["data"].key?("link") && !image["data"]["link"].nil? && image["data"]["link"].length > 0
+                  imgurlink = image["data"]["link"]
                 end
               end
 
@@ -173,18 +172,21 @@ module Plugins
             end
           
             begin
-              easy = Ethon::Easy.new url: tempurl, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, headers: {
+              http = HTTPX.plugin(:follow_redirects).plugin(:cookies).plugin(:follow_redirects).with(timeout: { request_timeout: 15 }).with(headers: {
                 'User-Agent' => (tempurl =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
-              }
+              })
+
+              response = http.get(url)
         
-              easy.on_body do |chunk, easy|
-              recvd << chunk             
-              :abort if recvd.length > 1024
-            end
-            easy.perform
+              while chunk = response.body.read(16_384)
+                recvd << chunk             
+                response.close if recvd.length > 1024
+              end
+
             rescue
               # EXCEPTION!
-            end    
+            end  
+            response.close rescue nil 
           end
 
           if recvd.length > 0
@@ -212,20 +214,23 @@ module Plugins
               filesize = 0;
               File.open(imagedir + imagefile, "wb") do |saved_file|
                 begin
-                  easy = Ethon::Easy.new url: tempurl, followlocation: true, ssl_verifypeer: false, headers: {
-                  'User-Agent' => (tempurl =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
-                  }         
-                    
-                  easy.on_body do |chunk, easy|
+                  http = HTTPX.plugin(:cookies).plugin(:follow_redirects).with(timeout: { request_timeout: 15 }).with(headers: {
+                    'User-Agent' => (tempurl =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
+                  })
+
+                  response = http.get(url)
+            
+                  while chunk = response.body.read(16_384)
+
                     saved_file.write(chunk) 
                     filesize += chunk.length;
-                    :abort if filesize > 50000000   #~50 MB limit
+                    response.close if recvd.length > 50000000   #~50 MB limit
                   end
                   
-                  easy.perform
                 rescue
                   # EXCEPTION!
-                end                
+                end   
+                response.close rescue nil            
               end
               
               if filesize == 0 || filesize >= 50000000

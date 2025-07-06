@@ -1,9 +1,8 @@
 require 'cgi'
-require 'unirest'
+require 'httpx'
 require 'time'
 require 'nokogiri'
-#require 'open-uri'
-#require 'htmlentities'
+
 
 module Plugins
   class TwitterSearch
@@ -41,7 +40,7 @@ module Plugins
       end
       n = 5 if n > 5
 
-      doc = Nokogiri::HTML(URI.open("https://mobile.twitter.com/search?q=#{CGI.escape q}&src=typed_query&f=live"))
+      doc = Nokogiri::HTML(HTTPX.plugin(:follow_redirects).get("https://mobile.twitter.com/search?q=#{CGI.escape q}&src=typed_query&f=live").body.to_s)
       
       tweets = doc.css("table.tweet")
       return if tweets.nil? or tweets.count == 0

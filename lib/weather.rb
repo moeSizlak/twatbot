@@ -1,5 +1,5 @@
 require 'cgi'
-require 'unirest'
+require 'httpx'
 require 'time'
 require 'thread'
 require 'csv'
@@ -136,15 +136,15 @@ module Plugins
         puts "Found cached lat/long of \"#{c.lat}\", \"#{c.long}\""
       else
         puts "Using URL1 = https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}"
-        newloc = Unirest::get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
+        newloc = HTTPX.get("https://maps.googleapis.com/maps/api/geocode/json?address=#{CGI.escape(mylocation).gsub('+','%20')}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}").json
         
-        if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("geometry") && newloc.body["results"][0]["geometry"].key?("location") && newloc.body["results"][0]["geometry"]["location"].key?("lat") && newloc.body["results"][0]["geometry"]["location"].key?("lng")
-          lat  = newloc.body["results"][0]["geometry"]["location"]["lat"].to_s
-          lng  = newloc.body["results"][0]["geometry"]["location"]["lng"].to_s
+        if newloc && newloc && newloc.key?("results") && newloc["results"][0] && newloc["results"][0].key?("geometry") && newloc["results"][0]["geometry"].key?("location") && newloc["results"][0]["geometry"]["location"].key?("lat") && newloc["results"][0]["geometry"]["location"].key?("lng")
+          lat  = newloc["results"][0]["geometry"]["location"]["lat"].to_s
+          lng  = newloc["results"][0]["geometry"]["location"]["lng"].to_s
 
-          if newloc && newloc.body && newloc.body.key?("results") && newloc.body["results"][0] && newloc.body["results"][0].key?("address_components") && newloc.body["results"][0]["address_components"].length > 0
+          if newloc && newloc && newloc.key?("results") && newloc["results"][0] && newloc["results"][0].key?("address_components") && newloc["results"][0]["address_components"].length > 0
             # Remove all of the following address components unconditionally
-            ac = newloc.body["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","neighborhood","sublocality","natural_feature","airport","park","point_of_interest"]).empty?}
+            ac = newloc["results"][0]["address_components"].select{|x| !(x["types"] & ["country","administrative_area_level_1","administrative_area_level_2","colloquial_area","locality","neighborhood","sublocality","natural_feature","airport","park","point_of_interest"]).empty?}
             
             # Only remove administrative_area_level_2 if it is not the FIRST address component in the list:
             ac = ac.reject{|x| x["types"].include?("administrative_area_level_2")} unless ac[0]["types"].include?("administrative_area_level_2")
@@ -153,7 +153,7 @@ module Plugins
             sl = "short_name" if (ac.find{|x| x["types"].include?("country") rescue ""}["short_name"] rescue "error") == "US"
             fad = ac.collect{|x| x[sl]}.join(", ")
           end
-          mycunt = newloc.body["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
+          mycunt = newloc["results"][0]["address_components"].find{|x| x["types"].include?("country") rescue false}["short_name"] rescue "error"
 
 
           @LocationCacheEntry.create(:location => mylocation, :lat => lat, :long => lng, :display_name => fad, :country => mycunt, :counter => 1)
@@ -207,7 +207,7 @@ module Plugins
           end
 
           puts "Using URL5 = #{url5}"
-          weather3 = Unirest::get(url5)
+          weather3 = HTTPX.get(url5).json
 
           @@apicalls_day.unshift(Time.now.to_i)
           @@apicalls_minute.unshift(Time.now.to_i)   
@@ -234,14 +234,14 @@ module Plugins
       idx1 = 0
       idx2 = 1
 
-      if weather3.body && weather3.body.dig('data', 'timelines', 0, 'timestep') != "current"
+      if weather3 && weather3.dig('data', 'timelines', 0, 'timestep') != "current"
         idx1=1
         idx2=0
       end
 
-      if weather3.body && weather3.body.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'temperature')
-        w = weather3.body
-        #puts w
+      if weather3 && weather3.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'temperature')
+        w = weather3
+        puts w
 
         temperature = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'temperature')
         weatherCode = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'weatherCode')
@@ -254,6 +254,8 @@ module Plugins
         sunsetTime = w.dig('data', 'timelines', idx2, 'intervals', 0, 'values', 'sunsetTime')
         cloudCover = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'cloudCover')
         humidity = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'humidity')
+        particulateMatter25 = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'particulateMatter25')
+        epaIndex = w.dig('data', 'timelines', idx1, 'intervals', 0, 'values', 'epaIndex')
 
 
         weatherCodes = [
@@ -317,15 +319,22 @@ module Plugins
 
         myreply3 << " | \x02Cloud Cover:\x0f #{cloudCover.round(0)}%" unless cloudCover.nil?
 
+        if !particulateMatter25.nil?
+          myreply3 << " | \x02PM2.5:\x0f #{particulateMatter25.to_f * 35.31} ug/m^3"
+          if !epaIndex.nil?
+            myreply3 << " (AQI #{epaIndex})"
+          end
+        end
+
         if !sunriseTime.nil? 
           sunriseTime = DateTime.parse(sunriseTime)
           if !sunriseTime.nil?
-            tz = Unirest::get("https://maps.googleapis.com/maps/api/timezone/json?location=#{lat},#{lng}&timestamp=#{sunriseTime.to_time.to_i}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
-            if tz && tz.body.dig('rawOffset')
-              sunriseTime = Time.at(sunriseTime.to_time.to_i + tz.body.dig('rawOffset').to_i + tz.body.dig('dstOffset').to_i ).utc.to_datetime
-              myreply3 << " | \x02Sunrise:\x0f #{sunriseTime.strftime("%l:%M %P").strip} #{tz.body.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
+            tz = HTTPX.get("https://maps.googleapis.com/maps/api/timezone/json?location=#{lat},#{lng}&timestamp=#{sunriseTime.to_time.to_i}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}").json
+            if tz && tz.dig('rawOffset')
+              sunriseTime = Time.at(sunriseTime.to_time.to_i + tz.dig('rawOffset').to_i + tz.dig('dstOffset').to_i ).utc.to_datetime
+              myreply3 << " | \x02Sunrise:\x0f #{sunriseTime.strftime("%l:%M %P").strip} #{tz.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
 
-              myreply3.sub!(/\|/, "| " + Time.at(Time.now.to_i + tz.body.dig('rawOffset').to_i + ((tz.body.dig('dstOffset').to_i) rescue 0)).utc.to_datetime.strftime("%l:%M%P").strip + " |")
+              myreply3.sub!(/\|/, "| " + Time.at(Time.now.to_i + tz.dig('rawOffset').to_i + ((tz.dig('dstOffset').to_i) rescue 0)).utc.to_datetime.strftime("%l:%M%P").strip + " |")
             end
           end
         end
@@ -333,10 +342,10 @@ module Plugins
         if !sunsetTime.nil? 
           sunsetTime = DateTime.parse(sunsetTime)
           if !sunsetTime.nil?
-            tz = Unirest::get("https://maps.googleapis.com/maps/api/timezone/json?location=#{lat},#{lng}&timestamp=#{sunsetTime.to_time.to_i}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}")
-            if tz && tz.body.dig('rawOffset')
-              sunsetTime = Time.at(sunsetTime.to_time.to_i + tz.body.dig('rawOffset').to_i + tz.body.dig('dstOffset').to_i ).utc.to_datetime
-              myreply3 << " | \x02Sunset:\x0f #{sunsetTime.strftime("%l:%M %P").strip} #{tz.body.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
+            tz = HTTPX.get("https://maps.googleapis.com/maps/api/timezone/json?location=#{lat},#{lng}&timestamp=#{sunsetTime.to_time.to_i}&key=#{@config[:YOUTUBE_GOOGLE_SERVER_KEY]}").json
+            if tz && tz.dig('rawOffset')
+              sunsetTime = Time.at(sunsetTime.to_time.to_i + tz.dig('rawOffset').to_i + tz.dig('dstOffset').to_i ).utc.to_datetime
+              myreply3 << " | \x02Sunset:\x0f #{sunsetTime.strftime("%l:%M %P").strip} #{tz.dig('timeZoneName').split(" ").map{|x| x[0]}.join}"
             end
           end
         end
@@ -357,9 +366,9 @@ module Plugins
         #myreply3 << " | \x02Sunset:\x0f #{sunset.strftime('%a %F %T %Z')}" unless sunset.nil?
 
 =begin        
-        if weather4.body && weather4.body.count >= 3 && weather4.body[0].dig('temp')
-          w = weather4.body
-          weather4.body[0...3].each do |d|
+        if weather4 && weather4.count >= 3 && weather4[0].dig('temp')
+          w = weather4
+          weather4[0...3].each do |d|
             myreply3 << " | \x02#{Date.parse(d.dig("observation_time","value")).strftime('%a')}:\x0f" unless d.dig("observation_time","value").nil?
             myreply3 << " " + d.dig("weather_code", "value").gsub(/_/, ' ').split.map(&:capitalize).join(' ') unless d.dig("weather_code", "value").nil?
             if !d.dig('temp').nil? && d.dig('temp').count >= 2

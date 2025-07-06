@@ -1,7 +1,5 @@
 require 'htmlentities'
-require 'ethon'
-require 'tmpdir'
-require 'tempfile'
+require 'httpx'
 require 'uri'
 
 
@@ -39,39 +37,34 @@ module URLHandlers
     def getTitle(url)
       coder = HTMLEntities.new
       recvd = String.new
-      t = Tempfile.new(['url_cookies', '.dat'])
-      tmpcookiefile = t.path
-      t.write("#HttpOnly_.dumpert.nl\tTRUE\t/\tFALSE\t0\tcpc\t10") if(url =~ /https?:\/\/[^\s\/]*dumpert.nl/)
-      t.close
 
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, accept_encoding: "gzip", headers: {
+        http = HTTPX.plugin(:cookies).plugin(:follow_redirects).with(timeout: { request_timeout: 15 }).with(headers: {
           'User-Agent' => (url =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
-        }
-        easy.on_body do |chunk, easy|
-          recvd << chunk
+        })
+        http = http.with_cookies([{ name: "cpc", value: "10", httponly: true }]) if(url =~ /https?:\/\/[^\s\/]*dumpert.nl/)
+        response = http.get(url)
 
+        while chunk = response.body.read(16_384)
+          recvd << chunk
           
-          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+          recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,1024})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
           if title_found = $1
             title_found = coder.decode title_found.force_encoding('utf-8')
             title_found.strip!
             title_found.gsub!(/[[:space:]]+/m, ' ')
             title_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
-            easy.cleanup rescue nil
-            File.unlink(tmpcookiefile) rescue nil
+            response.close
             return Cinch::Helpers.sanitize title_found
           end
           
-          :abort if recvd.length > 1131072 || title_found
+          response.close if recvd.length > 1131072 || title_found
         end
-        easy.perform
         rescue
         # EXCEPTION!
       end
       
-      easy.cleanup rescue nil
-      File.unlink(tmpcookiefile) rescue nil
+      response.close rescue nil
       return nil
     end
     
@@ -80,26 +73,28 @@ module URLHandlers
       recvd = String.new
       mytitle = nil
       myurl = nil
-      t = Tempfile.new(['url_cookies', '.dat'])
-      tmpcookiefile = t.path
-      t.close
-
+      mycode = nil
       desc_found = nil
       title_found = nil
 
+      ua = 'foo'
+      ua = 'facebookexternalhit/1.1' if url =~ /tiktok.com\//
+      ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36' if url =~ /nitter.poast.org\//
+      puts "UA = #{ua}"
+
+      headers = { 'User-Agent' => ua}
+
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, accept_encoding: "gzip", headers: {
-        #easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
-          'User-Agent' => (url =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
-        }
-        easy.on_body do |chunk, easy|
-          myurl = easy.effective_url
-          #puts "myurl=\"#{myurl}\"\nrecvd=\"#{recvd}\""
+        http = HTTPX.plugin(:cookies).plugin(:follow_redirects).with(timeout: { request_timeout: 15 }).with(headers: headers)
+        response = http.get(url)
+
+        while chunk = response.body.read(16_384)
+          myurl = response.uri.to_s
+          mycode = response.status
           recvd << chunk
 
-
           if 1==0 && desc_found.nil?
-            recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,640})', Regexp::MULTILINE | Regexp::IGNORECASE)
+            recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\1[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\2).){0,1024})', Regexp::MULTILINE | Regexp::IGNORECASE)
             if desc_found = $3
               desc_found = coder.decode desc_found.force_encoding('utf-8')
               desc_found = coder.decode desc_found.force_encoding('utf-8')
@@ -107,7 +102,7 @@ module URLHandlers
               desc_found.gsub!(/[[:space:]]+/m, ' ')
               desc_found.gsub!(/(?:\p{Mark}{2})\p{Mark}+/u, '')
             else
-              recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\1).){0,640})\1[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\3', Regexp::MULTILINE | Regexp::IGNORECASE)
+              recvd =~ Regexp.new('<[[:space:]]*meta[[:space:]]+[^>]*(?<=\b)content[[:space:]]*=[[:space:]]*([\'"])((?:(?!\1).){0,1024})\1[^>]*(?<=\b)name[[:space:]]*=[[:space:]]*([\'"])description\3', Regexp::MULTILINE | Regexp::IGNORECASE)
               if desc_found = $2
                 desc_found = coder.decode desc_found.force_encoding('utf-8')
                 desc_found = coder.decode desc_found.force_encoding('utf-8')
@@ -119,7 +114,7 @@ module URLHandlers
           end
           
           if title_found.nil?
-            recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,640})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
+            recvd =~ Regexp.new('<title[^>]*>[[:space:]]*((?:(?!</title>).){0,1024})[[:space:]]*</title>', Regexp::MULTILINE | Regexp::IGNORECASE)
             if title_found = $1
               title_found = coder.decode title_found.force_encoding('utf-8')
               title_found.strip!
@@ -128,16 +123,14 @@ module URLHandlers
             end
           end
           
-          :abort if recvd.length > 1131072 || title_found #(title_found && desc_found)
+          response.close if recvd.length > 1131072 || title_found
         end
-        easy.perform
+
         rescue
         # EXCEPTION!
       end
 
-      
-      easy.cleanup rescue nil
-      File.unlink(tmpcookiefile) rescue nil
+      response.close rescue nil
 
       retval = {:effective_url => myurl}
 
@@ -153,6 +146,8 @@ module URLHandlers
         retval[:description] = nil
       end
 
+      retval[:response_code] = mycode
+
       return retval
 
     end
@@ -160,25 +155,24 @@ module URLHandlers
 
     def getEffectiveUrl(url)
       myurl = nil
-      t = Tempfile.new(['url_cookies', '.dat'])
-      tmpcookiefile = t.path
-      t.close
+
 
       begin
-        easy = Ethon::Easy.new cookiefile: tmpcookiefile, cookiejar: tmpcookiefile, url: url, followlocation: true, ssl_verifypeer: false, timeout: 30, connecttimeout: 10, accept_encoding: "gzip", headers: {
+        http = HTTPX.plugin(:cookies).plugin(:follow_redirects).with(timeout: { request_timeout: 15 }).with(headers: {
           'User-Agent' => (url =~ /tiktok.com\// ? 'facebookexternalhit/1.1' : 'foo')
-        }
-        easy.on_body do |chunk, easy|
-          myurl = easy.effective_url
-          :abort
+        })
+        response = http.get(url)
+        
+        while chunk = response.body.read(16_384)
+          myurl = response.uri.to_s
+          response.close
         end
-        easy.perform
+
       rescue
         # EXCEPTION!
       end
 
-      easy.cleanup rescue nil
-      File.unlink(tmpcookiefile) rescue nil
+      response.close rescue nil
       return myurl
     end
     

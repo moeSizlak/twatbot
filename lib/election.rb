@@ -1,8 +1,6 @@
-require 'cgi'
-require 'unirest'
+require 'httpx'
 require 'time'
 require 'thread'
-require 'net/http'
 
 module Plugins
   class Election
@@ -22,13 +20,13 @@ module Plugins
       chart = nil
       
       url = "http://elections.huffingtonpost.com/pollster/api/charts/2016-general-election-trump-vs-clinton.json"
-      chart = Unirest::get(url)
+      chart = HTTPX.plugin(:follow_redirects).get(url).json
         
-      if chart.body && chart.body.key?("estimates")
-        if chart.body["estimates"].size>0
-          clinton = chart.body["estimates"].select { |e| e.fetch("choice", "") == "Clinton" && e.fetch("value", nil)}
-          trump   = chart.body["estimates"].select { |e| e.fetch("choice", "") == "Trump" && e.fetch("value", nil) }
-          other   = chart.body["estimates"].select { |e| e.fetch("choice", "") == "Other" && e.fetch("value", nil) }
+      if chart && chart.key?("estimates")
+        if chart["estimates"].size>0
+          clinton = chart["estimates"].select { |e| e.fetch("choice", "") == "Clinton" && e.fetch("value", nil)}
+          trump   = chart["estimates"].select { |e| e.fetch("choice", "") == "Trump" && e.fetch("value", nil) }
+          other   = chart["estimates"].select { |e| e.fetch("choice", "") == "Other" && e.fetch("value", nil) }
           
           if(clinton && clinton.size > 0)
             clinton = clinton[0]["value"]
@@ -89,11 +87,11 @@ module Plugins
       pivit_trump = ''
 
 
-      cnn = Unirest.get("http://data.cnn.com/ELECTION/2016/bop/p.json")
-      if cnn.body && cnn.body.key?("candidates")
-        if cnn.body["candidates"].size>=2
-          clinton = cnn.body["candidates"].select{|x|x.key?("lname") && x["lname"]=="Clinton" }[0]
-          trump   = cnn.body["candidates"].select{|x|x.key?("lname") && x["lname"]=="Trump" }[0]
+      cnn = HTTPX.plugin(:follow_redirects).get("http://data.cnn.com/ELECTION/2016/bop/p.json").json
+      if cnn && cnn.key?("candidates")
+        if cnn["candidates"].size>=2
+          clinton = cnn["candidates"].select{|x|x.key?("lname") && x["lname"]=="Clinton" }[0]
+          trump   = cnn["candidates"].select{|x|x.key?("lname") && x["lname"]=="Trump" }[0]
 
           ev_clinton = clinton["evotes"]
           ev_trump   = trump["evotes"]

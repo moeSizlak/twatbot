@@ -1,12 +1,3 @@
-require 'cgi'
-require 'unirest'
-require 'time'
-require 'sequel'
-require 'nokogiri'
-require 'open-uri'
-require 'tzinfo'
-
-
 module Plugins
   class Op
     include Cinch::Plugin
@@ -26,6 +17,7 @@ module Plugins
 
 
     match lambda {|m| /^#{m.bot.botconfig[:OP_PASSWORD]}\s+op\s+(#[^\s]+)\s*$/im}, use_prefix: false, method: :op
+    match lambda {|m| /^#{m.bot.botconfig[:OP_PASSWORD]}\s+unban\s+(#[^\s]+)\s*$/im}, use_prefix: false, method: :unban
     
     
     match /^ppppp$/, use_prefix: false, method: :test123, react_on: :message
@@ -54,6 +46,11 @@ module Plugins
  
     def op(m, chan)
       Channel(chan).op(m.user)
+      #m.reply('hi')
+    end
+
+    def unban(m, chan)
+      Channel(chan).unban(m.user)
       #m.reply('hi')
     end
 

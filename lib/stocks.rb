@@ -1,3 +1,5 @@
+require 'httpx'
+
 module Plugins  
   class Stocks
     include Cinch::Plugin
@@ -31,12 +33,12 @@ module Plugins
       @@stocks_mutex.synchronize do
         return if !@@stocks_lastupdate.nil?
 
-        mystocks = Unirest::get("https://api.gon.gs/v1/symbols/", headers:{"Accept" => "application/json" }) rescue nil
-        #puts "AAAAAAAAAAAAAAAAA #{mystocks.body}"
+        mystocks = HTTPX.plugin(:follow_redirects).get("https://api.gon.gs/v2/symbols/", headers:{"Accept" => "application/json" }).json
+        #puts "AAAAAAAAAAAAAAAAA #{mystocks}"
 
-        if !mystocks.nil? && !mystocks.body.nil? && mystocks.body.length > 0
+        if !mystocks.nil? && !mystocks.nil? && mystocks.length > 0
             puts "Loading stock symbols"
-            @@stocks = mystocks.body
+            @@stocks = mystocks
             @@stocks_lastupdate = DateTime.now
             #puts @@stocks
         end
@@ -78,14 +80,14 @@ module Plugins
           cc = @@stocks.find{|x| x["symbol"].upcase == c.upcase}          
 
           next if cc.nil?
-          cc = Unirest::get("https://api.gon.gs/v1/quote/#{cc["symbol"]}", headers:{"Accept" => "application/json" }) rescue nil
-          if cc.nil? || cc.body.nil? || cc.body.length <= 0
+          cc = HTTPX.plugin(:follow_redirects).get("https://api.gon.gs/v1/quote/#{cc["symbol"]}", headers:{"Accept" => "application/json" }).json
+          if cc.nil? || cc.nil? || cc.length <= 0
             m.reply "Error loading stock data (symbol=#{cc["symbol"]})."
             next
           end
 
 
-          c = cc.body[0]
+          c = cc[0]
           botlog "#{c["name"]} (#{c["symbol"]}) LU=#{@@stocks_lastupdate}",m
 
           changeColor = "03"
@@ -106,11 +108,5 @@ module Plugins
       end
     end
 
-    
-
-    
-    
-
-    
   end  
 end

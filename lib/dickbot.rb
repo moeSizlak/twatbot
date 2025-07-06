@@ -1,4 +1,4 @@
-require 'ethon'
+require 'httpx'
 require 'htmlentities'
 require 'sequel'
 
@@ -17,10 +17,11 @@ module Plugins
     match /^!latest/, use_prefix: false, method: :insult3
     match /^!list/, use_prefix: false, method: :insult3
     match /^!insult2\s+(\S+)/, use_prefix: false, method: :insult2
-    match lambda {|m| /^(?!.gpt3dickbot).*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :action_insult, react_on: :action
+    #match lambda {|m| /^(?!.gpt3dickbot).*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :action_insult, react_on: :action
     listen_to :join , method: :join_insult
     
-    match lambda {|m| /^(?!.gpt3dickbot).*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :talkback    
+    #match lambda {|m| /^(?!.gpt3dickbot).*(?:twatbot|dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :talkback  
+    match lambda {|m| /^.*(?:dickbot|#{Regexp.escape(m.bot.nick.to_s)})/im}, use_prefix: false, method: :talkback  
     match /^!imitate\s+(\S.*)$/, use_prefix: false, method: :imitate   
     match /^(?!!)(?!@)(?!\.).*$/, use_prefix: false, method: :speak
     
@@ -141,12 +142,13 @@ module Plugins
       coder = HTMLEntities.new
       recvd = String.new
       url = 'http://www.insultgenerator.org/'
-      
 
-      easy = Ethon::Easy.new url: url, followlocation: true, ssl_verifypeer: false, headers: {
+      http = HTTPX.plugin(:follow_redirects).plugin(:cookies).plugin(:follow_redirects).with(timeout: { request_timeout: 15 }).with(headers: {
         'User-Agent' => 'foo'
-      }
-      easy.on_body do |chunk, easy|
+      })
+      response = http.get(url)
+
+      while chunk = response.body.read(16_384)
         recvd << chunk
         
         recvd =~ Regexp.new('<div class="wrap">\s*<br><br>((?:(?!</div>).)+)', Regexp::MULTILINE | Regexp::IGNORECASE)
@@ -163,19 +165,21 @@ module Plugins
             p e.message
           end          
           
+          response.close rescue nil 
           return title_found
         end
         
-        :abort if recvd.length > 131072 || title_found
+        response.close if recvd.length > 131072 || title_found
       end
-      easy.perform
+
+      response.close rescue nil  
       
       return nil
     end
 
     def get_insult_api
-      i = search = Unirest::get("https://insult.mattbas.org/api/insult.json")
-      i = i.body.dig("insult") rescue nil
+      i = search = HTTPX.plugin(:follow_redirects).get("https://insult.mattbas.org/api/insult.json").json
+      i = i.dig("insult") rescue nil
       return i
     end
 

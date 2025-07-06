@@ -1,6 +1,4 @@
-require 'unirest'
-require 'cgi'
-require 'nokogiri' 
+require 'httpx'
 #require 'json'
 #require_relative 'url_title.rb'
 
@@ -17,10 +15,10 @@ module URLHandlers
         article = $2     
         language = $1
         puts "WIKI_URL: Article = \"#{article}\", Language=\"#{language}\""
-        y = Unirest::get("https://#{language}wikipedia.org/api/rest_v1/page/summary/#{article}")
+        y = HTTPX.plugin(:follow_redirects).get("https://#{language}wikipedia.org/api/rest_v1/page/summary/#{article}").json
 
-        if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0
-          myreply = "\x02[WIKIPEDIA]\x0f: #{(y.body["extract"][0..436]).gsub(/[\r\n]+/," ")}"
+        if y && y && y.key?("extract") && y["extract"].length > 0
+          myreply = "\x02[WIKIPEDIA]\x0f: #{(y["extract"][0..436]).gsub(/[\r\n]+/," ")}"
           return myreply
         else
           return nil #"ZOMG ERROR!"

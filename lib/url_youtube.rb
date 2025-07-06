@@ -1,4 +1,4 @@
-require 'unirest'
+require 'httpx'
 require 'time'
 require 'ruby-duration'
 
@@ -14,34 +14,34 @@ module URLHandlers
     def parse(url)      
       if(url =~ /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|watch\?(?:(?!v=)[^&]+&)+v=)([^#\&\?\s]*).*/i)
         id = $1
-        search = Unirest::get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics")
+        search = HTTPX.plugin(:follow_redirects).get("https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics").json
         #puts "https://www.googleapis.com/youtube/v3/videos?id=" + id + "&key=" + @config[:YOUTUBE_GOOGLE_SERVER_KEY] + "&part=snippet,contentDetails,statistics,status"
 
-        if search.body && search.body.key?("items") && search.body["items"].size > 0
-          if search.body["items"][0].key?("snippet") 
-            if search.body["items"][0]["snippet"].key?("publishedAt")
-              publishedAt = search.body["items"][0]["snippet"]["publishedAt"]
+        if search && search.key?("items") && search["items"].size > 0
+          if search["items"][0].key?("snippet") 
+            if search["items"][0]["snippet"].key?("publishedAt")
+              publishedAt = search["items"][0]["snippet"]["publishedAt"]
               if publishedAt.size > 0
                 publishedAt = DateTime.iso8601(publishedAt).strftime("%Y-%m-%d")
               end
             end
             
-            if search.body["items"][0]["snippet"].key?("title")
-              title = search.body["items"][0]["snippet"]["title"]
+            if search["items"][0]["snippet"].key?("title")
+              title = search["items"][0]["snippet"]["title"]
               end
             
-            if search.body["items"][0]["snippet"].key?("description")
-              description = search.body["items"][0]["snippet"]["description"]
+            if search["items"][0]["snippet"].key?("description")
+              description = search["items"][0]["snippet"]["description"]
             end      
 
-            if search.body["items"][0]["snippet"].key?("channelTitle")
-              author = search.body["items"][0]["snippet"]["channelTitle"]
+            if search["items"][0]["snippet"].key?("channelTitle")
+              author = search["items"][0]["snippet"]["channelTitle"]
             end
           end
           
-          if search.body["items"][0].key?("contentDetails") 
-            if search.body["items"][0]["contentDetails"].key?("duration")
-              duration = search.body["items"][0]["contentDetails"]["duration"]
+          if search["items"][0].key?("contentDetails") 
+            if search["items"][0]["contentDetails"].key?("duration")
+              duration = search["items"][0]["contentDetails"]["duration"]
               if duration.size > 0
                 if Duration.load(duration).format("%tm").to_f >= 60
                   duration = Duration.load(duration).format("%hh %mm %ss")
@@ -52,7 +52,7 @@ module URLHandlers
             end  
           end
 
-          duration2 = search.body["items"][0]["snippet"]["liveBroadcastContent"]
+          duration2 = search["items"][0]["snippet"]["liveBroadcastContent"]
           if duration2.downcase == 'live'
             duration2 = "LIVE"
           elsif duration2.downcase == 'upcoming'
@@ -61,17 +61,17 @@ module URLHandlers
             duration2 = nil
           end
           
-          if search.body["items"][0].key?("statistics") 
-            if search.body["items"][0]["statistics"].key?("viewCount")
-              viewCount = search.body["items"][0]["statistics"]["viewCount"]
+          if search["items"][0].key?("statistics") 
+            if search["items"][0]["statistics"].key?("viewCount")
+              viewCount = search["items"][0]["statistics"]["viewCount"]
             end  
             
-            if search.body["items"][0]["statistics"].key?("likeCount")
-              likeCount = search.body["items"][0]["statistics"]["likeCount"]
+            if search["items"][0]["statistics"].key?("likeCount")
+              likeCount = search["items"][0]["statistics"]["likeCount"]
             end  
             
-            if search.body["items"][0]["statistics"].key?("dislikeCount")
-              dislikeCount = search.body["items"][0]["statistics"]["dislikeCount"]
+            if search["items"][0]["statistics"].key?("dislikeCount")
+              dislikeCount = search["items"][0]["statistics"]["dislikeCount"]
             end  
           end
           

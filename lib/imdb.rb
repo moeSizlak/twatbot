@@ -1,7 +1,6 @@
 require 'imdb'
-require 'nokogiri'
-require 'open-uri'
 require 'cgi'
+require 'httpx'
 
 module Plugins
   class IMDB
@@ -43,18 +42,18 @@ module Plugins
       
       if i && i.title
         puts "Successful IMDB lookup (tit=#{i.title})"
-        omdb = Unirest::get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id) + "&apikey=#{IMDB.class_variable_get(:@@config)[:OMDB_API_KEY]}") rescue nil
-        if !omdb || !omdb.body || !omdb.body.key?('Response') || omdb.body["Response"] !~ /true/i
+        omdb = HTTPX.plugin(:follow_redirects).get('http://www.omdbapi.com/?tomatoes=true&i=tt' + CGI.escape(i.id) + "&apikey=#{IMDB.class_variable_get(:@@config)[:OMDB_API_KEY]}").json
+        if !omdb || !omdb || !omdb.key?('Response') || omdb["Response"] !~ /true/i
           omdb = nil
         end     
         
         puts "OMDB lookup by ImdbId successful ===>" + (!(omdb.nil?)).to_s + "\n"
              
         tomato = nil
-        if omdb && omdb.body.key?('tomatoURL') && omdb.body["tomatoURL"] =~ /^http/
-          puts "Trying RT link #{omdb.body["tomatoURL"]}"
+        if omdb && omdb.key?('tomatoURL') && omdb["tomatoURL"] =~ /^http/
+          puts "Trying RT link #{omdb["tomatoURL"]}"
           begin
-            tomato = RottenTomatoes::getRottenTomatoString(RottenTomatoes::scrapeRottenTomatoURL(omdb.body["tomatoURL"]))
+            tomato = RottenTomatoes::getRottenTomatoString(RottenTomatoes::scrapeRottenTomatoURL(omdb["tomatoURL"]))
           rescue
           end
         end
@@ -65,8 +64,8 @@ module Plugins
           else
           myrating = ""
         end
-        if omdb && (!myrating || myrating !~ /^\[/) && omdb.body.key?('Rated')
-          myrating = "[" + omdb.body["Rated"] + "]"
+        if omdb && (!myrating || myrating !~ /^\[/) && omdb.key?('Rated')
+          myrating = "[" + omdb["Rated"] + "]"
           puts "Falling back to OMDB MPAA Rating"
         end
 
@@ -78,15 +77,15 @@ module Plugins
           else
           mygenres = ""
         end
-        if omdb && (!mygenres || mygenres !~ /^\[/) && omdb.body.key?('Genre')
-          mygenres = "[" + omdb.body["Genre"] + "]"
+        if omdb && (!mygenres || mygenres !~ /^\[/) && omdb.key?('Genre')
+          mygenres = "[" + omdb["Genre"] + "]"
           puts "Falling back to OMDB Genres"
         end
         
         iscore = i.rating.to_s
         ivotes = i.votes.to_s.gsub(/,/,'')
-        ovotes = (omdb.body["imdbVotes"].gsub(/,/,'')) rescue nil
-        oscore = (omdb.body["imdbRating"]) rescue nil
+        ovotes = (omdb["imdbVotes"].gsub(/,/,'')) rescue nil
+        oscore = (omdb["imdbRating"]) rescue nil
 
 
         puts "IMDB DATA: #{iscore}, #{ivotes}"
@@ -128,9 +127,9 @@ module Plugins
         myplot = i.plot
         if myplot && myplot.length > 0
           puts "Using IMDB plot"
-        elsif omdb && omdb.body.key?('Plot') && omdb.body["Plot"].length > 0 && omdb.body["Plot"] !~ /^\s*(unknown|N[\\\/A])/i
+        elsif omdb && omdb.key?('Plot') && omdb["Plot"].length > 0 && omdb["Plot"] !~ /^\s*(unknown|N[\\\/A])/i
           puts "Using OMDB plot"
-          myplot = omdb.body["Plot"]
+          myplot = omdb["Plot"]
         else
           puts "Unable to get plot from IMDB or OMDB."
           myplot = ""

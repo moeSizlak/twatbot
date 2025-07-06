@@ -1,12 +1,23 @@
-require "open-uri"
+require "httpx"
 require "nokogiri"
-require "typhoeus"
 require "json"
 require 'htmlentities'
 require 'twitter_oauth2'
 
 module URLHandlers
   module Twitter
+=begin
+    def initialize(*args)
+      super
+      @config = bot.botconfig
+
+      @TweetCacheEntry = Class.new(Sequel::Model(bot.botconfig[:DB][:tweets]))
+      @TweetCacheEntry.unrestrict_primary_key
+    end
+=end
+
+      
+      
 
     def tweet_lookup(tweet_ids)
       client = TwitterOAuth2::Client.new(
@@ -20,7 +31,7 @@ module URLHandlers
 
       token_response = client.access_token!
 
-      puts "token_response=#{token_response}"
+      #puts "token_response=#{token_response}"
 
 
       options = {
@@ -40,27 +51,67 @@ module URLHandlers
         ##}
       }
 
-      #request = Typhoeus::Request.new("https://api.twitter.com/2/tweets", options)
-      request = Typhoeus::Request.new("https://api.twitter.com/1.1/statuses/show.json?id=#{tweet_ids}&tweet_mode=extended", options)
-      response = request.run
+      response = HTTPX.plugin(:follow_redirects).with(headers:{
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1",
+          "Authorization": "Bearer #{token_response}"
+        }).get("https://api.twitter.com/1.1/statuses/show.json?id=#{tweet_ids}&tweet_mode=extended")
 
-      puts "response=#{response}"
+      #puts "response=#{response}"
 
       return response
     end
 
-    def parse(url)
-      url = getEffectiveUrl(url) rescue nil
+    def tweet_lookup_v2(tweet_ids)
+      #puts "ohi"
+      client = TwitterOAuth2::Client.new(
+        # NOTE: not OAuth 2.0 Client ID, but OAuth 1.0 Consumer Key (a.k.a API Key)
+        identifier:     @config[:TWITTER_API_KEY],
+        # NOTE: not OAuth 2.0 Client Secret, but OAuth 1.0 Consumer Secret (a.k.a API Key Secret)
+        secret:         @config[:TWITTER_API_KEY_SECRET],
+        # NOTE: Twitter has Client Credentials Grant specific token endpoint.
+        token_endpoint: '/oauth2/token',
+      )
+
+      token_response = client.access_token!
+
+      #puts "token_response=#{token_response}"
+
+
+      options = {
+        method: 'get',
+        params: params = {
+          "ids": tweet_ids,
+          "expansions": "author_id", #,referenced_tweets.id",
+          "tweet.fields": "attachments,author_id,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,public_metrics",
+          "user.fields": "id,name,username,verified" 
+          # "media.fields": "url", 
+          # "place.fields": "country_code",
+          # "poll.fields": "options"
+        }
+      }
+
+      response = HTTPX.plugin(:follow_redirects).with(headers: {
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.99 Mobile/15E148 Safari/604.1",
+          "Authorization": "Bearer #{token_response}"
+        }).get("https://api.twitter.com/2/tweets")
+
+      #puts "response=#{response}"
+
+      return response
+    end
+
+    def parse_v11maybe(url)
+      #url = getEffectiveUrl(url) rescue nil
 
       if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*twitter.com\/(?:[^\/]*\/)*\w+\/status(?:es)?\/(\d+)/)
         tweet = $1
         response = tweet_lookup(tweet)
         r = JSON.parse(response.body)
-        #puts response.code, JSON.pretty_generate(r)
+        puts response.code, JSON.pretty_generate(r)
 
         myreply = ""
 
-        puts "BODY=#{response.body}"
+        #puts "BODY=#{response.body}"
 
 
         author =  r.dig("user")
@@ -140,17 +191,19 @@ module URLHandlers
 
 
     def parsev2(url)
-      url = getEffectiveUrl(url) rescue nil
-
+      #puts "yo"
+      #url = getEffectiveUrl(url) rescue nil
+      #puts "ho, u=#{url}"
       if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*twitter.com\/(?:[^\/]*\/)*\w+\/status(?:es)?\/(\d+)/)
         tweet = $1
+        #puts "t=#{tweet}"
         response = tweet_lookup(tweet)
         r = JSON.parse(response.body)
         #puts response.code, JSON.pretty_generate(r)
 
         myreply = ""
 
-        puts "BODY=#{response.body}"
+        #puts "BODY=#{response.body}"
 
         r.dig("data").each do |t|
           author =  r.dig("includes", "users").find{|x| x[:id] == t[:author_id]}
@@ -228,6 +281,62 @@ module URLHandlers
 
     end
 
+
+    def parse(url)
+      tweetCacheEntry = Class.new(Sequel::Model(@config[:DB][:tweets]))
+      tweetCacheEntry.unrestrict_primary_key
+
+      #title = getTitleAndLocation(url)
+      #url =  title[:effective_url] rescue nil
+
+      #if(!url.nil? && url =~ /^(https?:\/\/(?:[^\/]*\.)*)(?:twitter|x).com\//)
+      if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*(?:twitter|x).com\/(?:[^\/]*\/)*\w+\/status(?:es)?\/(\d+)/)
+        tweet = $1
+
+        c = tweetCacheEntry[tweet]
+        if !c.nil?
+          puts "Found tweet (#{tweet}) in cache."
+          return "[ \x02" + c.tweet + "\x0f ] - twitter.com"
+        end
+
+        nitters = [
+          'nitter.privacydev.net',
+          'nitter.poast.org',
+          'nitter.d420.de',
+          'nitter.x86-64-unknown-linux-gnu.zip',
+          'nitter.moomoo.me'
+        ]
+
+        nitters.each_with_index do |nitter, i|
+          #url = url.gsub(/^(https?:\/\/)(?:[^\/]*\.)*(?:twitter|x).com\//, '\1nitter.poast.org/')
+          urlnew = url.gsub(/^(https?:\/\/)(?:[^\/]*\.)*(?:twitter|x).com\//, '\1' + "#{nitter}/")
+
+          puts "Trying nitter #{i}: #{nitter}.  URL = #{urlnew}"
+          title = getTitleAndLocation(urlnew)
+          puts "title=#{title}"
+
+          title = nil if !title.nil? && !title[:title].nil? && title[:title].to_s =~ /^\s*Error\s*$/
+          title = nil if !title.nil? && !title[:response_code].nil? && title[:response_code].to_s =~ /^[45]/
+
+          #if !title.nil? && (!title[:title].nil? || !title[:description].nil?)
+          if !title.nil? && !title[:title].nil?
+            c = tweetCacheEntry.new
+            c.id = tweet
+            c.tweet = title[:title].gsub(/\s*\|\s*nitter.*$/, "")
+            c.save
+
+            #url =~ /https?:\/\/([^\/]+)/
+            title[:effective_url] =~ /https?:\/\/([^\/]+)/
+            host = $1
+            #return "[ \x02" + title[:title] + "\x0f ] - " + host + (title[:description].nil? ? '' : ("\n[ \x02" + title[:description] + "\x0f ] - " + host))
+            #return "[ \x02" + title[:title].gsub(/\s*\|\s*nitter(\.net)?\s*$/, "") + "\x0f ] - " + host.gsub(/nitter\.net/, "twitter.com")
+            return "[ \x02" + title[:title].gsub(/\s*\|\s*nitter.*$/, "") + "\x0f ] - twitter.com"
+          end
+        end
+      end
+      
+      return nil
+    end
 
   end
 end

@@ -1,5 +1,5 @@
 require 'nokogiri'
-require 'open-uri'
+require 'httpx'
 require 'cgi'
 require 'json'
 
@@ -12,50 +12,34 @@ module Plugins
     match /^[.!]rt(\d*)\s+(\S.*)$/i, use_prefix: false, method: :rt
     
     def self.scrapeRottenTomatoURL(url)
+      puts "z1"
       if !url || url !~ /^http/
         return nil
       end
+
       
       tomatoURL = url.gsub(/^http:/, "https:")
-      
+
       begin
-        movie = Nokogiri::HTML(open(tomatoURL))
+        movie = Nokogiri::HTML(HTTPX.plugin(:follow_redirects).get(tomatoURL).body.to_s)
       rescue
         return nil
       end
+
+      t = JSON.parse(movie.css('script#scoreDetails[@type="application/json"]').text)
+
       tomatoTitle = movie.css('title')[0].text.gsub(/(\s*-\s*)?\s*Rotten Tomatoes\s*$/,'')
-      tomatoSynopsis = movie.css('div.movie_synopsis  > text()').text.strip
-      #tomatoMeter = movie.css('div#all-critics-numbers div.critic-score.meter a#tomato_meter_link span.meter-value').text
-      tomatoMeter = movie.css('#tomato_meter_link > span.mop-ratings-wrap__percentage').text.strip rescue nil
+      tomatoSynopsis = movie.css('p[data-qa="movie-info-synopsis"][slot="content"]  > text()').text.strip
       
-      tomatoAvgCriticRating = ""
-      tomatoReviewCount = 0
-      tomatoFreshCount = 0
-      tomatoRottenCount = 0
-      
-      score_data = ""
-      movie.css('script').select{|x| x.text =~ /root\.RottenTomatoes\.context\.scoreInfo\s*=\s*(\{[^;]*);/m  && score_data = JSON.parse($1)} rescue nil
-      #puts "score_data = \"#{score_data}\""
+      tomatoMeter = t["scoreboard"]["tomatometerScore"]["value"].to_s + '%' rescue '0%'
+      tomatoAvgCriticRating = t["scoreboard"]["tomatometerScore"]["averageRating"].to_s + '/10' rescue '0/10'
+      tomatoReviewCount = t["scoreboard"]["tomatometerScore"]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+      tomatoFreshCount = t["scoreboard"]["tomatometerScore"]["likedCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+      tomatoRottenCount = t["scoreboard"]["tomatometerScore"]["notLikedCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
 
-      if score_data 
-        #puts "BBBB\n"
-        tomatoMeter = score_data["tomatometerAllCritics"]["score"].to_s + '%' rescue '0%'
-        tomatoAvgCriticRating = score_data["tomatometerAllCritics"]["avgScore"].to_s + '/10' rescue '0/10'
-        tomatoReviewCount = score_data["tomatometerAllCritics"]["numberOfReviews"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
-        tomatoFreshCount = score_data["tomatometerAllCritics"]["freshCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
-        tomatoRottenCount = score_data["tomatometerAllCritics"]["rottenCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
-
-        if score_data.key?("audienceVerified") && score_data["audienceVerified"].key?("ratingCount")  && score_data["audienceVerified"]["ratingCount"] > 0
-          a = "audienceVerified"
-        else
-          a = "audienceAll"
-        end
-
-        tomatoAudienceMeter = score_data[a]["score"].to_s + '%' rescue '0%'
-        tomatoAvgAudienceRating = score_data[a]["averageRating"].to_s + '/5' rescue '0/5'
-        tomatoAudienceVotes = score_data[a]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
-        #puts "BBBB\n"
-      end
+      tomatoAudienceMeter = t["scoreboard"]["audienceScore"]["value"].to_s + '%' rescue '0%'
+      tomatoAvgAudienceRating = t["scoreboard"]["audienceScore"]["averageRating"].to_s + '/5' rescue '0/5'
+      tomatoAudienceVotes = t["scoreboard"]["audienceScore"]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
 
       #puts "DDDDD\n"
 
@@ -128,7 +112,7 @@ module Plugins
       id.gsub!(/[^ -~]/, "")
       
       search_url = "https://www.rottentomatoes.com/search/?search=" + CGI.escape(id)
-      search = Nokogiri::HTML(open(search_url))
+      search = Nokogiri::HTML(HTTPX.plugin(:follow_redirects).get(search_url).body.to_s)
       begin
         tomatoURL = "https://www.rottentomatoes.com" + search.css('section#SummaryResults ul.results_ul li div.poster a')[hitno]["href"]
       rescue

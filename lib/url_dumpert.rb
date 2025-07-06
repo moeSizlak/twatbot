@@ -1,4 +1,4 @@
-require 'unirest'
+require 'httpx'
 require 'cgi'
 require 'nokogiri' 
 #require 'json'
@@ -16,10 +16,10 @@ module URLHandlers
         title = getTitle(url)
         if !title.nil?          
           title = '' + Nokogiri::HTML.parse(title.force_encoding('utf-8').gsub(/\s{2,}/, ' ')).text        
-          search = Unirest::get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(title.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))
+          search = HTTPX.plugin(:follow_redirects).get("https://translate.googleapis.com/translate_a/single?client=gtx&sl=nl&tl=en&dt=t&q=" + CGI.escape(title.gsub(/^\s*dumpert\.nl\s*-\s*/, '')))
           
-          if search.body
-            search = search.body[0][0][0] rescue nil
+          if search
+            search = search[0][0][0] rescue nil
 
             if !search.nil? && search.length > 0              
               return "\x02[Dumpert]\x0f #{title} :: \x0307#{search}\x0f"

@@ -1,4 +1,4 @@
-require 'unirest'
+require 'httpx'
 require 'time'
 require_relative 'url_title.rb'
 
@@ -35,17 +35,17 @@ module URLHandlers
           image = nil
           
           if type == "gallery"
-            gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
+            gallery = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/gallery/#{path}.json").json
             
-            if gallery.body && gallery.body.key?("success") && gallery.body["success"] == true && gallery.body.key?("data")
-              if gallery.body["data"].key?("is_album") && gallery.body["data"]["is_album"] == true
-                album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
-                if !album.body || !album.body.key?("success") || !album.body["success"] == true || !album.body.key?("data")
+            if gallery && gallery.key?("success") && gallery["success"] == true && gallery.key?("data")
+              if gallery["data"].key?("is_album") && gallery["data"]["is_album"] == true
+                album = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/album/#{path}.json").json
+                if !album || !album.key?("success") || !album["success"] == true || !album.key?("data")
                   album = nil
                 end
               else
-                image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
-                if !image.body || !image.body.key?("success") || !image.body["success"] == true || !image.body.key?("data")
+                image = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/image/#{path}.json").json
+                if !image || !image.key?("success") || !image["success"] == true || !image.key?("data")
                   image = nil
                 end
               end
@@ -54,12 +54,12 @@ module URLHandlers
             end
             
           elsif type == "album"
-            album = Unirest::get("https://api.imgur.com/3/album/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
+            album = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/album/#{path}.json").json
             
-            if album.body && album.body.key?("success") && album.body["success"] == true && album.body.key?("data")
-              if album.body["data"].key?("in_gallery") && album.body["data"]["in_gallery"] == true
-                gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
-                if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
+            if album && album.key?("success") && album["success"] == true && album.key?("data")
+              if album["data"].key?("in_gallery") && album["data"]["in_gallery"] == true
+                gallery = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/gallery/#{path}.json").json
+                if !gallery || !gallery.key?("success") || !gallery["success"] == true || !gallery.key?("data")
                   gallery = nil
                 end
               end
@@ -68,12 +68,11 @@ module URLHandlers
             end
             
           elsif type == "image"
-            image = Unirest::get("https://api.imgur.com/3/image/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
-            
-            if image.body && image.body.key?("success") && image.body["success"] == true && image.body.key?("data")
-              if image.body["data"].key?("in_gallery") && image.body["data"]["in_gallery"] == true
-                gallery = Unirest::get("https://api.imgur.com/3/gallery/#{path}.json", headers:{ "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] })
-                if !gallery.body || !gallery.body.key?("success") || !gallery.body["success"] == true || !gallery.body.key?("data")
+            image = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/image/#{path}.json").json
+            if image && image.key?("success") && image["success"] == true && image.key?("data")
+              if image["data"].key?("in_gallery") && image["data"]["in_gallery"] == true
+                gallery = HTTPX.plugin(:follow_redirects).with(headers: { "Authorization" => "Client-ID " + @config[:IMGUR_API_CLIENT_ID] }).get("https://api.imgur.com/3/gallery/#{path}.json").json
+                if !gallery || !gallery.key?("success") || !gallery["success"] == true || !gallery.key?("data")
                   gallery = nil
                 end
               end
@@ -84,28 +83,28 @@ module URLHandlers
           #####################
           
           if(!gallery.nil?)
-            if gallery.body["data"].key?("ups") && !gallery.body["data"]["ups"].nil?
-              g_ups = gallery.body["data"]["ups"]
+            if gallery["data"].key?("ups") && !gallery["data"]["ups"].nil?
+              g_ups = gallery["data"]["ups"]
             else
               g_ups = 0
             end
             
-            if gallery.body["data"].key?("downs") && !gallery.body["data"]["downs"].nil?
-              g_downs = gallery.body["data"]["downs"]
+            if gallery["data"].key?("downs") && !gallery["data"]["downs"].nil?
+              g_downs = gallery["data"]["downs"]
             else
               g_downs = 0
             end
               
-            if gallery.body["data"].key?("title") && !gallery.body["data"]["title"].nil? && gallery.body["data"]["title"].length > 0
-              g_title = gallery.body["data"]["title"]
+            if gallery["data"].key?("title") && !gallery["data"]["title"].nil? && gallery["data"]["title"].length > 0
+              g_title = gallery["data"]["title"]
             end
             
-            if gallery.body["data"].key?("topic") && !gallery.body["data"]["topic"].nil? && gallery.body["data"]["topic"].length > 0
-              g_topic = gallery.body["data"]["topic"]
+            if gallery["data"].key?("topic") && !gallery["data"]["topic"].nil? && gallery["data"]["topic"].length > 0
+              g_topic = gallery["data"]["topic"]
             end    
             
-            if gallery.body["data"].key?("section") && !gallery.body["data"]["section"].nil? && gallery.body["data"]["section"].length > 0
-              g_section = gallery.body["data"]["section"]
+            if gallery["data"].key?("section") && !gallery["data"]["section"].nil? && gallery["data"]["section"].length > 0
+              g_section = gallery["data"]["section"]
             end 
           end
             
@@ -118,22 +117,22 @@ module URLHandlers
           
           if !search.nil?
           
-            if search.body["data"].key?("views") && !search.body["data"]["views"].nil?
-              views = search.body["data"]["views"]
+            if search["data"].key?("views") && !search["data"]["views"].nil?
+              views = search["data"]["views"]
             else
               views = 0
             end
             
-            if search.body["data"].key?("title") && !search.body["data"]["title"].nil? && search.body["data"]["title"].length > 0
-              title = search.body["data"]["title"]
+            if search["data"].key?("title") && !search["data"]["title"].nil? && search["data"]["title"].length > 0
+              title = search["data"]["title"]
             end   
             
-            if search.body["data"].key?("section") && !search.body["data"]["section"].nil? && search.body["data"]["section"].length > 0
-              section = search.body["data"]["section"]
+            if search["data"].key?("section") && !search["data"]["section"].nil? && search["data"]["section"].length > 0
+              section = search["data"]["section"]
             end 
             
-            if search.body["data"].key?("topic") && !search.body["data"]["topic"].nil? && search.body["data"]["topic"].length > 0
-              topic = search.body["data"]["topic"]
+            if search["data"].key?("topic") && !search["data"]["topic"].nil? && search["data"]["topic"].length > 0
+              topic = search["data"]["topic"]
             end 
           
             color_yt = "03"     
@@ -159,24 +158,24 @@ module URLHandlers
             
             myreply += " " 
             
-            if search.body["data"].key?("nsfw") && !search.body["data"]["nsfw"].nil? && search.body["data"]["nsfw"] == true
+            if search["data"].key?("nsfw") && !search["data"]["nsfw"].nil? && search["data"]["nsfw"] == true
               myreply += "\x03" + color_name + "[NSFW] \x0f"
             end
             
             myreply += "\x03" + color_rating
             
-            if search.body["data"].key?("images_count")
+            if search["data"].key?("images_count")
               myreply += "[Album"
               
-              if !search.body["data"]["images_count"].nil?
-                myreply += " w/ " + search.body["data"]["images_count"].to_s   + " images"
+              if !search["data"]["images_count"].nil?
+                myreply += " w/ " + search["data"]["images_count"].to_s   + " images"
               end
               
               myreply += "] "
             end
             
-            if search.body["data"].key?("datetime") && !search.body["data"]["datetime"].nil?
-              myreply += "[" + Time.at(search.body["data"]["datetime"]).strftime("%Y-%m-%d") + "] "
+            if search["data"].key?("datetime") && !search["data"]["datetime"].nil?
+              myreply += "[" + Time.at(search["data"]["datetime"]).strftime("%Y-%m-%d") + "] "
             end
             
             myreply += "[" + views.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + " views] "
@@ -185,11 +184,11 @@ module URLHandlers
               myreply += "[+" + g_ups.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "/-" + g_downs.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse + "] "
             end
             
-            if search.body["data"].key?("type") && !search.body["data"]["type"].nil? && search.body["data"]["type"].length > 0
-              myreply += "[" + search.body["data"]["type"] + "] "
+            if search["data"].key?("type") && !search["data"]["type"].nil? && search["data"]["type"].length > 0
+              myreply += "[" + search["data"]["type"] + "] "
             end
             
-            if search.body["data"].key?("animated") && !search.body["data"]["animated"].nil? && search.body["data"]["animated"] == true
+            if search["data"].key?("animated") && !search["data"]["animated"].nil? && search["data"]["animated"] == true
               myreply += "[Animated] "
             end
             

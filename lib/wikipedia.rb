@@ -1,5 +1,5 @@
 require 'cgi'
-require 'unirest'
+require 'httpx'
 require 'time'
 
 module Plugins
@@ -32,17 +32,17 @@ module Plugins
       q.strip!
 
 
-      search = Unirest::get("https://en.wikipedia.org/w/api.php?action=opensearch&search=#{CGI.escape(q)}&limit=1&namespace=0&format=json")
+      search = HTTPX.plugin(:follow_redirects).get("https://en.wikipedia.org/w/api.php?action=opensearch&search=#{CGI.escape(q)}&limit=1&namespace=0&format=json").json
 
-      if search && search.body && search.body.count >=4 && search.body[3].count > 0
+      if search && search.count >=4 && search[3].count > 0
 
-        url = search.body[3][0]
-        x = search.body[3][0].gsub(/^.*\/([^\/]*)$/, '\1')
+        url = search[3][0]
+        x = search[3][0].gsub(/^.*\/([^\/]*)$/, '\1')
 
-        y = Unirest::get("https://en.wikipedia.org/api/rest_v1/page/summary/#{x}")
+        y = HTTPX.plugin(:follow_redirects).get("https://en.wikipedia.org/api/rest_v1/page/summary/#{x}").json
 
-        if y && y.body && y.body.key?("extract") && y.body["extract"].length > 0     
-          myreply = "\x02[WIKIPEDIA]\x0f: #{(y.body["extract"][0..(436-4-url.length)]).gsub(/[\r\n]+/," ")} :: \x0307#{url}\x0f"
+        if y && y && y.key?("extract") && y["extract"].length > 0     
+          myreply = "\x02[WIKIPEDIA]\x0f: #{(y["extract"][0..(436-4-url.length)]).gsub(/[\r\n]+/," ")} :: \x0307#{url}\x0f"
           m.reply myreply
         else
           m.reply "ZOMG ERROR!"

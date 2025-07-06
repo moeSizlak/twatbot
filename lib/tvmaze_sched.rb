@@ -1,13 +1,9 @@
 require 'cgi'
-require 'unirest'
+require 'httpx'
 require 'time'
 require 'sequel'
-require 'nokogiri'
-require 'open-uri'
 require 'tzinfo'
 require 'thread'
-
-
 
 module Plugins
   class TvMazeSchedule
@@ -73,10 +69,10 @@ module Plugins
           sleep 4
           myshows = @IMDBCacheEntry.where(:network => nil).order(:tv_maze_id).limit(20)
           myshows.each do |myshow|
-            show = Unirest::get("http://api.tvmaze.com/shows/" + myshow.tv_maze_id.to_s)
-            if show.body && show.body.size>0
-              network = show.body.dig("network", "name")
-              network = show.body.dig("webChannel", "name") if !network
+            show = HTTPX.plugin(:follow_redirects).get("http://api.tvmaze.com/shows/" + myshow.tv_maze_id.to_s).json
+            if show && show.size>0
+              network = show.dig("network", "name")
+              network = show.dig("webChannel", "name") if !network
               if network
                 myshow.network = network
                 myshow.save
@@ -115,11 +111,11 @@ module Plugins
 
             page = @config[:DB][:bot_config].select(:last_tvmaze_shows_page_number).limit(1).all[0][:last_tvmaze_shows_page_number]
             page = 0 if page.nil?
-            shows = Unirest::get("http://api.tvmaze.com/shows?page=#{page}")
+            shows = HTTPX.plugin(:follow_redirects).get("http://api.tvmaze.com/shows?page=#{page}").json
 
-            while shows && shows.body && shows.body.size > 0
+            while shows && shows && shows.size > 0
               puts "Successfully got shows page# #{page}."
-              shows.body.each do |show|
+              shows.each do |show|
                 name = show.dig("name")
                 status = show.dig("status")
                 network = show.dig("network", "name")
@@ -155,7 +151,7 @@ module Plugins
               puts "Trying to get shows page# #{page}."
 
               sleep 11
-              shows = Unirest::get("http://api.tvmaze.com/shows?page=#{page}")
+              shows = HTTPX.plugin(:follow_redirects).get("http://api.tvmaze.com/shows?page=#{page}").json
             end
 
           end          
@@ -185,13 +181,13 @@ module Plugins
           last_tv_update_minutes_ago = ((Time.now - last_tv_sched_update)/60).to_i if !last_tv_sched_update.nil?
           puts "last_tv_update_minutes_ago = #{last_tv_update_minutes_ago}"
           if last_tv_sched_update.nil? || last_tv_update_minutes_ago >= 480
-            @@tv_schedule = Unirest::get("http://api.tvmaze.com/schedule/full")
-            if @@tv_schedule.body && @@tv_schedule.body.size>0
+            @@tv_schedule = HTTPX.plugin(:follow_redirects).get("http://api.tvmaze.com/schedule/full").json
+            if @@tv_schedule && @@tv_schedule.size>0
               myshows = @config[:DB][:imdb_cache_entries].distinct(:tv_maze_id).select(:tv_maze_id).all.map{|x| x[:tv_maze_id]}
               if myshows && myshows.count > 0
                 g = []
 
-                @@tv_schedule.body.each do |ep|     
+                @@tv_schedule.each do |ep|     
                   ii = g.find_index{|x| x[:show_id] == ep["_embedded"]["show"]["id"]}
                   if ii.nil?
                     g.push({:show_id=>ep["_embedded"]["show"]["id"], :next_ep=>ep["airstamp"], :eps=>[ep["id"]]})

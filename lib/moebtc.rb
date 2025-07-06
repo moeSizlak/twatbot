@@ -1,3 +1,5 @@
+require 'httpx'
+
 module Plugins  
   class MoeBTC
     include Cinch::Plugin
@@ -36,11 +38,11 @@ module Plugins
     def updatecoins
       @@coins_mutex.synchronize do
         if (@@coinsymbols_lastupdate.nil? || (@@coinsymbols_lastupdate < (DateTime.now - (1.0))))
-          mysyms = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
-          #puts mysyms.body["data"]
+          mysyms = HTTPX.plugin(:follow_redirects).with(headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }).get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/map?sort=cmc_rank").json
+          #puts mysyms["data"]
 
-          if !mysyms.nil? && !mysyms.body.nil? && !mysyms.body["data"].nil?
-              @@coinsymbols = mysyms.body["data"].reject { |y| y["name"].include?("okenized")}
+          if !mysyms.nil? && !mysyms.nil? && !mysyms["data"].nil?
+              @@coinsymbols = mysyms["data"].reject { |y| y["name"].include?("okenized")}
               @@coinsymbols_lastupdate = DateTime.now
               #puts "SYM='#{@@coinsymbols.find{|x| x["symbol"].upcase == "TSLA"}}'"
           end
@@ -75,10 +77,10 @@ module Plugins
       end
 
       if c2.length > 0 
-        requested_coins = Unirest::get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=#{(c2+['BTC','ETH']).uniq.join(',')}&convert=USD", headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }) rescue nil
+        requested_coins = HTTPX.plugin(:follow_redirects).with(headers:{ "X-CMC_PRO_API_KEY" => @config[:COINMARKETCAP_API_KEY],   "Accept" => "application/json" }).get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=#{(c2+['BTC','ETH']).uniq.join(',')}&convert=USD").json
 
-        return if requested_coins.nil? || requested_coins.body.nil? || requested_coins.body["data"].nil?
-        requested_coins = requested_coins.body["data"]
+        return if requested_coins.nil? || requested_coins.nil? || requested_coins["data"].nil?
+        requested_coins = requested_coins["data"]
         #puts "REQ=#{requested_coins}"
 
         b = requested_coins['BTC'] 
@@ -130,29 +132,29 @@ module Plugins
         return
       end
 
-      bs = Unirest::get("https://www.bitstamp.net/api/v2/ticker/btcusd/") rescue nil
-      bsp = bs.body["last"] rescue ""      
+      bs = HTTPX.plugin(:follow_redirects).get("https://www.bitstamp.net/api/v2/ticker/btcusd/").json
+      bsp = bs["last"] rescue ""      
       
       
-      cb = Unirest::get("https://api.coinbase.com/v2/prices/spot?currency=USD") rescue nil
-      cbp = cb.body["data"]["amount"] rescue ""
+      cb = HTTPX.plugin(:follow_redirects).get("https://api.coinbase.com/v2/prices/spot?currency=USD").json
+      cbp = cb["data"]["amount"] rescue ""
 
-      cbl = Unirest::get("https://api.coinbase.com/v2/prices/LTC-USD/spot") rescue nil
-      cblp = cbl.body["data"]["amount"] rescue ""
+      cbl = HTTPX.plugin(:follow_redirects).get("https://api.coinbase.com/v2/prices/LTC-USD/spot").json
+      cblp = cbl["data"]["amount"] rescue ""
 
-      cbe = Unirest::get("https://api.coinbase.com/v2/prices/ETH-USD/spot") rescue nil
-      cbep = cbe.body["data"]["amount"] rescue ""
+      cbe = HTTPX.plugin(:follow_redirects).get("https://api.coinbase.com/v2/prices/ETH-USD/spot").json
+      cbep = cbe["data"]["amount"] rescue ""
 
-      #mc = Unirest::get("https://api.coinmarketcap.com/v1/ticker/bitcoin-cash/")
-      #mcp = mc.body[0]["price_usd"].gsub(/(\.\d\d)\d+/,'\1') rescue ""
-      mc = Unirest::get("https://www.bitstamp.net/api/v2/ticker/bchusd/") rescue nil
-      mcp = mc.body["last"].gsub(/(\.\d\d)\d+/,'\1') rescue "" 
+      #mc = HTTPX.plugin(:follow_redirects).get("https://api.coinmarketcap.com/v1/ticker/bitcoin-cash/").json
+      #mcp = mc[0]["price_usd"].gsub(/(\.\d\d)\d+/,'\1') rescue ""
+      mc = HTTPX.plugin(:follow_redirects).get("https://www.bitstamp.net/api/v2/ticker/bchusd/").json
+      mcp = mc["last"].gsub(/(\.\d\d)\d+/,'\1') rescue "" 
 
-      xrp1 = Unirest::get("https://www.bitstamp.net/api/v2/ticker/xrpusd/") rescue nil
-      xrp2 = xrp1.body["last"].gsub(/(\.\d\d)\d+/,'\1') rescue "" 
+      xrp1 = HTTPX.plugin(:follow_redirects).get("https://www.bitstamp.net/api/v2/ticker/xrpusd/").json
+      xrp2 = xrp1["last"].gsub(/(\.\d\d)\d+/,'\1') rescue "" 
 
-      g1 = Unirest::get("https://api.gemini.com/v1/pubticker/btcusd") rescue nil
-      g2 = g1.body["last"] rescue "" 
+      g1 = HTTPX.plugin(:follow_redirects).get("https://api.gemini.com/v1/pubticker/btcusd").json
+      g2 = g1["last"] rescue "" 
       
 
       m.reply "\x02Gemini:\x0f $" + g2.to_s.gsub(/^([^.]*).*$/,'\1').reverse.scan(/\d{3}|.+/).join(",").reverse.concat(g2.to_s.gsub(/^[^.]*(.*)$/, '\1')) + " | " +

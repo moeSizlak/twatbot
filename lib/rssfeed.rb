@@ -1,5 +1,5 @@
 require 'feedjira'
-require 'open-uri'
+require 'httpx'
 
 module Plugins
   class RSSFeed
@@ -19,7 +19,9 @@ module Plugins
       @feeds.each do |feed|      
         #feedparsed = Feedjira::Feed.fetch_and_parse(feed[:url])  
         #puts feed  
-        feedparsed = Feedjira.parse(URI.open(feed[:url]).read)
+        #dat = HTTPX.plugin(:follow_redirects).get(feed[:url])
+        #puts "zzzzz(#{dat.status})=#{dat.body.to_s[0..1000]}"
+        feedparsed = Feedjira.parse(HTTPX.plugin(:follow_redirects).get(feed[:url]).body.to_s)
 
 
         if !feed[:old].nil?
