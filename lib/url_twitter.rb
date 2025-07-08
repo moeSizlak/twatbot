@@ -31,11 +31,11 @@ module URLHandlers
 
         #puts "BODY=#{response.body}"
 
-        r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',0,'entries',0)
-        r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',1,'entries',0) if r1.nil?
+        r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',0,'entries')
+        r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',1,'entries') if r1.nil?
 
-        result = r1.dig('content','itemContent','tweet_results','result','tweet')
-        result = r1.dig('content','itemContent','tweet_results','result') if result.nil?
+        result = r1.find{|x| x['entryId'] == "tweet-#{tweet}"}.dig('content','itemContent','tweet_results','result','tweet')
+        result = r1.find{|x| x['entryId'] == "tweet-#{tweet}"}.dig('content','itemContent','tweet_results','result') if result.nil?
 
         if result.nil?
           puts "TWITTER FATAL ERROR, BODY=#{response.body}"
@@ -45,12 +45,23 @@ module URLHandlers
         author_name = result.dig("core", "user_results", "result", "legacy", "name")
         author_screen_name = result.dig("core", "user_results", "result", "legacy", "screen_name")
         author_blue_verified = result.dig("core", "user_results", "result", "is_blue_verified")
-        text = result.dig("legacy","full_text").force_encoding('utf-8')
 
-        highlights = ((result.dig("legacy", "entities", "hashtags") || []) + (result.dig("legacy", "entities", "user_mentions") || [])).sort_by{|k| k['indices'][0]}.reverse
-        highlights.each do |k|
-          text.force_encoding('utf-8').insert(k['indices'][1], "\x0f")
-          text.force_encoding('utf-8').insert(k['indices'][0], "\x0307")
+        text = result.dig("note_tweet","note_tweet_results","result","text").force_encoding('utf-8') rescue nil
+        
+        if !text.nil?
+          highlights = ((result.dig("note_tweet","note_tweet_results","result","entity_set","hashtags") || []) + (result.dig("note_tweet","note_tweet_results","result","entity_set","user_mentions") || [])).sort_by{|k| k['indices'][0]}.reverse
+          highlights.each do |k|
+            text.force_encoding('utf-8').insert(k['indices'][1], "\x0f")
+            text.force_encoding('utf-8').insert(k['indices'][0], "\x0307")
+          end
+          text = text[0..700]
+        else
+          text = result.dig("legacy","full_text").force_encoding('utf-8') if text.nil?
+          highlights = ((result.dig("legacy", "entities", "hashtags") || []) + (result.dig("legacy", "entities", "user_mentions") || [])).sort_by{|k| k['indices'][0]}.reverse
+          highlights.each do |k|
+            text.force_encoding('utf-8').insert(k['indices'][1], "\x0f")
+            text.force_encoding('utf-8').insert(k['indices'][0], "\x0307")
+          end
         end
 
         coder = HTMLEntities.new
