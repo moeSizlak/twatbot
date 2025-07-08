@@ -64,6 +64,13 @@ module URLHandlers
           end
         end
 
+
+        text_urls = URI.extract(text, ["http", "https"]) do |url|
+          text = text.gsub(url + ' ', '')
+          text = text.gsub(url, '')
+          text = text.strip
+        end
+
         coder = HTMLEntities.new
         text = coder.decode text.force_encoding('utf-8')
 
