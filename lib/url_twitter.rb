@@ -66,7 +66,8 @@ module URLHandlers
 
 
         text_urls = URI.extract(text, ["http", "https"]) do |url|
-          text = text.gsub(url + ' ', '')
+          text = text.gsub(/^#{url} /, '')
+          text = text.gsub(' ' + url, '')
           text = text.gsub(url, '')
           text = text.strip
         end
