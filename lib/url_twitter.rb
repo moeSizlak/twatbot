@@ -29,7 +29,7 @@ module URLHandlers
 
         myreply = ""
 
-        #puts "BODY=#{response.body}"
+        puts "BODY=#{response.body}"
 
         r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',0,'entries')
         r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',1,'entries') if r1.nil?
@@ -40,6 +40,12 @@ module URLHandlers
         if result.nil?
           puts "TWITTER FATAL ERROR, BODY=#{response.body}"
           return nil
+        end
+
+        result_type = result.dig("__typename")
+
+        if result_type == "TweetTombstone"
+          return "\x02[X]\x0f #{result.dig("tombstone","text","text")}"
         end
 
         author_name = result.dig("core", "user_results", "result", "legacy", "name")
