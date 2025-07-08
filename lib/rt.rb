@@ -26,20 +26,21 @@ module Plugins
         return nil
       end
 
-      t = JSON.parse(movie.css('script#scoreDetails[@type="application/json"]').text)
+      t = JSON.parse(movie.css('script#media-scorecard-json[@type="application/json"]').text)
+      t2 = JSON.parse(movie.css('script[@type="application/ld+json"]').text)
 
-      tomatoTitle = movie.css('title')[0].text.gsub(/(\s*-\s*)?\s*Rotten Tomatoes\s*$/,'')
-      tomatoSynopsis = movie.css('p[data-qa="movie-info-synopsis"][slot="content"]  > text()').text.strip
+      tomatoTitle = t2.dig('name')
+      tomatoSynopsis = t.dig('description')
       
-      tomatoMeter = t["scoreboard"]["tomatometerScore"]["value"].to_s + '%' rescue '0%'
-      tomatoAvgCriticRating = t["scoreboard"]["tomatometerScore"]["averageRating"].to_s + '/10' rescue '0/10'
-      tomatoReviewCount = t["scoreboard"]["tomatometerScore"]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
-      tomatoFreshCount = t["scoreboard"]["tomatometerScore"]["likedCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
-      tomatoRottenCount = t["scoreboard"]["tomatometerScore"]["notLikedCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+      tomatoMeter =  t.dig('overlay','criticsAll','scorePercent').to_s rescue '0%' #t["scoreboard"]["tomatometerScore"]["value"].to_s + '%' rescue '0%'
+      tomatoAvgCriticRating = t.dig('overlay','criticsAll','averageRating').to_s + '/10' rescue '0/10' #t["scoreboard"]["tomatometerScore"]["averageRating"].to_s + '/10' rescue '0/10'
+      tomatoReviewCount = t.dig('overlay','criticsAll','reviewCount').to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0' #t["scoreboard"]["tomatometerScore"]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+      tomatoFreshCount = t.dig('overlay','criticsAll','likedCount').to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0' #t["scoreboard"]["tomatometerScore"]["likedCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+      tomatoRottenCount = t.dig('overlay','criticsAll','notLikedCount').to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0' #t["scoreboard"]["tomatometerScore"]["notLikedCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
 
-      tomatoAudienceMeter = t["scoreboard"]["audienceScore"]["value"].to_s + '%' rescue '0%'
-      tomatoAvgAudienceRating = t["scoreboard"]["audienceScore"]["averageRating"].to_s + '/5' rescue '0/5'
-      tomatoAudienceVotes = t["scoreboard"]["audienceScore"]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
+      tomatoAudienceMeter = t.dig('overlay','audienceAll','scorePercent').to_s rescue '0%' #t["scoreboard"]["audienceScore"]["value"].to_s + '%' rescue '0%'
+      tomatoAvgAudienceRating = t.dig('overlay','audienceAll','averageRating').to_s + '/5' rescue '0/5' #t["scoreboard"]["audienceScore"]["averageRating"].to_s + '/5' rescue '0/5'
+      tomatoAudienceVotes = ((t.dig('overlay','audienceAll','likedCount').to_i rescue 0) + (t.dig('overlay','audienceAll','notLikedCount').to_i rescue 0)).to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0' #t["scoreboard"]["audienceScore"]["ratingCount"].to_s.reverse.gsub(/...(?=.)/,'\&,').reverse rescue '0'
 
       #puts "DDDDD\n"
 

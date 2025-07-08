@@ -136,7 +136,7 @@ module Plugins
         end  
         
         return { :id => i.id, :title => i.title, :year => i.year, :url => 'http://www.imdb.com/title/tt' + CGI.escape(i.id) + '/', :plot => myplot, :tomato => tomato,
-        :mpaa_rating => myrating, :genres => mygenres, :score => myscore, :votes => myvotes}
+        :mpaa_rating => myrating, :genres => mygenres, :score => myscore, :votes => myvotes, :metascore => i.metascore}
       end   
       return nil
     end
@@ -163,7 +163,7 @@ module Plugins
       end
       myreply[:title] << "\x0f"
       
-      myreply[:rating] = "\x03" + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes]"
+      myreply[:rating] = "\x03" + color_rating + "[IMDB: #{i[:score]} with #{i[:votes]} votes" + (i[:metascore].to_s.length > 0 ? ", Metascore: #{i[:metascore].to_s}" : '') + "]"
       
       if(i.key?(:tomato) && i[:tomato])
         myreply[:rating] << "\x0f " + i[:tomato][:rating] + "\x03" + color_rating

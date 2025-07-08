@@ -16,7 +16,108 @@ module URLHandlers
     end
 =end
 
+    def parse(url)
+      #puts "yo"
+      #url = getEffectiveUrl(url) rescue nil
+      #puts "ho, u=#{url}"
+      if(!url.nil? && url =~ /^https?:\/\/(?:[^\/]*\.)*(?:twitter|x).com\/(?:[^\/]*\/)*\w+\/status(?:es)?\/(\d+)/)
+        tweet = $1
+        #puts "t=#{tweet}"
+        response = HTTPX.plugin(:follow_redirects).with(headers:{"x-rapidapi-host": "x66.p.rapidapi.com", "x-rapidapi-key": @config[:RAPIDAPI_KEY]}).get("https://x66.p.rapidapi.com/tweet/#{tweet}")
+        r = JSON.parse(response.body)
+        #puts response.code, JSON.pretty_generate(r)
+
+        myreply = ""
+
+        #puts "BODY=#{response.body}"
+
+        r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',0,'entries',0)
+        r1 = r.dig('data','threaded_conversation_with_injections_v2','instructions',1,'entries',0) if r1.nil?
+
+        result = r1.dig('content','itemContent','tweet_results','result','tweet')
+        result = r1.dig('content','itemContent','tweet_results','result') if result.nil?
+
+        if result.nil?
+          puts "TWITTER FATAL ERROR, BODY=#{response.body}"
+          return nil
+        end
+
+        author_name = result.dig("core", "user_results", "result", "legacy", "name")
+        author_screen_name = result.dig("core", "user_results", "result", "legacy", "screen_name")
+        author_blue_verified = result.dig("core", "user_results", "result", "is_blue_verified")
+        text = result.dig("legacy","full_text").force_encoding('utf-8')
+
+        highlights = ((result.dig("legacy", "entities", "hashtags") || []) + (result.dig("legacy", "entities", "user_mentions") || [])).sort_by{|k| k['indices'][0]}.reverse
+        highlights.each do |k|
+          text.force_encoding('utf-8').insert(k['indices'][1], "\x0f")
+          text.force_encoding('utf-8').insert(k['indices'][0], "\x0307")
+        end
+
+        coder = HTMLEntities.new
+        text = coder.decode text.force_encoding('utf-8')
+
+        text = text.gsub(/\n/, " ")
+        text = text.gsub(/\s+/, " ")
+
+        retweets = result.dig("legacy", "retweet_count") || 0
+        if(retweets > 1000000)
+          retweets = "#{(retweets/1000000.0).floor(1).to_s.gsub(/\.0*$/, '')}M"
+        elsif(retweets > 1000)
+          retweets = "#{(retweets/1000.0).floor(1).to_s.gsub(/\.0*$/, '')}K"
+        end
+
+        likes = result.dig("legacy", "favorite_count") || 0
+        if(likes > 1000000)
+          likes = "#{(likes/1000000.0).floor(1).to_s.gsub(/\.0*$/, '')}M"
+        elsif(likes > 1000)
+          likes = "#{(likes/1000.0).floor(1).to_s.gsub(/\.0*$/, '')}K"
+        end
+
+        createdAt = result.dig("legacy", "created_at")
+        timeAgo = nil
+
+        if !createdAt.nil?
+          now = Time.now
+          createdAt = DateTime.parse(createdAt).to_time
+
+          diff = (now-createdAt).floor
+          days = (diff/(60*60*24)).floor
+          hours = ((diff-(days*60*60*24))/(60*60)).floor
+          minutes = ((diff-(days*60*60*24)-(hours*60*60))/60).floor
+          #seconds = (diff-(days*60*60*24)-(hours*60*60)-(minutes*60)).floor
+
+          if(days == 0)
+            if(hours == 0)
+              timeAgo = minutes == 1 ? "1 minute ago" : "#{minutes} minutes ago"
+            else
+              timeAgo = hours == 1 ? "1 hour ago" : "#{hours} hours ago"
+            end
+          elsif(days < 7)
+            timeAgo = days == 1 ? "1 day ago" : "#{days} days ago"
+          else
+            timeAgo = createdAt.strftime("%b %d %Y")
+          end
+
+        end
+
+        #myreply <<  "\x0303" + "[Twitter] \x0f"
+        myreply << "\x02[X]\x0f (@" + "\x0311" + author_screen_name + "\x0f" +  (author_blue_verified == true ? "\x0302\u{2705}\x0f" : "") + ((1==0 && author_name != author_screen_name) ? " - " + author_name : "") + "): "
+        #myreply << "\x02@" + author.dig("username") + "\x0f" +  (author.dig("verified") == true ? "\x0302\u{2705}\x0f" : "") + " (" + author.dig("name") + "): "
+        #myreply << "\x02" + text + "\x0f" + " | "
+        myreply << text  + " | "
+        if !timeAgo.nil?
+          myreply << timeAgo + " " 
+        end
+        myreply << "(#{retweets} \u{1f503} / #{likes} \u{2665})"
+
+
+
+        return myreply
+      end
       
+      return nil
+
+    end  
       
 
     def tweet_lookup(tweet_ids)
@@ -282,7 +383,7 @@ module URLHandlers
     end
 
 
-    def parse(url)
+    def parse_nitters(url)
       tweetCacheEntry = Class.new(Sequel::Model(@config[:DB][:tweets]))
       tweetCacheEntry.unrestrict_primary_key
 
