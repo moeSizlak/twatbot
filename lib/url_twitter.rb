@@ -78,8 +78,8 @@ module URLHandlers
           text = text.strip
         end
 
-        ## try to add direct video links:
-        media = result.dig("legacy", "entities", "media")
+        ## try to add direct photo/video links:
+        media = result.dig("legacy", "entities", "media") || []
         media.each do |i|
           if i["type"] == "video"
             variants = i.dig("video_info", "variants")
@@ -87,7 +87,16 @@ module URLHandlers
             if v && (v["bitrate"].to_i rescue 0) > 0
               text << " #{v["url"].gsub(/\?tag=\d+$/, '')}"
             end
+          elsif i["type"] == "photo"
+            text << " #{i['media_url_https']}"
           end
+
+        end
+
+        ## try to add direct url links:
+        url = result.dig("legacy", "entities", "urls") || []
+        url.each do |u|
+          text << " #{u["expanded_url"]}"
         end
 
         coder = HTMLEntities.new
