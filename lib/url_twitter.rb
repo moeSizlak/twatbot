@@ -78,6 +78,18 @@ module URLHandlers
           text = text.strip
         end
 
+        ## try to add direct video links:
+        media = result.dig("legacy", "entities", "media")
+        media.each do |i|
+          if i["type"] == "video"
+            variants = i.dig("video_info", "variants")
+            v = variants.sort_by{|x| (x["bitrate"].to_i rescue 0) * -1}.first rescue nil
+            if v && (v["bitrate"].to_i rescue 0) > 0
+              text << " #{v["url"].gsub(/\?tag=\d+$/, '')}"
+            end
+          end
+        end
+
         coder = HTMLEntities.new
         text = coder.decode text.force_encoding('utf-8')
 
@@ -126,7 +138,7 @@ module URLHandlers
         end
 
         #myreply <<  "\x0303" + "[Twitter] \x0f"
-        myreply << "\x02[X]\x0f (@" + "\x0311" + author_screen_name + "\x0f" +  (author_blue_verified == true ? "\x0302\u{2705}\x0f" : "") + ((1==0 && author_name != author_screen_name) ? " - " + author_name : "") + "): "
+        myreply << "\x02[X]\x0f (@" + "\x0311" + author_screen_name + "\x0f" +  ((1==0 && author_blue_verified == true) ? "\x0302\u{2705}\x0f" : "") + ((1==0 && author_name != author_screen_name) ? " - " + author_name : "") + "): "
         #myreply << "\x02@" + author.dig("username") + "\x0f" +  (author.dig("verified") == true ? "\x0302\u{2705}\x0f" : "") + " (" + author.dig("name") + "): "
         #myreply << "\x02" + text + "\x0f" + " | "
         myreply << text  + " | "
@@ -135,15 +147,15 @@ module URLHandlers
         end
         myreply << "(#{retweets} \u{1f503} / #{likes} \u{2665})"
 
-
-
         return myreply
       end
       
       return nil
 
     end  
-      
+
+
+=begin      
 
     def tweet_lookup(tweet_ids)
       client = TwitterOAuth2::Client.new(
@@ -463,6 +475,6 @@ module URLHandlers
       
       return nil
     end
-
+=end
   end
 end
